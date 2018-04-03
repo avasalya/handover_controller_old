@@ -1,0 +1,22 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=/usr/local/lib
+bindir=/usr/local/bin
+pkglibdir=/usr/local/lib/mc_handover_controller
+includedir=/usr/local/include
+datarootdir=/usr/local/share
+pkgdatarootdir=/usr/local/share
+docdir=/usr/local/share/doc/mc_handover_controller
+doxygendocdir=/usr/local/share/doc/mc_handover_controller/doxygen-html
+
+Name: mc_handover_controller
+Description: human-robot tool handover controller for mc_rtc
+URL: https://gite.lirmm.fr/asheshvasalya_at_yahoo_in/mc_handover_controller
+Version: UNKNOWN-dirty
+Requires: mc_rtc
+Conflicts: 
+Libs: -L${libdir} 
+Libs.private: 
+Cflags:  -I${includedir}
+
+
