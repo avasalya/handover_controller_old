@@ -183,6 +183,33 @@ mc_handover_controller/fast:
 	cd /home/avasalya/mc_handover_controller/build && $(MAKE) -f src/CMakeFiles/mc_handover_controller.dir/build.make src/CMakeFiles/mc_handover_controller.dir/build
 .PHONY : mc_handover_controller/fast
 
+handover_minJerk.o: handover_minJerk.cpp.o
+
+.PHONY : handover_minJerk.o
+
+# target to build an object file
+handover_minJerk.cpp.o:
+	cd /home/avasalya/mc_handover_controller/build && $(MAKE) -f src/CMakeFiles/mc_handover_controller.dir/build.make src/CMakeFiles/mc_handover_controller.dir/handover_minJerk.cpp.o
+.PHONY : handover_minJerk.cpp.o
+
+handover_minJerk.i: handover_minJerk.cpp.i
+
+.PHONY : handover_minJerk.i
+
+# target to preprocess a source file
+handover_minJerk.cpp.i:
+	cd /home/avasalya/mc_handover_controller/build && $(MAKE) -f src/CMakeFiles/mc_handover_controller.dir/build.make src/CMakeFiles/mc_handover_controller.dir/handover_minJerk.cpp.i
+.PHONY : handover_minJerk.cpp.i
+
+handover_minJerk.s: handover_minJerk.cpp.s
+
+.PHONY : handover_minJerk.s
+
+# target to generate assembly for a file
+handover_minJerk.cpp.s:
+	cd /home/avasalya/mc_handover_controller/build && $(MAKE) -f src/CMakeFiles/mc_handover_controller.dir/build.make src/CMakeFiles/mc_handover_controller.dir/handover_minJerk.cpp.s
+.PHONY : handover_minJerk.cpp.s
+
 mc_handover_controller.o: mc_handover_controller.cpp.o
 
 .PHONY : mc_handover_controller.o
@@ -224,6 +251,9 @@ help:
 	@echo "... install/strip"
 	@echo "... install/local"
 	@echo "... test"
+	@echo "... handover_minJerk.o"
+	@echo "... handover_minJerk.i"
+	@echo "... handover_minJerk.s"
 	@echo "... mc_handover_controller.o"
 	@echo "... mc_handover_controller.i"
 	@echo "... mc_handover_controller.s"

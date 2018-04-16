@@ -8,13 +8,14 @@ namespace mc_control
 {
     using namespace rbd;
 
-    MCHandoverController::MCHandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, const double & dt)
-    : MCController(robot_module, dt)
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                        //
+    //                      MCHandoverController::MCHandoverController()                      //
+    //                                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    MCHandoverController::MCHandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, const double & dt):MCController(robot_module, dt)
     {
-       //  std::array<double, 3> damper = {{0.01, 0.001, 0.01}};
-       //  // KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent)
-       //  kinematicsConstraint = mc_solver::KinematicsConstraint(robots(), 0, timeStep, damper, 0.8);
-
+      
         // add collision ConstraintSet
         selfCollisionConstraint.addCollision(solver(), {"LARM_LINK3", "LLEG_LINK2", 0.1, 0.05, 0});
         selfCollisionConstraint.addCollision(solver(), {"LARM_LINK4", "LLEG_LINK2", 0.1, 0.05, 0});
@@ -38,26 +39,15 @@ namespace mc_control
         mc_rbdyn::Contact(robots(), "LowerBack","AllGround")
         });
         
-        /* move head */
-        // if(robot().name() == "hrp2_drc")
-        // {
-        //      head_joint_index = robot().jointIndexByName("HEAD_JOINT0");
-        // }
-
-        //  head_joint_target = std::min(std::abs(robot().ql()[head_joint_index][0]), robot().qu()[head_joint_index][0]) - 0.05;
-        // set_joint_pos(robot().mb().joint(head_joint_index).name(), head_joint_target);
-        
-        /*log data */
-        // logger().addLogEntry("CustomLogValue", [this]() { return head_joint_target; });
-        // logger().addLogEntry("SomethingElse", []() { return 42.0; });
-
 
         efTask.reset(new mc_tasks::EndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(),5.0,1e3));
+
         oriTask.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
         comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex()));
         solver().addTask(comTask);
 
+        
         elbow_pos.reset(new mc_tasks::PositionTask("RARM_LINK3", robots(), 0, 1.0, 1e4));
         Eigen::VectorXd dimW(3);
         dimW << 0., 0., 2.;//0., 0., 1.;
@@ -67,7 +57,11 @@ namespace mc_control
     }
 
 
-
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                        //
+    //                            MCHandoverController::reset()                               //
+    //                                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////
     void MCHandoverController::reset(const ControllerResetData & reset_data)
     {
         auto q = reset_data.q;
@@ -90,25 +84,27 @@ namespace mc_control
         efTask->reset();
         comTask->reset();
         elbow_pos->reset();
-        
-        // set_joint_pos(robot().mb().joint(head_joint_index).name(), head_joint_target);
+      
     }
 
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                        //
+    //                              MCHandoverController::run()                               //
+    //                                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////
     bool MCHandoverController::run()
     {
+
       bool ret = MCController::run();
-     
-      // if( std::abs(head_joint_target - robot().mbc().q[head_joint_index][0]) < 1e-3 )
-      // {
-      //     head_joint_target = -head_joint_target;
-      //     set_joint_pos(robot().mb().joint(head_joint_index).name(), head_joint_target);
-      // }
 
       return ret;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                        //
+    //                            MCHandoverController:init_pos()                             //
+    //                                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////
     void MCHandoverController::init_pos()
     {
       /* Set the hand in its initial configuration */
@@ -125,75 +121,43 @@ namespace mc_control
 
       Eigen::Vector3d initPos;
       initPos <<  0.392299, -0.508818, 1.1509;
+
       Eigen::Matrix3d initOri;
-      initOri <<    -0.295298,  0.338036,  3.0605,
-                    -0.758028,  0.486418, -0.4345,
-                    -0.581542, -0.805685,  0.112602;
+      initOri <<  -0.295298,  0.338036,  3.0605,
+                  -0.758028,  0.486418, -0.4345,
+                  -0.581542, -0.805685,  0.112602;
 
       efTask->set_ef_pose(sva::PTransformd(initOri, initPos));
+
+
     }
 
-    //    void MCHandoverController::traj_task(const std::string & name)
-    //    {
-    //      ready = false;
-    //      if(first_traj)
-    //      {
-    //        /* Remove the task added by init_pos */
-    //        solver().removeTask(efTask);
-    //        /* Set up task to lock the orientation and the elbow position */
-    //        elbow_pos->reset();
-    //        oriTask->reset();
-    //        solver().addTask(elbow_pos);
-    //        solver().addTask(oriTask);
-    //      }
-    //      trajectoryTask.reset(new mj_traj::mj_trajectory(solver(), mj_traj::mj_trajectory::traj_configs.at(name)));
-    //    }
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                        //
+    //                      MCHandoverController::createWaypoints()                           //
+    //                                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    void MCHandoverController::createWaypoints()
+    {
+
+      std::cout << " producing way points " << std::endl << std::endl;
+
+      int sample = 10;
+
+      for (int i=0; i<sample; i++)
+      {
+        mjObj.produceWp(MatrixXd::Random(sample,3), MatrixXd::Random(sample,3), i, sample);
+        // std::cout << mjObj.yPos[i] << std::endl; // to acess any produced wp
+      }
+
+    }
 
 
-    //    std::ostream& MCHandoverController::log_header(std::ostream & os)
-    //    {
-    //      os << ";ef_pos_x";
-    //      os << ";ef_pos_y";
-    //      os << ";ef_pos_z";
-    //      os << ";ef_vel_x";
-    //      os << ";ef_vel_y";
-    //      os << ";ef_vel_z";
-    //      os << ";ef_ref_x";
-    //      os << ";ef_ref_y";
-    //      os << ";ef_ref_z";
-    //      os << ";ef_velref_x";
-    //      os << ";ef_velref_y";
-    //      os << ";ef_velref_z";
-    //      return os;
-    //    }
-    
-    
-    // std::ostream& MCHandoverController::log_data(std::ostream & os)
-    // {
-    //   Eigen::Vector3d pos = robot().mbc().bodyPosW[robot().bodyIndexByName("RARM_LINK7")].translation();
-    //   Eigen::Vector3d vel = robot().mbc().bodyVelW[robot().bodyIndexByName("RARM_LINK7")].linear();
-    //   Eigen::Vector3d ref(0,0,0);
-    //   Eigen::VectorXd refVel = Eigen::VectorXd::Zero(3);
-    //   if(trajectoryTask)
-    //   {
-    //     ref = trajectoryTask->positionTask->position();
-    //     refVel = trajectoryTask->refVel;
-    //   }
-    //   os << ";" << pos.x();
-    //   os << ";" << pos.y();
-    //   os << ";" << pos.z();
-    //   os << ";" << vel.x();
-    //   os << ";" << vel.y();
-    //   os << ";" << vel.z();
-    //   os << ";" << ref.x();
-    //   os << ";" << ref.y();
-    //   os << ";" << ref.z();
-    //   os << ";" << refVel.x();
-    //   os << ";" << refVel.y();
-    //   os << ";" << refVel.z();
-    //   return os;
-    // }
-
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                        //
+    //                      MCHandoverController::read_msg()                                  //
+    //                                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////
     bool MCHandoverController::read_msg(std::string & msg)
     {
       std::stringstream ss; ss << msg;
@@ -224,6 +188,7 @@ namespace mc_control
 
         ///initial orientation and pos in the beginning of exp
         init_pos();
+        createWaypoints();
         return true;
       }
       /// open right gripper
@@ -253,27 +218,7 @@ namespace mc_control
         std::cout<<std::endl;
         return true;
       }
-    //if(mj_traj::mj_trajectory::traj_configs.count(token))
-    //{
-    //  if(ready)
-    //  {
-    //    traj_task(token);
-    //  }
-    //  else
-    //  {
-    //    LOG_ERROR("Current trajectory not finished")
-    //    return false;
-    //  }
-    //  return true;
-    //}
-    //if(token == "stop")
-    //{
-    //  if(trajectoryTask)
-    //  {
-    //    LOG_WARNING("Stopping after the next iteration")
-    //    trajectoryTask->traj_count = trajectoryTask->config.count;
-    //  }
-    //}
+    
       LOG_WARNING("Cannot handle " << msg)
       return false;
     }
