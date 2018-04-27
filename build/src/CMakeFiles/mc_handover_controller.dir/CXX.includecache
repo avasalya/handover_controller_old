@@ -35,6 +35,18 @@ Eigen/SVD
 -
 Eigen/Dense
 -
+mc_control/mc_controller.h
+-
+mc_tasks/TrajectoryTask.h
+-
+mc_rbdyn/Robot.h
+-
+mc_rtc/logging.h
+-
+Tasks/QPTasks.h
+-
+
+/home/avasalya/mc_handover_controller/src/handover_traj.h
 
 /home/avasalya/mc_handover_controller/src/mc_handover_controller.cpp
 mc_handover_controller.h
@@ -73,6 +85,8 @@ RBDyn/FV.h
 -
 handover_minJerk.h
 /home/avasalya/mc_handover_controller/src/handover_minJerk.h
+handover_traj.h
+/home/avasalya/mc_handover_controller/src/handover_traj.h
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

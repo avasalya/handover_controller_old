@@ -24,6 +24,7 @@
 #include <RBDyn/FV.h>
 
 #include "handover_minJerk.h"
+#include "handover_traj.h"
 
 
 
@@ -53,9 +54,15 @@ namespace mc_control
       
       
       std::shared_ptr<mc_tasks::CoMTask> comTask;
-      std::shared_ptr<mc_tasks::PositionTask> elbow_pos;
-      std::shared_ptr<mc_tasks::EndEffectorTask> efTask;
-      std::shared_ptr<mc_tasks::OrientationTask> oriTask;
+
+      // std::shared_ptr<mc_tasks::PositionTask> elbow_posL;
+      // std::shared_ptr<mc_tasks::PositionTask> elbow_posR;
+
+      std::shared_ptr<mc_tasks::EndEffectorTask> efTaskL;
+      std::shared_ptr<mc_tasks::EndEffectorTask> efTaskR;
+      
+      std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
+      std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
       minJerk  mjObj;
     

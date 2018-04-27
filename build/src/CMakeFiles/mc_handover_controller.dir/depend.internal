@@ -14,6 +14,7 @@ src/CMakeFiles/mc_handover_controller.dir/handover_minJerk.cpp.o
  /usr/include/eigen3/Eigen/LU
  /usr/include/eigen3/Eigen/QR
  /usr/include/eigen3/Eigen/SVD
+ /usr/include/eigen3/Eigen/StdVector
  /usr/include/eigen3/Eigen/src/Cholesky/LDLT.h
  /usr/include/eigen3/Eigen/src/Cholesky/LLT.h
  /usr/include/eigen3/Eigen/src/Cholesky/LLT_MKL.h
@@ -189,6 +190,8 @@ src/CMakeFiles/mc_handover_controller.dir/handover_minJerk.cpp.o
  /usr/include/eigen3/Eigen/src/SVD/JacobiSVD_MKL.h
  /usr/include/eigen3/Eigen/src/SVD/SVDBase.h
  /usr/include/eigen3/Eigen/src/SVD/UpperBidiagonalization.h
+ /usr/include/eigen3/Eigen/src/StlSupport/StdVector.h
+ /usr/include/eigen3/Eigen/src/StlSupport/details.h
  /usr/include/eigen3/Eigen/src/misc/Image.h
  /usr/include/eigen3/Eigen/src/misc/Kernel.h
  /usr/include/eigen3/Eigen/src/plugins/ArrayCwiseBinaryOps.h
@@ -198,8 +201,107 @@ src/CMakeFiles/mc_handover_controller.dir/handover_minJerk.cpp.o
  /usr/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h
  /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+ /usr/include/eigen3/unsupported/Eigen/Splines
+ /usr/include/eigen3/unsupported/Eigen/src/Splines/Spline.h
+ /usr/include/eigen3/unsupported/Eigen/src/Splines/SplineFitting.h
+ /usr/include/eigen3/unsupported/Eigen/src/Splines/SplineFwd.h
+ /usr/local/include/RBDyn/Body.h
+ /usr/local/include/RBDyn/CoM.h
+ /usr/local/include/RBDyn/FD.h
+ /usr/local/include/RBDyn/Jacobian.h
+ /usr/local/include/RBDyn/Joint.h
+ /usr/local/include/RBDyn/Momentum.h
+ /usr/local/include/RBDyn/MultiBody.h
+ /usr/local/include/RBDyn/MultiBodyConfig.h
+ /usr/local/include/RBDyn/MultiBodyGraph.h
+ /usr/local/include/RBDyn/VisServo.h
+ /usr/local/include/SpaceVecAlg/ABInertia.h
+ /usr/local/include/SpaceVecAlg/EigenTypedef.h
+ /usr/local/include/SpaceVecAlg/EigenUtility.h
+ /usr/local/include/SpaceVecAlg/ForceVec.h
+ /usr/local/include/SpaceVecAlg/MathFunc.h
+ /usr/local/include/SpaceVecAlg/MotionVec.h
+ /usr/local/include/SpaceVecAlg/Operators.h
+ /usr/local/include/SpaceVecAlg/PTransform.h
+ /usr/local/include/SpaceVecAlg/RBInertia.h
+ /usr/local/include/SpaceVecAlg/SpaceVecAlg
+ /usr/local/include/Tasks/QPConstr.h
+ /usr/local/include/Tasks/QPContactConstr.h
+ /usr/local/include/Tasks/QPContacts.h
+ /usr/local/include/Tasks/QPMotionConstr.h
+ /usr/local/include/Tasks/QPSolver.h
+ /usr/local/include/Tasks/QPSolverData.h
+ /usr/local/include/Tasks/QPTasks.h
+ /usr/local/include/Tasks/Tasks.h
+ /usr/local/include/mc/rtc/deprecated.hh
+ /usr/local/include/mc_control/Configuration.h
+ /usr/local/include/mc_control/api.h
+ /usr/local/include/mc_control/generic_gripper.h
+ /usr/local/include/mc_control/mc_controller.h
+ /usr/local/include/mc_rbdyn/Base.h
+ /usr/local/include/mc_rbdyn/BodySensor.h
+ /usr/local/include/mc_rbdyn/Collision.h
+ /usr/local/include/mc_rbdyn/Contact.h
+ /usr/local/include/mc_rbdyn/Flexibility.h
+ /usr/local/include/mc_rbdyn/ForceSensor.h
+ /usr/local/include/mc_rbdyn/Robot.h
+ /usr/local/include/mc_rbdyn/RobotModule.h
+ /usr/local/include/mc_rbdyn/Robots.h
+ /usr/local/include/mc_rbdyn/Springs.h
+ /usr/local/include/mc_rbdyn/Surface.h
+ /usr/local/include/mc_rbdyn/api.h
+ /usr/local/include/mc_rbdyn_urdf/api.h
+ /usr/local/include/mc_rbdyn_urdf/urdf.h
+ /usr/local/include/mc_rtc/Configuration.h
+ /usr/local/include/mc_rtc/log/Logger.h
+ /usr/local/include/mc_rtc/log/serialization/MCLog_generated.h
+ /usr/local/include/mc_rtc/log/serialization/fb_utils.h
+ /usr/local/include/mc_rtc/log/serialization/flatbuffers/base.h
+ /usr/local/include/mc_rtc/log/serialization/flatbuffers/flatbuffers.h
+ /usr/local/include/mc_rtc/log/serialization/flatbuffers/stl_emulation.h
+ /usr/local/include/mc_rtc/logging.h
+ /usr/local/include/mc_rtc/utils_api.h
+ /usr/local/include/mc_solver/CollisionsConstraint.h
+ /usr/local/include/mc_solver/ConstraintSet.h
+ /usr/local/include/mc_solver/ContactConstraint.h
+ /usr/local/include/mc_solver/DynamicsConstraint.h
+ /usr/local/include/mc_solver/KinematicsConstraint.h
+ /usr/local/include/mc_solver/QPSolver.h
+ /usr/local/include/mc_solver/api.h
+ /usr/local/include/mc_solver/msg/Contact.h
+ /usr/local/include/mc_solver/msg/QPResult.h
+ /usr/local/include/mc_solver/msg/Robot.h
+ /usr/local/include/mc_tasks/MetaTask.h
+ /usr/local/include/mc_tasks/TrajectoryTask.h
+ /usr/local/include/mc_tasks/api.h
+ /usr/local/include/mc_trajectory/BSplineTrajectory.h
+ /usr/local/include/mc_trajectory/api.h
+ /usr/local/include/rbdyn/config.hh
+ /usr/local/include/sch/Matrix/QuaternionT.h
+ /usr/local/include/sch/Matrix/SCH_Types.h
+ /usr/local/include/sch/Matrix/SmallMatrix3x3T.h
+ /usr/local/include/sch/Matrix/SmallMatrix4x4T.h
+ /usr/local/include/sch/Matrix/SmallVector3T.h
+ /usr/local/include/sch/Matrix/SmallVector4T.h
+ /usr/local/include/sch/STP-BV/STP_BV.h
+ /usr/local/include/sch/STP-BV/STP_Feature.h
+ /usr/local/include/sch/STP-BV/STP_Feature.hxx
+ /usr/local/include/sch/S_Object/S_Object.h
+ /usr/local/include/sch/S_Object/S_Object.hxx
+ /usr/local/include/sch/S_Object/S_ObjectNonNormalized.h
+ /usr/local/include/sch/S_Object/S_ObjectNonNormalized.hxx
+ /usr/local/include/sch/S_Object/S_ObjectNormalized.h
+ /usr/local/include/sch/S_Object/S_ObjectNormalized.hxx
+ /usr/local/include/sch/S_Polyhedron/Polyhedron_algorithms.h
+ /usr/local/include/sch/S_Polyhedron/S_Polyhedron.h
+ /usr/local/include/sch/S_Polyhedron/S_PolyhedronVertex.h
+ /usr/local/include/sch/S_Polyhedron/S_PolyhedronVertex.hxx
+ /usr/local/include/sch/core/deprecated.hh
+ /usr/local/include/sch/sch_api.h
+ /usr/local/include/tasks/config.hh
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o
  /home/avasalya/mc_handover_controller/src/handover_minJerk.h
+ /home/avasalya/mc_handover_controller/src/handover_traj.h
  /home/avasalya/mc_handover_controller/src/mc_handover_controller.cpp
  /home/avasalya/mc_handover_controller/src/mc_handover_controller.h
  /usr/include/eigen3/Eigen/Cholesky

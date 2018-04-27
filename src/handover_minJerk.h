@@ -16,7 +16,15 @@
 #include <Eigen/SVD>
 #include <Eigen/Dense>
 
+#include <mc_control/mc_controller.h>
 
+#include <mc_tasks/TrajectoryTask.h>
+
+#include <mc_rbdyn/Robot.h>
+
+#include <mc_rtc/logging.h>
+
+#include <Tasks/QPTasks.h>
 
 namespace mc_control 
 {
@@ -67,9 +75,6 @@ namespace mc_control
   };
 
 
+
 }
-
-
-
-
 #endif

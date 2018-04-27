@@ -1,6 +1,6 @@
+//
+/// ... min_jerk_traj ...
 ///
-///// ... min_jerk_traj ...
-/////
 
 #include "handover_minJerk.h"
 
