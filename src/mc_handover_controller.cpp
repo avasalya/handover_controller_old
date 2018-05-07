@@ -39,10 +39,10 @@ namespace mc_control
 
         // //////////////////////// RIGHT ARM ///////////////////// //
   
-        efTaskR.reset(new mc_tasks::EndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(),5.0,1e3));
+        rEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 2.0,1e3));
         oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
-        efTaskL.reset(new mc_tasks::EndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(),5.0,1e3));
+        rEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 2.0,1e3));
         oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
         qpsolver->addTask(postureTask.get());
@@ -61,9 +61,9 @@ namespace mc_control
     ////////////////////////////////////////////////////////////////////////////////////////////
     void MCHandoverController::reset(const ControllerResetData & reset_data)
     {
-        auto q = reset_data.q;
-        q[0] = {0.991445, -0, -0, 0.130526, -0.275, -0.05, 0.825336};
-        MCController::reset({q});
+        // auto q = reset_data.q;
+        // q[0] = {0.991445, -0, -0, 0.130526, -0.275, -0.05, 0.825336};
+        // MCController::reset({q});
 
         qpsolver->setContacts({
         mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
@@ -72,8 +72,11 @@ namespace mc_control
         mc_rbdyn::Contact(robots(), "LowerBack","AllGround")
         });
 
-        efTaskL->reset();
-        efTaskR->reset();
+        // efTaskL->reset();
+        // efTaskR->reset();
+        rEfTaskL->reset();
+        rEfTaskR->reset();
+
         comTask->reset();
     }
 
@@ -103,18 +106,18 @@ namespace mc_control
       Eigen::Vector3d initPosR, initPosL;
       sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-      initPosR <<  0.30, -0.18, 0.2;
-      efTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR+BodyW.translation()));
-      solver().addTask(efTaskR);
+      initPosR <<  0.30, -0.35, 0.2;
+      rEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+      solver().addTask(rEfTaskR);
 
-      std::cout << initPosR+BodyW.translation()<< "\n"<< std::endl;
+      // std::cout << initPosR+BodyW.translation()<< "\n"<< std::endl;
 
       
       initPosL <<  0.30, 0.35, 0.2;      
-      efTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL+BodyW.translation()));
-      solver().addTask(efTaskL);
+      rEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+      solver().addTask(rEfTaskL);
 
-      std::cout << initPosL+BodyW.translation()<< "\n"<< std::endl;
+      // std::cout << initPosL+BodyW.translation()<< "\n"<< std::endl;
         
 
     }
@@ -127,7 +130,7 @@ namespace mc_control
     void MCHandoverController::createWaypoints()
     {
 
-      std::cout << " producing way points " << std::endl << std::endl;
+      // std::cout << " producing way points " << std::endl << std::endl;
 
       int sample = 10;
 
@@ -158,8 +161,8 @@ namespace mc_control
         double z = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")].translation().z();
         t.z() +=z;
         sva:: PTransformd X(q.inverse(), t);
-        efTaskR->set_ef_pose(X);
-        solver().addTask(efTaskR);
+        rEfTaskR->set_ef_pose(X);
+        solver().addTask(rEfTaskR); 
 
         return true;
       }

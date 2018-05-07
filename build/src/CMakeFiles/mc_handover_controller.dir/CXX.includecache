@@ -59,6 +59,8 @@ mc_control/mc_controller.h
 -
 mc_tasks/EndEffectorTask.h
 -
+mc_tasks/RelativeEndEffectorTask.h
+-
 mc_tasks/OrientationTask.h
 -
 mc_tasks/ComplianceTask.h
@@ -1782,6 +1784,12 @@ mc_tasks/TrajectoryTaskGeneric.h
 
 /usr/local/include/mc_tasks/PositionTask.h
 mc_tasks/TrajectoryTaskGeneric.h
+-
+
+/usr/local/include/mc_tasks/RelativeEndEffectorTask.h
+mc_tasks/EndEffectorTask.h
+-
+mc_tasks/api.h
 -
 
 /usr/local/include/mc_tasks/TrajectoryTask.h

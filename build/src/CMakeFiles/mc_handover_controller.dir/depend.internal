@@ -580,6 +580,7 @@ src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o
  /usr/local/include/mc_tasks/MetaTask.h
  /usr/local/include/mc_tasks/OrientationTask.h
  /usr/local/include/mc_tasks/PositionTask.h
+ /usr/local/include/mc_tasks/RelativeEndEffectorTask.h
  /usr/local/include/mc_tasks/TrajectoryTask.h
  /usr/local/include/mc_tasks/TrajectoryTaskGeneric.h
  /usr/local/include/mc_tasks/TrajectoryTaskGeneric.hpp
