@@ -37,35 +37,16 @@ namespace mc_control
         });
 
 
-        Eigen::VectorXd dimW(3);
-        dimW << 0., 0., 2.;//0., 0., 1.;
-        
         // //////////////////////// RIGHT ARM ///////////////////// //
-
-        // set RArm wrist jointGain
-        // postureTask->jointsGains(robots().mbs(), {{"RARM_JOINT5", 1e3}});
-        // qpsolver->addTask(postureTask.get());
   
         efTaskR.reset(new mc_tasks::EndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(),5.0,1e3));
         oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
-        // elbow_posR.reset(new mc_tasks::PositionTask("RARM_LINK3", robots(), 0, 1.0, 1e4));
-        // elbow_posR->dimWeight(dimW);
-
-        // //////////////////////// LEFT ARM ///////////////////// //
-
-        // set LArm wrist jointGain
-        // postureTask->jointsGains(robots().mbs(), {{"LARM_JOINT5", 1e3}});
-        // qpsolver->addTask(postureTask.get());
-
         efTaskL.reset(new mc_tasks::EndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(),5.0,1e3));
         oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
-        // elbow_posL.reset(new mc_tasks::PositionTask("LARM_LINK3", robots(), 0, 1.0, 1e4));
-        // elbow_posL->dimWeight(dimW);
-
-
         qpsolver->addTask(postureTask.get());
+
         comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex()));
         solver().addTask(comTask);
 
@@ -81,12 +62,6 @@ namespace mc_control
     void MCHandoverController::reset(const ControllerResetData & reset_data)
     {
         auto q = reset_data.q;
-        std::cout << "q[0] ";
-        // for(const auto & qi : q[0])
-        // {
-        //   std::cout << qi << ", ";
-        // }
-        // std::cout << std::endl;
         q[0] = {0.991445, -0, -0, 0.130526, -0.275, -0.05, 0.825336};
         MCController::reset({q});
 
@@ -98,11 +73,7 @@ namespace mc_control
         });
 
         efTaskL->reset();
-        // elbow_posL->reset();
-      
         efTaskR->reset();
-        // elbow_posR->reset();
-
         comTask->reset();
     }
 
@@ -115,7 +86,8 @@ namespace mc_control
     {
 
       bool ret = MCController::run();
-      init_pos();
+      // init_pos();
+
 
       return ret;
     }
@@ -127,56 +99,23 @@ namespace mc_control
     ////////////////////////////////////////////////////////////////////////////////////////////
     void MCHandoverController::init_pos()
     {
-      /* Set the hands in their initial configuration */
-      // std::vector<double> rArm_Joints_q =
-      // // {-0.86, -0.37, 0.59, -0.56, -1.6, 0.46, -0.04, -0.0};
-      // {-0.4, -0.55, 0.55, -0.65, -1.2, 0.37, -0.1, -0.00}; // old good working pose
-
-
-      // std::vector<double> lArm_Joints_q =
-      // // {-0.86, 0.28, -0.48, -0.68, 1.37, -0.21, -0.04, 0.02};
-      // {-0.4, -0.55, 0.55, -0.65, -1.2, 0.37, -0.1, -0.00};
-
-      // for(size_t i = 0; i < 8; ++i)
-      // {
-      //   std::stringstream ss1,  ss2;
-      //   ss1 << "RARM_JOINT" << i;
-      //   set_joint_pos(ss1.str(), rArm_Joints_q[i]);
-      //   ss2 << "LARM_JOINT" << i;
-      //   set_joint_pos(ss2.str(), lArm_Joints_q[i]);
-      // }
-      // solver().addTask(efTaskL);
-      // solver().addTask(efTaskR);
-
-      // Eigen::Matrix3d initOriR;
-      // initOriR << -0.295298,  0.338036,  3.0605,
-      //             -0.758028,  0.486418, -0.4345,
-      //             -0.581542, -0.805685,  0.112602;
-
-      Eigen::Vector3d initPosR;
-      initPosR <<  0.35, -0.18, 1.2;
-
+      
+      Eigen::Vector3d initPosR, initPosL;
       sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
-      // efTaskR->set_ef_pose(sva::PTransformd(sva::RotX(1./2.*M_PI)*BodyW.rotation(), initPosR));
-      
-      efTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-      // efTaskR->add_ef_pose(sva::PTransformd(sva::RotX(-(M_PI/180)*45)*BodyW.rotation(), initPosR));
-      
+
+      initPosR <<  0.30, -0.18, 0.2;
+      efTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR+BodyW.translation()));
       solver().addTask(efTaskR);
 
+      std::cout << initPosR+BodyW.translation()<< "\n"<< std::endl;
+
       
- 
+      initPosL <<  0.30, 0.35, 0.2;      
+      efTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL+BodyW.translation()));
+      solver().addTask(efTaskL);
 
-       // sva::RotX(M_PI/1.0 - phi)*sva::RotY(phi);
-
-      // Eigen::Matrix3d initOriL;
-      // initOriL <<  -0.295298,  0.338036,  3.0605,
-      //             -0.758028,  0.486418, -0.4345,
-      //             -0.581542, -0.805685,  0.112602;
-
-      // Eigen::Vector3d initPosL;
-      // initPosL <<  0.392299, 0.508818, 1.1509;
-      // efTaskL->set_ef_pose(sva::PTransformd(initOriL, initPosL));
+      std::cout << initPosL+BodyW.translation()<< "\n"<< std::endl;
+        
 
     }
 

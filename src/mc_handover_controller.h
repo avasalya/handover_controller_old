@@ -51,12 +51,8 @@ namespace mc_control
       /* Generic message passing */
       virtual bool read_msg(std::string & msg) override;
       
-      
-      
+            
       std::shared_ptr<mc_tasks::CoMTask> comTask;
-
-      // std::shared_ptr<mc_tasks::PositionTask> elbow_posL;
-      // std::shared_ptr<mc_tasks::PositionTask> elbow_posR;
 
       std::shared_ptr<mc_tasks::EndEffectorTask> efTaskL;
       std::shared_ptr<mc_tasks::EndEffectorTask> efTaskR;
