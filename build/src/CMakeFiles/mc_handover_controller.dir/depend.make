@@ -573,13 +573,16 @@ src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/loc
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_solver/msg/Contact.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_solver/msg/QPResult.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_solver/msg/Robot.h
+src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/AdmittanceTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/CoMTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/ComplianceTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/EndEffectorTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/MetaTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/OrientationTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/PositionTask.h
+src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/PostureTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/RelativeEndEffectorTask.h
+src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/SurfaceTransformTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/TrajectoryTask.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/TrajectoryTaskGeneric.h
 src/CMakeFiles/mc_handover_controller.dir/mc_handover_controller.cpp.o: /usr/local/include/mc_tasks/TrajectoryTaskGeneric.hpp

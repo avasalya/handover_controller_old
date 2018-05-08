@@ -4,14 +4,14 @@
 #include <mc_control/mc_controller.h>
 #include <mc_control/mc_controller.h>
 
-#include <mc_tasks/EndEffectorTask.h>
+#include <mc_tasks/AdmittanceTask.h>
+#include <mc_tasks/PostureTask.h>
 #include <mc_tasks/RelativeEndEffectorTask.h>
-
 #include <mc_tasks/OrientationTask.h>
 #include <mc_tasks/ComplianceTask.h>
-#include <mc_tasks/TrajectoryTask.h>
+// #include <mc_tasks/TrajectoryTask.h>
 #include <mc_tasks/CoMTask.h>
-#include <mc_tasks/TrajectoryTask.h>
+// #include <mc_tasks/TrajectoryTask.h>
 
 #include <mc_rtc/logging.h>
 #include <mc_rtc/logging.h>
@@ -56,14 +56,17 @@ namespace mc_control
             
       std::shared_ptr<mc_tasks::CoMTask> comTask;
 
-      std::shared_ptr<mc_tasks::EndEffectorTask> efTaskL;
-      std::shared_ptr<mc_tasks::EndEffectorTask> efTaskR;
-
       std::shared_ptr<mc_tasks::RelativeEndEffectorTask> rEfTaskL;
       std::shared_ptr<mc_tasks::RelativeEndEffectorTask> rEfTaskR;
       
       std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
       std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
+
+      // std::shared_ptr<mc_tasks::AdmittanceTask> AdmittanceTaskL;
+      // std::shared_ptr<mc_tasks::AdmittanceTask> AdmittanceTaskR;
+
+      // std::shared_ptr<mc_tasks::PostureTask> postureTaskL;
+      // std::shared_ptr<mc_tasks::PostureTask> postureTaskR;
 
       minJerk  mjObj;
     
