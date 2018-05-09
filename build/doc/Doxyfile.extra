@@ -1,4 +1,0 @@
-INPUT                  = /home/avasalya/mc_handover_controller/include
-IMAGE_PATH             = /home/avasalya/mc_handover_controller/doc/pictures
-FILE_PATTERNS          = *.h *.idl
-
