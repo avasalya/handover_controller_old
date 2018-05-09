@@ -14,8 +14,8 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "."
   "include"
   "../include"
-  "/opt/ros/kinetic/include"
   "/home/avasalya/catkin_ws/devel/include"
+  "/opt/ros/kinetic/include"
   "/usr/local/include"
   "/usr/include/eigen3"
   )

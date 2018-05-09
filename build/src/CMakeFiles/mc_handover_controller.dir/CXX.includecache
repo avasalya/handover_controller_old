@@ -6,6 +6,8 @@
 
 #IncludeRegexTransform: 
 
+/home/avasalya/mc_handover_controller/src/handover_complianceTask.h
+
 /home/avasalya/mc_handover_controller/src/handover_minJerk.cpp
 handover_minJerk.h
 /home/avasalya/mc_handover_controller/src/handover_minJerk.h
@@ -46,8 +48,6 @@ mc_rtc/logging.h
 Tasks/QPTasks.h
 -
 
-/home/avasalya/mc_handover_controller/src/handover_traj.h
-
 /home/avasalya/mc_handover_controller/src/mc_handover_controller.cpp
 mc_handover_controller.h
 /home/avasalya/mc_handover_controller/src/mc_handover_controller.h
@@ -56,10 +56,6 @@ mc_handover_controller.h
 mc_control/mc_controller.h
 -
 mc_control/mc_controller.h
--
-mc_tasks/AdmittanceTask.h
--
-mc_tasks/PostureTask.h
 -
 mc_tasks/RelativeEndEffectorTask.h
 -
@@ -85,8 +81,8 @@ RBDyn/FV.h
 -
 handover_minJerk.h
 /home/avasalya/mc_handover_controller/src/handover_minJerk.h
-handover_traj.h
-/home/avasalya/mc_handover_controller/src/handover_traj.h
+handover_complianceTask.h
+/home/avasalya/mc_handover_controller/src/handover_complianceTask.h
 
 /usr/include/eigen3/Eigen/Cholesky
 Core
@@ -1748,10 +1744,6 @@ vector
 Eigen/Core
 -
 
-/usr/local/include/mc_tasks/AdmittanceTask.h
-mc_tasks/SurfaceTransformTask.h
--
-
 /usr/local/include/mc_tasks/CoMTask.h
 mc_tasks/TrajectoryTaskGeneric.h
 -
@@ -1788,20 +1780,10 @@ mc_tasks/TrajectoryTaskGeneric.h
 mc_tasks/TrajectoryTaskGeneric.h
 -
 
-/usr/local/include/mc_tasks/PostureTask.h
-mc_tasks/MetaTask.h
--
-Tasks/QPTasks.h
--
-
 /usr/local/include/mc_tasks/RelativeEndEffectorTask.h
 mc_tasks/EndEffectorTask.h
 -
 mc_tasks/api.h
--
-
-/usr/local/include/mc_tasks/SurfaceTransformTask.h
-mc_tasks/TrajectoryTaskGeneric.h
 -
 
 /usr/local/include/mc_tasks/TrajectoryTask.h

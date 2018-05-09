@@ -6,5 +6,5 @@ CXX_FLAGS =  -pedantic -Wno-long-long -Wall -Wextra -Wcast-align -Wcast-qual -Wf
 
 CXX_DEFINES = -Dmc_handover_controller_EXPORTS
 
-CXX_INCLUDES = -I/home/avasalya/mc_handover_controller/build -I/home/avasalya/mc_handover_controller/build/include -I/home/avasalya/mc_handover_controller/include -isystem /opt/ros/kinetic/include -isystem /home/avasalya/catkin_ws/devel/include -isystem /usr/local/include -isystem /usr/include/eigen3 
+CXX_INCLUDES = -I/home/avasalya/mc_handover_controller/build -I/home/avasalya/mc_handover_controller/build/include -I/home/avasalya/mc_handover_controller/include -isystem /home/avasalya/catkin_ws/devel/include -isystem /opt/ros/kinetic/include -isystem /usr/local/include -isystem /usr/include/eigen3 
 

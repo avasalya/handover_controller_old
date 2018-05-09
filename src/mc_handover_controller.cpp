@@ -6,7 +6,6 @@
 
 namespace mc_control
 {
-    using namespace rbd;
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     //                                                                                        //
@@ -50,8 +49,6 @@ namespace mc_control
         });
 
 
-        // //////////////////////// RIGHT ARM ///////////////////// //
-  
         rEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 10.0,1e3));
         oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
@@ -62,6 +59,19 @@ namespace mc_control
 
         comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex()));
         solver().addTask(comTask);
+
+
+        // compliance  Task //
+        enabled_.resize(robot_module->forceSensors().size(), false);
+
+        Eigen::Matrix6d dof =  Eigen::Matrix6d::Identity();
+        compTaskL.reset(new mc_tasks::ComplianceTask(robots(), robots().robotIndex(), "LARM_LINK7", 0.005, dof, 5, 1e3, 3., 1., {0.02, 0.005}, {0.2, 0.05} ));  
+        solver().addTask(compTaskL);
+
+        // Hardcoded wrist sensors
+        enableSensor("LeftHandForceSensor");
+        enableSensor("RightHandForceSensor");
+
 
         LOG_SUCCESS("mc_handover_controller init done")
     }
@@ -141,62 +151,60 @@ namespace mc_control
     ////////////////////////////////////////////////////////////////////////////////////////////
     void MCHandoverController::createWaypoints()
     {
-
-      // std::cout << " producing way points " << std::endl << std::endl;
-
       int sample = 10;
-
       for (int i=0; i<sample; i++)
       {
-        mjObj.produceWp(MatrixXd::Random(sample,3), MatrixXd::Random(sample,3), i, sample);
+        mjTask->produceWp(MatrixXd::Random(sample,3), MatrixXd::Random(sample,3), i, sample);
         // std::cout << mjObj.yPos[i] << std::endl; // to acess any produced wp
       }
     }
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////
     //                                                                                        //
-    //                      MCHandoverController::read_msg()                                  //
+    //                      MCHandoverController::read_write_msg()                            //
     //                                                                                        //
     ////////////////////////////////////////////////////////////////////////////////////////////
-    bool MCHandoverController::read_msg(std::string & msg)
+    bool  MCHandoverController::read_write_msg(std::string & msg, std::string & out)
     {
-      std::stringstream ss;
-      ss << msg;
-      
+      std::stringstream ss, ssout;
       std::string token;
+      ss << msg;
       ss >> token;
 
-     
+      if(token == "enableSensor")
+      {
+        std::string sensorName;
+        ss >> sensorName;
+        ssout << "try to enable " << sensorName;
+        out = ssout.str();
+        return enableSensor(sensorName);   
+      }
+      else if(token == "disableSensor")
+      {
+        std::string sensorName;
+        ss >> sensorName;
+        ssout << "Try to disable " << sensorName;
+        out = ssout.str();
+        return disableSensor(sensorName);
+      }
+
+      else
+      {
+        out = "Could not interpret command " + token;
+        return false;
+      }
+
 
       if(token == "initial2")
       { 
 
-          // Eigen::Vector3d t( 0.66, -0.23, 0.27 );
-          // Eigen::Matrix3d m;
-          // m << -1, 1, -1, 0, 1, 0, 1, 1, -1;
-          // MCController::change_ef("LARM_JOINT6");
-          // MCController::move_ef(t, m);
+        Eigen::Vector3d t( 0.66, -0.23, 0.27 );
+        sva::PTransformd dtr(Eigen::Matrix3d::Identity(), t);
+        rEfTaskL->add_ef_pose(dtr);
 
-          // std::cout<< "I am working here " << std::endl;
-          // postureTaskL.reset(new mc_tasks::PostureTask(solver(), robots().robotIndex(), 10, 1e3));
-
-          // // postureTaskL->selectActiveJoints(solver(), "LARM_JOINT6");
-
-          // unsigned int wrist_i = robot().jointIndexByName("LARM_JOINT6");
-          // auto p = postureTaskL->posture();
-          // p[wrist_i][0] = 1; //yaw;
-          // postureTaskL->posture(p);
-          // qpsolver->addTask(postureTask.get());
-
-        // Eigen::Vector3d t( 0.66, -0.23, 0.27 );
-        // sva::PTransformd dtr(Eigen::Matrix3d::Identity(), t);
-        // rEfTaskL->add_ef_pose(dtr);
-
-          return true;
+        return true;
       }
 
-      // set initial pose
       if(token == "initial")
       {
         ///HEAD orientation in the beginning of exp
@@ -277,41 +285,8 @@ namespace mc_control
     
       LOG_WARNING("Cannot handle " << msg)
       return false;
+
     }
-}
 
-
-
- // very old init pos   // doesn't replicate accurately 
-      // if(token == "init")  // set initial coordinates and orientation in the beginning of exp
-      // {                     // w,   x,      y,    z
-      //   Eigen::Quaterniond q(0.55, 0.51, -0.52, -0.4); q.normalize(); //0.59,-0.008, 0.059, 0.80
-      //   Eigen::Vector3d t( 0.66, -0.23, 0.27 );
-      //   double z = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")].translation().z();
-      //   t.z() +=z;
-      //   sva:: PTransformd X(q.inverse(), t);
-      //   rEfTaskR->set_ef_pose(X);
-      //   solver().addTask(rEfTaskR); 
-
-      //   return true;
-      // }
-
-
-      /*sitting positon*/
-      // if(token == "sit")
-      // {
-      //    MCController::set_joint_pos("RLEG_JOINT2",-1.7);
-      //    MCController::set_joint_pos("LLEG_JOINT2",-1.7);
-
-      //    MCController::set_joint_pos("RLEG_JOINT3", 1.6);
-      //    MCController::set_joint_pos("LLEG_JOINT3", 1.6);
-
-      //    MCController::set_joint_pos("RLEG_JOINT4", 0.0);
-      //    MCController::set_joint_pos("LLEG_JOINT4", 0.0);
-
-      //    return true;
-      // }
-
-
-
-  
+   
+} //namespace
