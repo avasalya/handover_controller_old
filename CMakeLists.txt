@@ -4,7 +4,7 @@ set(CXX_DISABLE_WERROR 1)
 include(cmake/base.cmake)
 include(cmake/boost.cmake)
 
-set(PROJECT_NAME mc_handover_controller)
+set(PROJECT_NAME handover_controller)
 set(PROJECT_DESCRIPTION "human-robot tool handover controller for mc_rtc")
 set(PROJECT_URL https://gite.lirmm.fr/asheshvasalya_at_yahoo_in/mc_handover_controller)
 

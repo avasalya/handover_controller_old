@@ -15,7 +15,7 @@ namespace mc_control
   //                               minJerk::minJerk()                                       //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
-  minJerk::minJerk()
+  MinJerk::MinJerk()
   {
     std::cout << "minJerk constructor created " <<std::endl; 
   }
@@ -25,7 +25,7 @@ namespace mc_control
   //                               minJerk::setPosA()                                       //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
-  void minJerk::setPosA(const Eigen::MatrixXd & a, int i)
+  void MinJerk::setPosA(const Eigen::MatrixXd & a, int i)
   {
     pos1 = a;
     n   = i;
@@ -36,7 +36,7 @@ namespace mc_control
   //                               minJerk::setPosB()                                       //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
-  void minJerk::setPosB(const Eigen::MatrixXd & b, int i)
+  void MinJerk::setPosB(const Eigen::MatrixXd & b, int i)
   {
     pos2 = b;
     n   = i;
@@ -47,7 +47,7 @@ namespace mc_control
   //                               minJerk::getPosA()                                       //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
-  MatrixXd minJerk::getPosA() 
+  MatrixXd MinJerk::getPosA() 
   { 
     return pos1;
   }
@@ -57,7 +57,7 @@ namespace mc_control
   //                               minJerk::getPosB()                                       //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
-  MatrixXd minJerk::getPosB() 
+  MatrixXd MinJerk::getPosB() 
   { 
     return pos2;
   }
@@ -67,7 +67,7 @@ namespace mc_control
   //                               minJerk::produceWp()                                     //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
-  void minJerk::produceWp(const Eigen::MatrixXd & posA, const Eigen::MatrixXd & posB, int T, int N)
+  void MinJerk::produceWp(const Eigen::MatrixXd & posA, const Eigen::MatrixXd & posB, int T, int N)
   { 
 
     pos1 = posA;

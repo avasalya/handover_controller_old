@@ -1,11 +1,16 @@
 set(controller_SRC
-  mc_handover_controller.cpp
+  handover_controller.cpp
   handover_minJerk.cpp
+  handover_step.cpp
+
+ # handover_admittanceTask.cpp
 )
 
 set(controller_HDR
-  mc_handover_controller.h
+  handover_controller.h
   handover_minJerk.h
+  handover_step.cpp
+ # handover_admittanceTask.h
 )
 
 add_library(${PROJECT_NAME} SHARED ${controller_SRC} ${controller_HDR})

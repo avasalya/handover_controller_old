@@ -30,13 +30,13 @@ namespace mc_control
 {
 
     using namespace Eigen;
-    class minJerk {
+    class MinJerk {
 
     public:
 
-    minJerk();
+    MinJerk();
 
-    ~minJerk();
+    ~MinJerk();
 
     void setPosA(const Eigen::MatrixXd & a, int i);
     void setPosB(const Eigen::MatrixXd & b, int i);
