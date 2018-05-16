@@ -39,16 +39,11 @@ namespace mc_control
 
 	CREATE_Step(GrippersOpenStep, "open both grippers step", double targetOpen; double openSpeed;)
 
-	CREATE_Step(GrippersAddStep, "Add grippers to controller step", std::shared_ptr<mc_tasks::ComplianceTask> complianceTask; mc_rbdyn::ForceSensor forceSensor;)
+	CREATE_Step(AddGripperStep, "Add grippers to controller step", std::shared_ptr<mc_tasks::ComplianceTask> complianceTaskL; std::shared_ptr<mc_tasks::ComplianceTask> complianceTaskR; mc_rbdyn::ForceSensor forceSensor;)
 
-	CREATE_Step(GrippersCloseStep, "close both grippers step", double targetClose; double CloseSpeed;)
+	CREATE_Step(CloseGrippersStep, "close both grippers step", double targetClose; double CloseSpeed;)
 
-	CREATE_Step(AdjustHandStep, "Adjust hand step", std::shared_ptr<mc_tasks::ComplianceTask> complianceTask; mc_rbdyn::ForceSensor forceSensor; tasks::qp::ContactId cId;)
-
-	// CREATE_Step 
-
-	CREATE_Step(ExperimentStep, "Constraint experiment step", std::shared_ptr<mc_solver::CoMIncPlaneConstr> comIncPlaneConstr; std::shared_ptr<mc_rbdyn::QuadraticGenerator> generator; std::unique_lock<std::mutex> interpolator_lock; std::shared_ptr<mc_rbdyn::PolygonInterpolator> interpolator; unsigned int interp_index; std::shared_ptr<mc_tasks::ComplianceTask> complianceTask;)
-
+	
 	#undef CREATE_Step
 
 } // namespace mc_control
@@ -56,3 +51,7 @@ namespace mc_control
 
 
 
+// CREATE_Step(AdjustHandsStep, "Adjust hands step", std::shared_ptr<mc_tasks::ComplianceTask> complianceTask; mc_rbdyn::ForceSensor forceSensor; tasks::qp::ContactId cId;)
+
+
+	// CREATE_Step(ExperimentStep, "Constraint experiment step", std::shared_ptr<mc_solver::CoMIncPlaneConstr> comIncPlaneConstr; std::shared_ptr<mc_rbdyn::QuadraticGenerator> generator; std::unique_lock<std::mutex> interpolator_lock; std::shared_ptr<mc_rbdyn::PolygonInterpolator> interpolator; unsigned int interp_index; std::shared_ptr<mc_tasks::ComplianceTask> complianceTask;)

@@ -9,9 +9,9 @@
 using namespace std;
 namespace mc_control
 {
-    //
-    //      Handover Controller constructor
-    //
+    //////////////
+    // Handover Controller constructor
+    //////////////
     HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, const double & dt):MCController(robot_module, dt)
     {
       
@@ -19,7 +19,7 @@ namespace mc_control
 
         qpsolver->addConstraintSet(contactConstraint);
         qpsolver->addConstraintSet(kinematicsConstraint);
-        // qpsolver->addConstraintSet(dynamicsConstraint);
+        // qpsolver->addConstraintSet(dynamicsConstraint); //walking
 
         qpsolver->addConstraintSet(selfCollisionConstraint);
         selfCollisionConstraint.addCollisions(solver(), {
@@ -51,6 +51,8 @@ namespace mc_control
         mc_rbdyn::Contact(robots(), "LowerBack","AllGround")
         });
 
+        comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex()));
+        solver().addTask(comTask);
         
         //      change oriTask to relEF orientation task      //
         relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 10.0,1e3));
@@ -59,21 +61,22 @@ namespace mc_control
         relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 10.0,1e3));
         oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
-        comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex()));
-        solver().addTask(comTask);
-
         /* Compliance Task*/
         if(initComplianceTask)
-        {
-          compliTaskL.reset(new mc_tasks::ComplianceTask(robots(), robots().robotIndex(), "LeftHandForceSensor", 0.005, Eigen::Matrix6d::Identity(), 5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));          
+        { 
+
+            forceSensor.push_back(mc_rbdyn::ForceSensor("LeftHandForceSensor", "RARM_LINK6", sva::PTransformd(Eigen::Vector3d(0, 0, -0.087))));
+
+
+          compliTaskL.reset(new mc_tasks::ComplianceTask(robots(), robots().robotIndex(), forceSensor, 0.005, Eigen::Matrix6d::Identity(), 5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));          
         }
 
         LOG_SUCCESS("mc_handover_controller init done")
     }
 
-    //
-    //      Handover Controller reset
-    //
+    //////////////
+    // Handover Controller reset
+    //////////////
     void HandoverController::reset(const ControllerResetData & reset_data)
     {
         auto q = reset_data.q;
@@ -105,9 +108,9 @@ namespace mc_control
     }
 
 
-    //
-    //      Handover Controller run
-    //
+    //////////////
+    // Handover Controller run
+    //////////////
     bool HandoverController::run()
     {
       bool ret = MCController::run();
@@ -148,7 +151,7 @@ namespace mc_control
       return ret;
     }
 
-    
+
     //
     //      Handover Controller play_next_step
     //
@@ -162,27 +165,27 @@ namespace mc_control
     }
        
 
-    //
-    //      Handover Controller init_pos
-    //
+    //////////////
+    // Handover Controller init_pos
+    //////////////
     void HandoverController::init_pos()
     {
-      Eigen::Vector3d initPosR, initPosL;
-      sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+      // Eigen::Vector3d initPosR, initPosL;
+      // sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-      initPosR <<  0.30, -0.35, 0.45;
-      relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-      solver().addTask(relEfTaskR);
+      // initPosR <<  0.30, -0.35, 0.45;
+      // relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+      // solver().addTask(relEfTaskR);
 
 
-      initPosL <<  0.30, 0.35, 0.45;      
-      relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-      solver().addTask(relEfTaskL);     
+      // initPosL <<  0.30, 0.35, 0.45;      
+      // relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+      // solver().addTask(relEfTaskL);     
     }
 
-    //
-    //      Handover Controller createWayPoints
-    //
+    //////////////
+    // Handover Controller createWayPoints
+    //////////////
     void HandoverController::createWaypoints()
     {
       int sample = 10;
@@ -194,9 +197,9 @@ namespace mc_control
     }
 
 
-    //
-    //      Handover Controller read_msg
-    //
+    //////////////
+    // Handover Controller read_msg
+    //////////////
     bool  HandoverController::read_msg(std::string & msg)
     {
       std::stringstream ss;
@@ -237,7 +240,6 @@ namespace mc_control
         return true;
       }
 
-///
       if(token == "step1")
       {
         // MCController::set_joint_pos("HEAD_JOINT0", -0.3); //-ve to move head to robot's right

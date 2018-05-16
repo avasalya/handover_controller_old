@@ -19,7 +19,7 @@
 #include <RBDyn/FV.h>
 
 #include "handover_minJerk.h"
-#include "handover_FSM.h"
+#include "handover_step.h"
 
 
 namespace mc_control
@@ -89,11 +89,12 @@ namespace mc_control
         std::shared_ptr<mc_tasks::ComplianceTask> compliTaskL;
         std::shared_ptr<mc_tasks::ComplianceTask> compliTaskR;
 
-        mc_rbdyn::ForceSensorsCalibrator calibrator;
+        mc_rbdyn::ForceSensorsCalibData & calibrator;
+        mc_rbdyn::ForceSensor & forceSensor;
 
         std::shared_ptr<MinJerk>  mjTask;
 
-        handoverStep * step = nullptr;
+        HandoverStep * step = nullptr;
 
         bool runOnlyOnce = true;
         bool paused = false;
