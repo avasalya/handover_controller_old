@@ -1,32 +1,37 @@
 #pragma once
 #include <mc_control/mc_controller.h>
 
+#include <mc_rtc/logging.h>
+
 #include <mc_tasks/CoMTask.h>
 // #include <mc_tasks/AdmittanceTask.h>
-// #include <mc_tasks/MetaTask.h>
-// #include <mc_tasks/EndEffectorTask.h>
+#include <mc_tasks/MetaTask.h>
 #include <mc_tasks/RelativeEndEffectorTask.h>
 #include <mc_tasks/OrientationTask.h>
 #include <mc_tasks/ComplianceTask.h>
-
-#include <mc_rtc/logging.h>
+#include <mc_tasks/PostureTask.h>
 
 #include <Tasks/QPContactConstr.h>
 #include <Tasks/QPTasks.h>
+
+#include <mc_rbdyn/ForceSensor.h>
+#include <mc_rbdyn/Robot.h>
+#include <mc_rbdyn/RobotLoader.h>
+#include <mc_rbdyn/RobotModule.h>
 
 #include <RBDyn/EulerIntegration.h>
 #include <RBDyn/FK.h>
 #include <RBDyn/FV.h>
 
 #include "handover_minJerk.h"
-#include "handover_step.h"
+// #include "handover_admittanceTask.h"
 
+#define initComplianceTask 0 //1 to initialize complianceTask
+#define initForceSensor 1 //1 to  enable ForceSensor code
 
 namespace mc_control
 {   
     class minJerk;
-    struct HandoverStep;
-    struct InitStep;
 
     struct HandoverController : public MCController
     {
@@ -39,45 +44,19 @@ namespace mc_control
 
         virtual void reset(const ControllerResetData & reset_data) override;
 
-        virtual bool read_msg(std::string& msg) override;
+        virtual bool read_msg(std::string & msg) override;
 
-        virtual bool play_next_step() override;
-
+        // virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
         void init_pos();       
 
         void createWaypoints();
-
-        std::vector<std::string> activeJointsLeftArm =
-          {
-               "LARM_JOINT0",
-               "LARM_JOINT1",
-               "LARM_JOINT2",
-               "LARM_JOINT3",
-               "LARM_JOINT4",
-               "LARM_JOINT5",
-               "LARM_JOINT6",
-               "LARM_JOINT7",
-               };
-           std::vector<std::string> activeJointsRightArm =
-          {    "RARM_JOINT0",
-               "RARM_JOINT1",
-               "RARM_JOINT2",
-               "RARM_JOINT3",
-               "RARM_JOINT4",
-               "RARM_JOINT5",
-               "RARM_JOINT6",
-               "RARM_JOINT7" };
-          std::vector<std::string> activeJointsLegs =
-          {"Root", "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2",
-           "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
-           "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2",
-           "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5"};
-          std::vector<std::string> activeJointsHead =
-          {"HEAD_JOINT0", "HEAD_JOINT1"};
-
                       
-      private:
+      public:
+
+        bool runOnlyOnce = true;
+        // std::shared_ptr<MinJerk>  mjTask;
+
         std::shared_ptr<mc_tasks::CoMTask> comTask;
 
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
@@ -89,31 +68,25 @@ namespace mc_control
         std::shared_ptr<mc_tasks::ComplianceTask> compliTaskL;
         std::shared_ptr<mc_tasks::ComplianceTask> compliTaskR;
 
-        mc_rbdyn::ForceSensorsCalibData & calibrator;
-        mc_rbdyn::ForceSensor & forceSensor;
+        std::shared_ptr<mc_tasks::PostureTask> postureTask;
 
-        std::shared_ptr<MinJerk>  mjTask;
+        // std::shared_ptr<mc_rbdyn::detail::ForceSensorCalibData> calibrator;
+        // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
+        // std::vector<mc_rbdyn::ForceSensor> fSensorVectL;
 
-        HandoverStep * step = nullptr;
+        std::map<std::string, sva::ForceVecd> wrenches;
 
-        bool runOnlyOnce = true;
-        bool paused = false;
+        // std::shared_ptr<AdmittanceTask> AdmittTaskL;
+        // std::shared_ptr<AdmittanceTask> AdmittTaskR;
+
+
+
 
     private:
-        void addToLogger(mc_rtc::Logger & logger) override;
-        void removeFromLogger(mc_rtc::Logger & logger) override;
+        // void addToLogger(mc_rtc::Logger & logger) override;
+        // void removeFromLogger(mc_rtc::Logger & logger) override;
         
     };
 } // namespace mc_control
 
 SIMPLE_CONTROLLER_CONSTRUCTOR("Handover", mc_control::HandoverController)
-
-
-
-
-        // std::shared_ptr<mc_tasks::AdmittanceTask> AdmittanceTaskL;
-
-        // std::shared_ptr<mc_tasks::PostureTask> postureTaskL;
-
-        // std::shared_ptr<tasks::qp::PostureTask> postureTask;
-

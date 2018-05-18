@@ -4,13 +4,13 @@
 
 #include "handover_controller.h"
 
-#define initComplianceTask 0 //1 to initialize complianceTask
-
 using namespace std;
 namespace mc_control
 {
     //////////////
+    //
     // Handover Controller constructor
+    //
     //////////////
     HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, const double & dt):MCController(robot_module, dt)
     {
@@ -41,7 +41,7 @@ namespace mc_control
           mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.)
         });
 
-        postureTask = std::make_shared<tasks::qp::PostureTask>(robots().mbs(), 0, postureTask->posture(), 1., 1.);
+        postureTask.reset(new mc_tasks::PostureTask(solver(), robots().robotIndex(), 3, 1e2));
         qpsolver->addTask(postureTask.get());
 
         qpsolver->setContacts({
@@ -55,27 +55,36 @@ namespace mc_control
         solver().addTask(comTask);
         
         //      change oriTask to relEF orientation task      //
-        relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 10.0,1e3));
+        relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
         oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
 
-        relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 10.0,1e3));
+        relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
         oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),9.0,1e2));
+
+        /* Force Sensor*/
+        if(initForceSensor)
+        { 
+          // (0, 0, -0.087);
+
+          // forceSensor.reset(new mc_rbdyn::ForceSensor("LeftHandForceSensor", "LARM_LINK6", sva::PTransformd(Eigen::Vector3d(1., 1., 1.)))); 
+          // fSensorVectL = robot_module->forceSensors();
+        }
 
         /* Compliance Task*/
         if(initComplianceTask)
         { 
-
-            forceSensor.push_back(mc_rbdyn::ForceSensor("LeftHandForceSensor", "RARM_LINK6", sva::PTransformd(Eigen::Vector3d(0, 0, -0.087))));
-
-
-          compliTaskL.reset(new mc_tasks::ComplianceTask(robots(), robots().robotIndex(), forceSensor, 0.005, Eigen::Matrix6d::Identity(), 5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));          
+          compliTaskL.reset(new mc_tasks::ComplianceTask(robots(), robots().robotIndex(), "LARM_LINK6", 0.005, Eigen::Matrix6d::Identity(), 5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));          
         }
 
         LOG_SUCCESS("mc_handover_controller init done")
     }
 
+
+
     //////////////
+    //
     // Handover Controller reset
+    //
     //////////////
     void HandoverController::reset(const ControllerResetData & reset_data)
     {
@@ -102,143 +111,117 @@ namespace mc_control
           compliTaskL->reset();
           compliTaskL->resetJointsSelector(solver());
         }
-
-        /* start the FSM*/
-        step  = new InitStep();
     }
 
 
+
     //////////////
+    //
     // Handover Controller run
+    //
     //////////////
     bool HandoverController::run()
     {
       bool ret = MCController::run();
 
-      if(ret && !paused)
-      {
-        if(step)
-        {
-          auto nstep = step->update(*this);
-          if(nstep != step)
-          {
-            LOG_SUCCESS("Completed " << step->name)
-            delete step;
-            step = nstep;
-            paused = stepByStep;
-            if(step == nullptr)
-            {
-              LOG_SUCCESS("Completed demo")
-            }
-          }
+    if(runOnlyOnce)
+    {
+      runOnlyOnce = false;
+      // init_pos();
+
+      auto gripper = grippers["l_gripper"].get();
+      gripper->setTargetQ({1});
+      gripper = grippers["r_gripper"].get();
+      gripper->setTargetQ({1});
+
+      /* Force Sensor*/
+      if(initForceSensor)
+      {  
+        wrenches["LeftHandForceSensor"] = 
+                    this->robot().forceSensor("LeftHandForceSensor").wrench();
+        wrenches["RightHandForceSensor"] =
+                    this->robot().forceSensor("RightHandForceSensor").wrench();
+
+        for(auto & i : wrenches){
+          cout << i.first << ": " << i.second << '\n';
         }
+
+        LOG_SUCCESS("ForceSensor enabled")
       }
-     
+      else
+      {
+        LOG_WARNING("ForceSensor disabled")
+      }
+
       /* Compliance Task*/
       if(initComplianceTask)
       {
-        if(runOnlyOnce)
-        {
-          runOnlyOnce = false;
-          LOG_SUCCESS("complianceTask initialized")          
-        }
+        LOG_SUCCESS("complianceTask initialized")          
       }
       else
       {
         LOG_WARNING("complianceTask not initialized")
       }        
+    }
+
+      cout << "\nforce readinig ----\n " << wrenches.at("RightHandForceSensor").force() <<endl<< "\ntorque readinig ---- \n" << wrenches.at("RightHandForceSensor").couple() << endl;
       
       return ret;
     }
 
-
-    //
-    //      Handover Controller play_next_step
-    //
-    bool MCCrapahutController::play_next_step()
-    {
-      if(paused)
-      {
-        paused = false;
-      }
-      return true;
-    }
        
 
     //////////////
+    //
     // Handover Controller init_pos
+    //
     //////////////
     void HandoverController::init_pos()
     {
-      // Eigen::Vector3d initPosR, initPosL;
-      // sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+      Eigen::Vector3d initPosR, initPosL;
+      sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-      // initPosR <<  0.30, -0.35, 0.45;
-      // relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-      // solver().addTask(relEfTaskR);
+      initPosR <<  0.30, -0.35, 0.45;
+      relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+      solver().addTask(relEfTaskR);
 
 
-      // initPosL <<  0.30, 0.35, 0.45;      
-      // relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-      // solver().addTask(relEfTaskL);     
+      initPosL <<  0.30, 0.35, 0.45;      
+      relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+      solver().addTask(relEfTaskL);     
     }
 
+
+
     //////////////
+    //
     // Handover Controller createWayPoints
+    //
     //////////////
-    void HandoverController::createWaypoints()
-    {
-      int sample = 10;
-      for (int i=0; i<sample; i++)
-      {
-        mjTask->produceWp(MatrixXd::Random(sample,3), MatrixXd::Random(sample,3), i, sample);
-        // std::cout << mjObj.yPos[i] << std::endl; // to acess any produced wp
-      }
-    }
+    // void HandoverController::createWaypoints()
+    // {
+    //   int sample = 10;
+    //   for (int i=0; i<sample; i++)
+    //   {
+    //     mjTask->produceWp(MatrixXd::Random(sample,3), MatrixXd::Random(sample,3), i, sample);
+    //     // std::cout << mjObj.yPos[i] << std::endl; // to acess any produced wp
+    //   }
+    // }
 
 
+
     //////////////
+    //
     // Handover Controller read_msg
+    //
     //////////////
     bool  HandoverController::read_msg(std::string & msg)
     {
       std::stringstream ss;
-      ss << msg;
-
       std::string token;
+
+      ss << msg;
       ss >> token;
-
-  
-      if(token == "step2")
-      {     
-        if(initComplianceTask)
-        {
-          solver().removeTask(relEfTaskL);          
-          compliTaskL->selectActiveJoints(solver(),activeJointsLeftArm);          
-          solver().addTask(compliTaskL);
-
-          // sva::ForceVecd setWrench = {1, 1, 1, 1, 1, 1};
-          // compliTaskL->setTargetWrench(setWrench);
-          compliTaskL->forceThresh(8.);
-
-          if(compliTaskL->forceThresh() ==8.)
-          {
-            auto gripper = grippers["l_gripper"].get();
-            gripper->setTargetQ({-0.25});
-            cout << "closing left gripper " << endl;
-          }
-
-          compliTaskL->setTargetWrench(compliTaskL->getFilteredWrench());
-          sva::ForceVecd wrench_ = compliTaskL->getFilteredWrench();
-          cout << "getFilteredWrench" << wrench_<<endl;
-          // std::pair<double,double> fGain = compliTaskL->forceGain();          
-          // cout << "1st " << fGain.first  << " 2nd " << fGain.second << endl;
-
-        }
-
-
-        return true;
-      }
 
       if(token == "step1")
       {
@@ -250,20 +233,56 @@ namespace mc_control
         return true;
       }
 
+
+      if(token == "step2")
+      {     
+        
+        if(initForceSensor)
+        {
+
+          cout << "force readinig ---- " << wrenches.at("RightHandForceSensor").force() <<endl<< "torque readinig ---- " << wrenches.at("RightHandForceSensor").couple() << endl;
+        }
+
+        if(initComplianceTask)
+        {
+          // solver().removeTask(relEfTaskL);          
+          // compliTaskL->selectActiveJoints(solver(),activeJointsLeftArm);          
+          // solver().addTask(compliTaskL);
+
+        
+          // if(v >= 10)
+          // {
+          //   auto gripper = grippers["l_gripper"].get();
+          //   gripper->setTargetQ({-0.25});
+          //   cout << "closing left gripper " << endl;
+          // }
+
+        }
+        return true;
+      }
+
+
       if(token == "step3")
       { 
         //set ef pose 
-        Eigen::Vector3d t( 0.66, -0.23, 0.27 );
-        sva::PTransformd dtr(Eigen::Matrix3d::Identity(), t);
-        relEfTaskL->add_ef_pose(dtr);
+        Eigen::Vector3d tL( 0.30, 0.35, 1. );
+        Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
+        sva::PTransformd dtrL(getCurRotL, tL);
+        relEfTaskL->set_ef_pose(dtrL);
+
+
+        Eigen::Vector3d tR( 0.30, -0.35, 1. );
+        Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
+        sva::PTransformd dtrR(getCurRotR, tR);
+        relEfTaskR->set_ef_pose(dtrR);
+
       }
 
-      /* other read statements */
 
       if(token == "open_rgripper")
       {
         auto gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({0.5});
+        gripper->setTargetQ({1});
         return true;
       }
       if(token == "close_rgripper")
@@ -278,7 +297,7 @@ namespace mc_control
       if(token == "open_lgripper")
       {
         auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({0.5});
+        gripper->setTargetQ({1});
         return true;
       }
       if(token == "close_lgripper")
@@ -293,9 +312,9 @@ namespace mc_control
       if(token == "open_grippers")
       {
         auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({0.5});
+        gripper->setTargetQ({1});
         gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({0.5});
+        gripper->setTargetQ({1});
         return true;
       }
       if(token == "close_grippers")
@@ -321,10 +340,9 @@ namespace mc_control
         return true;
       }
     
-      LOG_WARNING("Cannot handle " << msg)
-      return false;
+    LOG_WARNING("Cannot handle " << msg)
+    return false;
 
-    }
-
+    } //read_msg
    
 } //namespace mc_control
