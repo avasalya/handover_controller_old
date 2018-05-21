@@ -27,13 +27,14 @@
 // #include "handover_admittanceTask.h"
 
 #define initComplianceTask 0 //1 to initialize complianceTask
-#define initForceSensor 1 //1 to  enable ForceSensor code
+#define initForceSensor 0 //1 to  enable ForceSensor code
 
+using namespace std;
 namespace mc_control
 {   
     class minJerk;
 
-    struct HandoverController : public MCController
+    struct MC_CONTROL_DLLAPI HandoverController : public MCController
     {
       public:
         HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & RobotModule, const double & dt);
@@ -46,15 +47,14 @@ namespace mc_control
 
         virtual bool read_msg(std::string & msg) override;
 
-        // virtual bool read_write_msg(std::string & msg, std::string & out) override;
+        virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
-        void init_pos();       
-
-        void createWaypoints();
                       
-      public:
-
+      private:
+        
         bool runOnlyOnce = true;
+        bool SIMULATION_VREP = true;
+
         // std::shared_ptr<MinJerk>  mjTask;
 
         std::shared_ptr<mc_tasks::CoMTask> comTask;
@@ -71,21 +71,13 @@ namespace mc_control
         std::shared_ptr<mc_tasks::PostureTask> postureTask;
 
         // std::shared_ptr<mc_rbdyn::detail::ForceSensorCalibData> calibrator;
-        // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
-        // std::vector<mc_rbdyn::ForceSensor> fSensorVectL;
+        std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
 
         std::map<std::string, sva::ForceVecd> wrenches;
 
-        // std::shared_ptr<AdmittanceTask> AdmittTaskL;
-        // std::shared_ptr<AdmittanceTask> AdmittTaskR;
+        std::vector<mc_rbdyn::ForceSensor> fsensor;
 
 
-
-
-    private:
-        // void addToLogger(mc_rtc::Logger & logger) override;
-        // void removeFromLogger(mc_rtc::Logger & logger) override;
-        
     };
 } // namespace mc_control
 
