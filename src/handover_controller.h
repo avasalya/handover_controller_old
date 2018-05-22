@@ -18,10 +18,15 @@
 #include <mc_rbdyn/Robot.h>
 #include <mc_rbdyn/RobotLoader.h>
 #include <mc_rbdyn/RobotModule.h>
+#include <boost/filesystem/fstream.hpp>
 
 #include <RBDyn/EulerIntegration.h>
 #include <RBDyn/FK.h>
 #include <RBDyn/FV.h>
+
+
+#include <boost/filesystem/fstream.hpp>
+
 
 #include "handover_minJerk.h"
 // #include "handover_admittanceTask.h"
@@ -49,15 +54,18 @@ namespace mc_control
 
         virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
-                      
+        void getCalibData();
+
       private:
         
         bool runOnlyOnce = true;
-        bool SIMULATION_VREP = true;
 
         // std::shared_ptr<MinJerk>  mjTask;
 
+        // Eigen::Vector3d comZero;
+
         std::shared_ptr<mc_tasks::CoMTask> comTask;
+
 
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
@@ -74,8 +82,12 @@ namespace mc_control
         std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
 
         std::map<std::string, sva::ForceVecd> wrenches;
+        std::map<std::string, sva::ForceVecd> wrenches2;
 
         std::vector<mc_rbdyn::ForceSensor> fsensor;
+
+        sva::ForceVecd offset_;
+
 
 
     };
