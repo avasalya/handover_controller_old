@@ -11,15 +11,18 @@ namespace mc_control
     // Handover Controller constructor
     //
     //////////////
-    HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, const double & dt):MCController({robot_module, mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt)
+    HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, 
+      const double & dt) //, const Configuration & conf) 
+      :MCController({robot_module, mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt)//, calibrator(robot_module)
     {
-      
-        selfCollisionConstraint.reset();
-
+    
         qpsolver->addConstraintSet(contactConstraint);
         qpsolver->addConstraintSet(kinematicsConstraint);
         qpsolver->addConstraintSet(dynamicsConstraint);
         qpsolver->addConstraintSet(selfCollisionConstraint);
+    
+
+        selfCollisionConstraint.reset();
         selfCollisionConstraint.addCollisions(solver(), {
           mc_rbdyn::Collision("LARM_LINK3", "BODY", 0.1, 0.05, 0.),
           mc_rbdyn::Collision("LARM_LINK4", "BODY", 0.1, 0.05, 0.),
@@ -36,7 +39,14 @@ namespace mc_control
           mc_rbdyn::Collision("LARM_LINK4", "CHEST_LINK0", 0.1, 0.05, 0.),
           mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK0", 0.1, 0.05, 0.),
           mc_rbdyn::Collision("LARM_LINK4", "CHEST_LINK1", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.)
+          mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.),
+          mc_rbdyn::Collision("RARM_LINK5", "RLEG_LINK2", 0.05,0.01, 0.),
+          mc_rbdyn::Collision("RARM_LINK6", "RLEG_LINK2", 0.05,0.01, 0.),
+          mc_rbdyn::Collision("RARM_LINK7", "RLEG_LINK2", 0.05,0.01, 0.),
+          mc_rbdyn::Collision("LARM_LINK5", "LLEG_LINK2", 0.05,0.01, 0.),
+          mc_rbdyn::Collision("LARM_LINK6", "LLEG_LINK2", 0.05,0.01, 0.),
+          mc_rbdyn::Collision("LARM_LINK7", "LLEG_LINK2", 0.05,0.01, 0.),
+
         });
 
 
@@ -53,29 +63,25 @@ namespace mc_control
         postureTask.reset(new mc_tasks::PostureTask(solver(), robots().robotIndex(), 1.0, 1e2));
         qpsolver->addTask(postureTask.get());
         
-        //      change oriTask to relEF orientation task      //
         relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
         oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
 
         relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
         oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
 
+
+
         /* Force Sensor*/
         if(initForceSensor)
         { 
           // (0, 0, -0.087);
 
-          forceSensor.reset(new mc_rbdyn::ForceSensor("LeftHandForceSensor", "LARM_LINK6", sva::PTransformd(Eigen::Vector3d(1., 1., 1.)))); 
-          // fSensorVectL = robot_module->forceSensors();
-        }
-
-        /* Compliance Task*/
-        if(initComplianceTask)
-        { 
-          compliTaskL.reset(new mc_tasks::ComplianceTask(robots(), robots().robotIndex(), "LARM_LINK6", 0.005, Eigen::Matrix6d::Identity(), 5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));          
+          // forceSensor.reset(new mc_rbdyn::ForceSensor("LeftHandForceSensor", "LARM_LINK6", sva::PTransformd(Eigen::Vector3d(1., 1., 1.)))); 
+          // // fSensorVectL = robot_module->forceSensors();
         }
 
 
+        /* Logging method */
         // ~/mc_rtc/utils/mc_log_gui
         // ./mc_log_ui.py /tmp/mc-control-Handover-latest.bin 
 
@@ -118,9 +124,15 @@ namespace mc_control
         /* Compliance Task*/
         if(initComplianceTask)
         {
-          compliTaskL->reset();
-          compliTaskL->resetJointsSelector(solver());
+          // compliTaskR->reset();        
         }
+
+
+        // gui()->addElement({"Utilities"},
+        // mc_rtc::gui::Button("openGrippers", [this]() { std::string msg = "openGrippers";  read_msg(msg); }),
+        // mc_rtc::gui::Button("closeGrippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); })
+        // );
+
     }
 
 
@@ -133,6 +145,8 @@ namespace mc_control
     bool HandoverController::run()
     {
       bool ret = MCController::run();
+
+  
 
       if(runOnlyOnce)
       {
@@ -152,7 +166,7 @@ namespace mc_control
         /* Compliance Task*/
         if(initComplianceTask)
         {
-          LOG_INFO("complianceTask initialized")          
+         LOG_INFO("ComplianceTask initialized")          
         }
         else
         {
@@ -160,29 +174,69 @@ namespace mc_control
         }        
       }
 
+
       
       // transform from Vrep force sensor reference system to solver force sensor reference system
       wrenches["LeftHandForceSensor"] = 
                 this->robot().forceSensor("LeftHandForceSensor").wrench();
-      sva::ForceVecd wrench_inter = wrenches.at("LeftHandForceSensor");
-      wrenches.at("LeftHandForceSensor").couple() << wrench_inter.couple()[2],wrench_inter.couple()[1],-wrench_inter.couple()[0];
-      wrenches.at("LeftHandForceSensor").force() << wrench_inter.force()[2],wrench_inter.force()[1],-wrench_inter.force()[0];
-      // cout << "left hand "<< wrench_inter << '\n';
+      sva::ForceVecd wrenchLt = wrenches.at("LeftHandForceSensor");
+      wrenches.at("LeftHandForceSensor").couple() << wrenchLt.couple()[2],wrenchLt.couple()[1],-wrenchLt.couple()[0];
+      wrenches.at("LeftHandForceSensor").force() << wrenchLt.force()[2],wrenchLt.force()[1],-wrenchLt.force()[0];
+      // cout << "left hand "<< wrenchLt << '\n';
 
       wrenches["RightHandForceSensor"] =
                 this->robot().forceSensor("RightHandForceSensor").wrench();
-      wrench_inter = wrenches.at("RightHandForceSensor");    
-      wrenches.at("RightHandForceSensor").couple() << wrench_inter.couple()[2],wrench_inter.couple()[1],-wrench_inter.couple()[0];
-      wrenches.at("RightHandForceSensor").force() << wrench_inter.force()[2],wrench_inter.force()[1],-wrench_inter.force()[0];
-      // cout << "right hand "<< wrench_inter << '\n';
-    
+      sva::ForceVecd wrenchRt = wrenches.at("RightHandForceSensor");   
+      wrenches.at("RightHandForceSensor").couple() << wrenchRt.couple()[2],wrenchRt.couple()[1],-wrenchRt.couple()[0];
+      wrenches.at("RightHandForceSensor").force() << wrenchRt.force()[2],wrenchRt.force()[1],-wrenchRt.force()[0];
+      // cout <<  "right hand " << wrenchRt.force().eval().norm() << endl;
+
+
+      if(relEfTaskR && relEfTaskR->eval().norm() < 1e-1 && relEfTaskR->speed().norm() < 1e-2)
+      {
+        cout << "initiating compliance task" <<  endl;
+
+        solver().removeTask(relEfTaskR);
+        relEfTaskR->reset();
+
+        compliTaskR.reset(new mc_tasks::HandoverComplianceTask(robots(), robots().robotIndex(), robots().robot().forceSensor("RightHandForceSensor").parentBody(), 0.005, 5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));
+        compliTaskR->setTargetWrench(sva::ForceVecd(Eigen::Vector3d(0., 0., 0.),Eigen::Vector3d(0., 0., 50.)));
+        solver().addTask(compliTaskR);
+      }
+      
+      if(compliTaskR)
+      {
+        cout << "initialized compliance task" <<  endl;
+        compliTaskR->update();
+        if(compliTaskR->eval().norm() < 25 && compliTaskR->speed().norm() < 0.001)
+        {
+          LOG_SUCCESS("Contact established")
+          solver().removeTask(compliTaskR);
+          compliTaskR->reset();
+          qpsolver->setContacts({
+          mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
+          mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
+          mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
+          mc_rbdyn::Contact(robots(), "LowerBack","AllGround"),
+          mc_rbdyn::Contact(robots(), "RightFingers","AllGround")
+          });              
+        }
+      }
+
+
+
+      // w1 = compliTaskR->getTargetWrench();
+
+      // cout << compliTaskR->eval().norm() << endl;
+
+
+      gripperControl();
+
 
 
       // comTask->com(Eigen::Vector3d({0.02,-0.004, 0.8}));
       // comZero = rbd::computeCoM(robot().mb(), robot().mbc());
       // cout << comZero(0) << " "<< comZero(1) <<" "<< comZero(2) <<" "<< endl;
-      
-
 
       return ret;
     }
@@ -190,39 +244,39 @@ namespace mc_control
 
 
 
+
+
     //////////////
     //
-    // Handover Controller getCalibData
+    // Handover Controller check Gripper control
     //
     //////////////
-    // void  HandoverController::getCalibData()
-    // {
-    //   // get calibration data
-    //   boost::filesystem::path filename = std::string(mc_rtc::HRP2_DRC_DESCRIPTION_PATH) + "/calib/hrp2_drc/calib_data.LeftHandForceSensor";
-    //   const int nr_params = 13;
-    //   boost::filesystem::ifstream strm(filename);
-    //   if(!strm.is_open())
-    //   {
-    //     LOG_ERROR("Could not open " << filename)
-    //   }
-    //   //Vector 13d
-    //   Eigen::Matrix<double, nr_params, 1> X;
-    //   double temp;
-    //   for(int i = 0; i < nr_params; ++i)
-    //   {
-    //     strm >> temp;
-    //     if(!strm.good())
-    //     {
-    //       LOG_ERROR("Invalid calibration file")
-    //     }
-    //     if(strm.eof())
-    //     {
-    //       LOG_ERROR("File too short, should have " << nr_params << " parameters")
-    //     }
-    //     X(i) = temp;
-    //   }
-    //  offset_ = sva::ForceVecd(X.segment<6>(7));
-    // }
+    void HandoverController::gripperControl()
+    {
+
+      if(this->robot().forceSensor("RightHandForceSensor").wrench().force()[0] < 10)      {
+
+        if(GripperMsg){
+          GripperMsg = false;
+          cout << "opening grippers" << endl;
+        }
+        // auto gripper = grippers["r_gripper"].get();
+        // gripper->setTargetQ({1});
+
+        for(const auto & g : grippers)
+        {
+          g.second->setTargetOpening(1.0);
+        } 
+      }
+      else
+      {
+        cout << "force not enough to open gripper" << endl;
+      }
+
+    }
+
+
+
 
 
 
@@ -356,24 +410,64 @@ namespace mc_control
         return true;
       }
     
-    LOG_WARNING("Cannot handle " << msg)
-    return false;
+      LOG_WARNING("Cannot handle " << msg)
+      return false;
 
-  } //read_msg
-
-
+    } //read_msg
 
 
-  //////////////
-  //
-  // Handover Controller read_write_msg
-  //
-  //////////////    
-  bool HandoverController::read_write_msg(std::string & msg, std::string & out)
-  {
-    out = msg;
-    return true;
-  }
+
+
+    //////////////
+    //
+    // Handover Controller read_write_msg
+    //
+    //////////////    
+    bool HandoverController::read_write_msg(std::string & msg, std::string & out)
+    {
+      out = msg;
+      return true;
+    }
 
    
 } //namespace mc_control
+
+
+
+
+
+    //////////////
+    //
+    // Handover Controller getCalibData
+    //
+    //////////////
+    // sva::ForceVecd offset_;
+
+    // void  HandoverController::getCalibData()
+    // {
+    //   // get calibration data
+    //   boost::filesystem::path filename = std::string(mc_rtc::HRP2_DRC_DESCRIPTION_PATH) + "/calib/hrp2_drc/calib_data.LeftHandForceSensor";
+    //   const int nr_params = 13;
+    //   boost::filesystem::ifstream strm(filename);
+    //   if(!strm.is_open())
+    //   {
+    //     LOG_ERROR("Could not open " << filename)
+    //   }
+    //   //Vector 13d
+    //   Eigen::Matrix<double, nr_params, 1> X;
+    //   double temp;
+    //   for(int i = 0; i < nr_params; ++i)
+    //   {
+    //     strm >> temp;
+    //     if(!strm.good())
+    //     {
+    //       LOG_ERROR("Invalid calibration file")
+    //     }
+    //     if(strm.eof())
+    //     {
+    //       LOG_ERROR("File too short, should have " << nr_params << " parameters")
+    //     }
+    //     X(i) = temp;
+    //   }
+    //  offset_ = sva::ForceVecd(X.segment<6>(7));
+    // }
