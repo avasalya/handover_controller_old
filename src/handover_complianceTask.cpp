@@ -1,23 +1,18 @@
-#include <mc_rbdyn/configuration_io.h>
-#include <mc_rbdyn/rpy_utils.h>
-
-#include <mc_tasks/MetaTaskLoader.h>
-
 
 #include "handover_complianceTask.h"
 
 
-namespace mc_tasks
+namespace mc_handover
 {
 
 namespace
 {
 
-std::function<double(double)> clamper(double value)
-{
-  auto clamp = [value](const double & v) { return std::min(std::max(v, -value), value); };
-  return clamp;
-}
+  std::function<double(double)> clamper(double value)
+  {
+    auto clamp = [value](const double & v) { return std::min(std::max(v, -value), value); };
+    return clamp;
+  }
 
 }
 
@@ -41,7 +36,7 @@ HandoverComplianceTask::HandoverComplianceTask(const mc_rbdyn::Robots & robots,
     torqueGain_(torqueGain),
     dof_(dof)
 {
-  efTask_ = std::make_shared<EndEffectorTask>(body, robots,
+  efTask_ = std::make_shared<mc_tasks::EndEffectorTask>(body, robots,
                                               robotIndex, stiffness, weight);
   clampTrans_ = clamper(0.01);
   clampRot_ = clamper(0.1);
@@ -50,48 +45,17 @@ HandoverComplianceTask::HandoverComplianceTask(const mc_rbdyn::Robots & robots,
   name_ = "compliance_" + robot_.name() + "_" + body;
 }
 
-HandoverComplianceTask::HandoverComplianceTask(const mc_rbdyn::Robots & robots,
-      unsigned int robotIndex,
-      const std::string & body,
-      double timestep,
-      double stiffness, double weight,
-      double forceThresh, double torqueThresh,
-      std::pair<double, double> forceGain, std::pair<double, double> torqueGain)
-  : HandoverComplianceTask(robots, robotIndex, body,
-      timestep, Eigen::Matrix6d::Identity(), stiffness, weight,
-      forceThresh, torqueThresh, forceGain, torqueGain)
+
+void HandoverComplianceTask::reset()
 {
+  efTask_->reset();
 }
 
-void HandoverComplianceTask::addToSolver(mc_solver::QPSolver & solver)
+sva::ForceVecd HandoverComplianceTask::getFilteredWrench() const
 {
-  MetaTask::addToSolver(*efTask_, solver);
+  return wrench_ + sva::ForceVecd(dof_*obj_.vector());
 }
 
-void HandoverComplianceTask::removeFromSolver(mc_solver::QPSolver & solver)
-{
-  MetaTask::removeFromSolver(*efTask_, solver);
-}
-
-sva::PTransformd HandoverComplianceTask::computePose()
-{
-    Eigen::Vector3d trans = Eigen::Vector3d::Zero();
-    Eigen::Matrix3d rot = Eigen::Matrix3d::Identity();
-    if(wrench_.force().norm() > forceThresh_)
-    {
-      trans = (forceGain_.first*wrench_.force() + forceGain_.second*errorD_.force()).unaryExpr(clampTrans_);
-    }
-    if(wrench_.couple().norm() > torqueThresh_)
-    {
-      Eigen::Vector3d rpy = (torqueGain_.first*wrench_.couple() + torqueGain_.second*errorD_.couple()).unaryExpr(clampRot_);
-      rot = mc_rbdyn::rpyToMat(rpy);
-    }
-    const auto & X_p_f = sensor_.X_p_f();
-    const auto & X_0_p = robot_.mbc().bodyPosW[robot_.bodyIndexByName(sensor_.parentBody())];
-    sva::PTransformd move(rot, trans);
-    const auto & X_f_ds = sensor_.X_fsmodel_fsactual();
-    return ((X_f_ds*X_p_f).inv()*move*(X_f_ds*X_p_f))*X_0_p;
-}
 
 void HandoverComplianceTask::update()
 {
@@ -105,15 +69,18 @@ void HandoverComplianceTask::update()
   MetaTask::update(*efTask_);
 }
 
-void HandoverComplianceTask::reset()
+
+void HandoverComplianceTask::addToSolver(mc_solver::QPSolver & solver)
 {
-  efTask_->reset();
+  MetaTask::addToSolver(*efTask_, solver);
 }
 
-sva::ForceVecd HandoverComplianceTask::getFilteredWrench() const
+
+void HandoverComplianceTask::removeFromSolver(mc_solver::QPSolver & solver)
 {
-  return wrench_ + sva::ForceVecd(dof_*obj_.vector());
+  MetaTask::removeFromSolver(*efTask_, solver);
 }
+
 
 void HandoverComplianceTask::dimWeight(const Eigen::VectorXd & dimW)
 {
@@ -142,31 +109,28 @@ void HandoverComplianceTask::resetJointsSelector(mc_solver::QPSolver & solver)
   efTask_->resetJointsSelector(solver);
 }
 
-} // mc_tasks
 
-namespace
+
+sva::PTransformd HandoverComplianceTask::computePose()
 {
-
-static bool registered = mc_tasks::MetaTaskLoader::register_load_function("compliance",
-  [](mc_solver::QPSolver & solver,
-     const mc_rtc::Configuration & config)
-  {
-    Eigen::Matrix6d dof = Eigen::Matrix6d::Identity();
-    config("dof", dof);
-    auto t = std::shared_ptr<mc_tasks::HandoverComplianceTask>(new mc_tasks::HandoverComplianceTask(solver.robots(), config("robotIndex"), config("body"), solver.dt(), dof));
-    if(config.has("stiffness")) { t->stiffness(config("stiffness")); }
-    if(config.has("weight")) { t->weight(config("weight")); }
-    if(config.has("forceThresh")) { t->forceThresh(config("forceThresh")); }
-    if(config.has("torqueThresh")) { t->torqueThresh(config("torqueThresh")); }
-    if(config.has("forceGain")) { t->forceGain(config("forceGain")); }
-    if(config.has("torqueGain")) { t->torqueGain(config("torqueGain")); }
-    if(config.has("wrench"))
+    Eigen::Vector3d trans = Eigen::Vector3d::Zero();
+    Eigen::Matrix3d rot = Eigen::Matrix3d::Identity();
+    if(wrench_.force().norm() > forceThresh_)
     {
-      t->setTargetWrench(config("wrench"));
+      trans = (forceGain_.first*wrench_.force() + forceGain_.second*errorD_.force()).unaryExpr(clampTrans_);
     }
-    t->load(solver, config);
-    return t;
-  }
-);
-
+    if(wrench_.couple().norm() > torqueThresh_)
+    {
+      Eigen::Vector3d rpy = (torqueGain_.first*wrench_.couple() + torqueGain_.second*errorD_.couple()).unaryExpr(clampRot_);
+      rot = mc_rbdyn::rpyToMat(rpy);
+    }
+    const auto & X_p_f = sensor_.X_p_f();
+    const auto & X_0_p = robot_.mbc().bodyPosW[robot_.bodyIndexByName(sensor_.parentBody())];
+    sva::PTransformd move(rot, trans);
+    const auto & X_f_ds = sensor_.X_fsmodel_fsactual();
+    return ((X_f_ds*X_p_f).inv()*move*(X_f_ds*X_p_f))*X_0_p;
 }
+
+
+} // mc_handover
+

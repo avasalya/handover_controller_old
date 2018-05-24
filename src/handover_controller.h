@@ -28,13 +28,13 @@
 #include <typeinfo>
 
 
-#include "handover_minJerk.h"
 #include "handover_complianceTask.h"
 
 #define initComplianceTask 1        //1 to initialize complianceTask
-#define initForceSensor    0        //1 to  enable ForceSensor code
+#define initForceSensor    1        //1 to  enable ForceSensor code
 
 using namespace std;
+
 namespace mc_control
 {   
     class minJerk;
@@ -56,21 +56,14 @@ namespace mc_control
 
         virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
-        // void getCalibData();
-
-        // bool LtHandForceThresh(mc_rbdyn::ForceSensor & sensorL);
-        // bool RtHandForceThresh(mc_rbdyn::ForceSensor & sensorR);
-
+        
         void gripperControl();
 
       private:
         
         bool runOnlyOnce = true;
-        bool GripperMsg = true;
+        bool GripperOpeningMsg = true;
 
-        // std::shared_ptr<MinJerk>  mjTask;
-
-        // Eigen::Vector3d comZero;
 
         std::shared_ptr<mc_tasks::CoMTask> comTask;
 
@@ -80,18 +73,14 @@ namespace mc_control
         std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
         std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
-        // std::shared_ptr<mc_tasks::ComplianceTask> compliTaskL;
-        // std::shared_ptr<mc_tasks::ComplianceTask> compliTaskR;
-
-        std::shared_ptr<mc_tasks::HandoverComplianceTask> compliTaskL;
-        std::shared_ptr<mc_tasks::HandoverComplianceTask> compliTaskR;
-
-
-        // std::shared_ptr<mc_tasks::PostureTask> postureTask;
-
-        // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;        
+        std::shared_ptr<mc_handover::HandoverComplianceTask> compliTaskL;
+        std::shared_ptr<mc_handover::HandoverComplianceTask> compliTaskR;
 
         std::map<std::string, sva::ForceVecd> wrenches;
+        sva::ForceVecd wrenchLt, wrenchRt;
+        
+        // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
+
         
         // mc_rbdyn::detail::ForceSensorCalibData calibrator;
 
