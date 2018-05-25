@@ -1,5 +1,6 @@
 #pragma once
 #include <mc_control/mc_controller.h>
+#include <mc_control/fsm/Controller.h>
 #include <mc_control/api.h>
 
 #include <mc_rtc/logging.h>
@@ -30,21 +31,20 @@
 
 #include "handover_complianceTask.h"
 
-#define initComplianceTask 1        //1 to initialize complianceTask
-#define initForceSensor    1        //1 to  enable ForceSensor code
+#define initComplianceTask  1        //1 to initialize complianceTask
+#define initForceSensor     1        //1 to  enable ForceSensor code
+#define initFSM             1        //1 to  initialize FSM
 
 using namespace std;
+using namespace mc_control;
 
-namespace mc_control
+namespace mc_handover
 {   
-    class minJerk;
-
-    struct MC_CONTROL_DLLAPI HandoverController : public MCController
+    struct MC_CONTROL_DLLAPI HandoverController : public mc_control::fsm::Controller
     {
       public:
         HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & RobotModule,
-                         const double & dt);
-                         // , const Configuration & conf);
+                         const double & dt, const mc_rtc::Configuration & config);
 
         virtual ~HandoverController() {}
 
@@ -59,12 +59,10 @@ namespace mc_control
         
         void gripperControl();
 
-      private:
-        
-        bool runOnlyOnce = true;
         bool GripperOpeningMsg = true;
 
-
+      private:
+        
         std::shared_ptr<mc_tasks::CoMTask> comTask;
 
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
@@ -89,5 +87,5 @@ namespace mc_control
     };
 } // namespace mc_control
     
-    SIMPLE_CONTROLLER_CONSTRUCTOR("Handover", mc_control::HandoverController)
-// CONTROLLER_CONSTRUCTOR("Handover", mc_control::HandoverController)
+// SIMPLE_CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)
+CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)

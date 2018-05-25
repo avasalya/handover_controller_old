@@ -5,10 +5,9 @@
 // #include "handover_minJerk.h"
 
 
-// namespace mc_control
+// namespace mc_handover
 // {
 
-//   using namespace std;
 
 //   ////////////////////////////////////////////////////////////////////////////////////////////
 //   //                                                                                        //

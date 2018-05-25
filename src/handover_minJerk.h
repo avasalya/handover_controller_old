@@ -1,5 +1,4 @@
-// #ifndef _H_HANDOVER_MINJERK_H_
-// #define _H_HANDOVER_MINJERK_H
+// #pragma once
 
 
 // #include <cmath>
@@ -26,11 +25,14 @@
 
 // #include <Tasks/QPTasks.h>
 
-// namespace mc_control 
+// using namespace std;
+// using namespace mc_control;
+// using namespace Eigen;
+
+// namespace mc_handover 
 // {
 
-//     using namespace Eigen;
-//     class MinJerk {
+//     struct MinJerk {
 
 //     public:
 
@@ -76,5 +78,4 @@
 
 
 
-// }
-// #endif
+// } // namespace mc_handover

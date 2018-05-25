@@ -4,7 +4,7 @@
 
 #include "handover_controller.h"
 
-namespace mc_control
+namespace mc_handover
 {
     //////////////
     //
@@ -12,13 +12,15 @@ namespace mc_control
     //
     //////////////
     HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, 
-      const double & dt) //, const Configuration & conf) 
-      :MCController({robot_module, mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt)//, calibrator(robot_module)
+      const double & dt, const mc_rtc::Configuration & config) 
+      :mc_control::fsm::Controller(robot_module, dt, config)
+      
+      // :mc_control::fsm::Controller({robot_module, mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt, config)
     {
     
-        qpsolver->addConstraintSet(contactConstraint);
+        // qpsolver->addConstraintSet(contactConstraint);
         qpsolver->addConstraintSet(kinematicsConstraint);
-        qpsolver->addConstraintSet(dynamicsConstraint);
+        // qpsolver->addConstraintSet(dynamicsConstraint);
         qpsolver->addConstraintSet(selfCollisionConstraint);
     
 
@@ -82,6 +84,13 @@ namespace mc_control
     //////////////
     void HandoverController::reset(const ControllerResetData & reset_data)
     {
+        /* Force Sensor */
+        if(initForceSensor){LOG_INFO("ForceSensor enabled")}else{LOG_WARNING("ForceSensor disabled")}
+        /* Compliance Task */
+        if(initComplianceTask){LOG_INFO("ComplianceTask initialized")}else{LOG_WARNING("complianceTask not initialized")}        
+         /* FSM */
+        if(initFSM){LOG_INFO("FSM initialized")}else{LOG_WARNING("FSM not initialized")}
+
         auto q = reset_data.q;
         MCController::reset({q});
 
@@ -101,12 +110,11 @@ namespace mc_control
         relEfTaskR->reset();
 
 
-        /* Compliance Task*/
+        /* Compliance Task */
         if(initComplianceTask)
         {
           // compliTaskR->reset();
         }
-
 
         // gui()->addElement({"Utilities"},
         // mc_rtc::gui::Button("openGrippers", [this]() { std::string msg = "openGrippers";  read_msg(msg); }),
@@ -126,35 +134,8 @@ namespace mc_control
     {
       bool ret = MCController::run();
 
-  
-
-      if(runOnlyOnce)
+      if(ret)
       {
-        runOnlyOnce = false;
-
-        /* Force Sensor*/
-        if(initForceSensor)
-        {  
-
-          LOG_INFO("ForceSensor enabled")
-        }
-        else
-        {
-          LOG_WARNING("ForceSensor disabled")
-        }
-
-        /* Compliance Task*/
-        if(initComplianceTask)
-        {
-         LOG_INFO("ComplianceTask initialized")
-        }
-        else
-        {
-          LOG_WARNING("complianceTask not initialized")
-        }        
-      }
-
-
         /* Force Sensor*/
         if(initForceSensor)
         {        
@@ -216,7 +197,8 @@ namespace mc_control
         }
 
 
-      gripperControl();
+        gripperControl();
+      }
 
       return ret;
     }
