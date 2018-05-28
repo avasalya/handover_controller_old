@@ -15,10 +15,14 @@ if(NOT WIN32)
   add_definitions(-std=c++0x)
 endif()
 
+# INCLUDE_DIRECTORIES ( "${EIGEN3_INCLUDE_DIR}/usr/include/Eigen3" )
+
 # Use jrl-cmakemoduels to get mc_rtc depency
 set(PKG_CONFIG_ADDITIONAL_VARIABLES "${PKG_CONFIG_ADDITIONAL_VARIABLES} libdir")
 add_required_dependency(mc_rtc)
 
 add_subdirectory(src)
+add_subdirectory(states)
+# include_directories(${states})
 
 setup_project_finalize()

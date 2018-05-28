@@ -9,7 +9,7 @@ namespace mc_handover
 {
 	namespace states
 	{
-		struct GoHalfSittingStep : mc_control::fsm::State
+		struct CloseGrippersStep : mc_control::fsm::State
 		{
 			public:
 				void configure(const mc_rtc::Configuration & config) override;
@@ -18,15 +18,15 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) {}
+				void teardown(mc_control::fsm::Controller&) override {}
 
 			private:
 				// Configs
-				double threshold_eval_;
-				double threshold_speed_;
-				double stiffness_;
-				double weight_;
 
+				double closeGrippers =  -0.25;
+								
 		};
 	} // namespace states
 } // namespace mc_handover
+
+EXPORT_SINGLE_STATE("closeGrippersStep", mc_handover::states::closeGrippersStep)

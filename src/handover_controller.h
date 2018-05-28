@@ -4,6 +4,9 @@
 #include <mc_control/api.h>
 
 #include <mc_rtc/logging.h>
+#include <mc_rtc/GUIState.h>
+
+#include <Eigen/Core>
 
 #include <mc_tasks/CoMTask.h>
 #include <mc_tasks/MetaTask.h>
@@ -19,6 +22,8 @@
 #include <mc_rbdyn/Robot.h>
 #include <mc_rbdyn/RobotLoader.h>
 #include <mc_rbdyn/RobotModule.h>
+#include <mc_rbdyn/Contact.h>
+
 
 #include <RBDyn/EulerIntegration.h>
 #include <RBDyn/FK.h>
@@ -31,7 +36,7 @@
 
 #include "handover_complianceTask.h"
 
-#define initComplianceTask  1        //1 to initialize complianceTask
+#define initComplianceTask  0        //1 to initialize complianceTask
 #define initForceSensor     1        //1 to  enable ForceSensor code
 #define initFSM             1        //1 to  initialize FSM
 
@@ -78,14 +83,17 @@ namespace mc_handover
         sva::ForceVecd wrenchLt, wrenchRt;
         
         // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
-
-        
         // mc_rbdyn::detail::ForceSensorCalibData calibrator;
 
+        std::shared_ptr<mc_rbdyn::Contact> checkContact;
+
+        sva::PTransformd leftHandPosW;
+        sva::MotionVecd leftHandVelW;
+        sva::PTransformd rightHandPosW;
+        sva::MotionVecd rightHandVelW;
 
 
     };
 } // namespace mc_control
     
-// SIMPLE_CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)
 CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)

@@ -23,8 +23,6 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			// std::cout<<ctl.getPostureTask(ctl.robot().name())->eval().norm()<<" "<< threshold_eval_<<std::endl;
-			// std::cout<<ctl.getPostureTask(ctl.robot().name())->speed().norm()<<" "<< threshold_speed_<<std::endl;
 			if (ctl.getPostureTask(ctl.robot().name())->eval().norm() < threshold_eval_ && ctl.getPostureTask(ctl.robot().name())->speed().norm() < threshold_speed_){
 			return true;
 			}
@@ -35,5 +33,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_torquing_controller
-
-EXPORT_SINGLE_STATE("GoHalfSittingStep", mc_handover::states::GoHalfSittingStep)

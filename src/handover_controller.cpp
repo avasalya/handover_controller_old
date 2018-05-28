@@ -13,9 +13,9 @@ namespace mc_handover
     //////////////
     HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, 
       const double & dt, const mc_rtc::Configuration & config) 
-      :mc_control::fsm::Controller(robot_module, dt, config)
-      
-      // :mc_control::fsm::Controller({robot_module, mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt, config)
+      :mc_control::fsm::Controller({robot_module,
+       mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt, config)
+      // :mc_control::fsm::Controller(robot_module, dt, config)
     {
     
         // qpsolver->addConstraintSet(contactConstraint);
@@ -65,11 +65,11 @@ namespace mc_handover
         postureTask.reset(new mc_tasks::PostureTask(solver(), robots().robotIndex(), 1.0, 1e2));
         qpsolver->addTask(postureTask.get());
         
-        relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
-        oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
+        // relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
+        // oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
 
-        relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
-        oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
+        // relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
+        // oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
 
 
         LOG_SUCCESS("mc_handover_controller init done")
@@ -83,13 +83,16 @@ namespace mc_handover
     //
     //////////////
     void HandoverController::reset(const ControllerResetData & reset_data)
-    {
+    {   
         /* Force Sensor */
         if(initForceSensor){LOG_INFO("ForceSensor enabled")}else{LOG_WARNING("ForceSensor disabled")}
         /* Compliance Task */
         if(initComplianceTask){LOG_INFO("ComplianceTask initialized")}else{LOG_WARNING("complianceTask not initialized")}        
          /* FSM */
         if(initFSM){LOG_INFO("FSM initialized")}else{LOG_WARNING("FSM not initialized")}
+
+
+        mc_control::fsm::Controller::reset(reset_data);
 
         auto q = reset_data.q;
         MCController::reset({q});
@@ -110,15 +113,11 @@ namespace mc_handover
         relEfTaskR->reset();
 
 
-        /* Compliance Task */
-        if(initComplianceTask)
-        {
-          // compliTaskR->reset();
-        }
 
-        // gui()->addElement({"Utilities"},
-        // mc_rtc::gui::Button("openGrippers", [this]() { std::string msg = "openGrippers";  read_msg(msg); }),
-        // mc_rtc::gui::Button("closeGrippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); })
+        // gui()->addElement(
+        // {"Grippers"},
+        // mc_rtc::gui::Button("open_Grippers", [this]() {std::string msg = "openGrippers";  read_msg(msg); })
+        // mc_rtc::gui::Button("close_Grippers",[this]() {std::string msg = "closeGrippers"; read_msg(msg); })
         // );
 
     }
@@ -132,7 +131,7 @@ namespace mc_handover
     //////////////
     bool HandoverController::run()
     {
-      bool ret = MCController::run();
+      bool ret = mc_control::fsm::Controller::run();
 
       if(ret)
       {
@@ -262,18 +261,18 @@ namespace mc_handover
 
       if(token == "step1")
       {
-        MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
-        Eigen::Vector3d initPosR, initPosL;
-        sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+        // MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+        // Eigen::Vector3d initPosR, initPosL;
+        // sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-        initPosR <<  0.30, -0.35, 0.45;
-        relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-        solver().addTask(relEfTaskR);
+        // initPosR <<  0.30, -0.35, 0.45;
+        // relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+        // solver().addTask(relEfTaskR);
 
 
-        initPosL <<  0.30, 0.35, 0.45;      
-        relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-        solver().addTask(relEfTaskL);     
+        // initPosL <<  0.30, 0.35, 0.45;      
+        // relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+        // solver().addTask(relEfTaskL);     
    
         return true;
       }
@@ -377,9 +376,9 @@ namespace mc_handover
       }
     
       LOG_WARNING("Cannot handle " << msg)
-      return false;
+      return mc_control::fsm::Controller::read_msg(msg);
 
-    } //read_msg
+    }
 
 
 
@@ -391,8 +390,9 @@ namespace mc_handover
     //////////////    
     bool HandoverController::read_write_msg(std::string & msg, std::string & out)
     {
-      out = msg;
-      return true;
+      // out = msg;
+      // return true;
+      return mc_control::fsm::Controller::read_write_msg(msg, out);
     }
 
    
