@@ -1,15 +1,15 @@
-#include "openGrippersStep.h"
+#include "OpenGrippersStep.h"
 
 namespace mc_handover
 {
 	namespace states {
 
-		void openGrippersStep::configure(const mc_rtc::Configuration & config)
+		void OpenGrippersStep::configure(const mc_rtc::Configuration & config)
 		{
 			config("openGrippers", openGrippers);
 		}
 
-		void openGrippersStep::start(mc_control::fsm::Controller & controller)
+		void OpenGrippersStep::start(mc_control::fsm::Controller & controller)
 		{
     		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 

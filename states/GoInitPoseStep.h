@@ -9,7 +9,7 @@ namespace mc_handover
 {
 	namespace states
 	{
-		struct GoHalfSittingStep : mc_control::fsm::State
+		struct GoInitPoseStep : mc_control::fsm::State
 		{
 			public:
 				void configure(const mc_rtc::Configuration & config) override;
@@ -18,7 +18,7 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) {}
+				void teardown(mc_control::fsm::Controller&) override;
 
 			private:
 				// Configs

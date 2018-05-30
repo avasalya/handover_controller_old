@@ -20,13 +20,17 @@ namespace mc_handover
 
 				void teardown(mc_control::fsm::Controller&) override {}
 
+				std::shared_ptr<mc_rbdyn::Contact> contact;
+
 			private:
 				// Configs
 
 				double closeGrippers =  -0.25;
+				bool hasContacts = false;
+
 								
 		};
 	} // namespace states
 } // namespace mc_handover
 
-EXPORT_SINGLE_STATE("closeGrippersStep", mc_handover::states::closeGrippersStep)
+EXPORT_SINGLE_STATE("CloseGrippersStep", mc_handover::states::CloseGrippersStep)

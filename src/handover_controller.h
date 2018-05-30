@@ -33,8 +33,8 @@
 
 #include <typeinfo>
 
-
 #include "handover_complianceTask.h"
+
 
 #define initComplianceTask  0        //1 to initialize complianceTask
 #define initForceSensor     1        //1 to  enable ForceSensor code
@@ -48,8 +48,9 @@ namespace mc_handover
     struct MC_CONTROL_DLLAPI HandoverController : public mc_control::fsm::Controller
     {
       public:
-        HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & RobotModule,
-                         const double & dt, const mc_rtc::Configuration & config);
+        HandoverController(std::shared_ptr<mc_rbdyn::RobotModule> RobotModule,
+                            double dt,
+                            const mc_rtc::Configuration & config);
 
         virtual ~HandoverController() {}
 
@@ -66,7 +67,7 @@ namespace mc_handover
 
         bool GripperOpeningMsg = true;
 
-      private:
+      // private:
         
         std::shared_ptr<mc_tasks::CoMTask> comTask;
 
@@ -85,7 +86,7 @@ namespace mc_handover
         // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
         // mc_rbdyn::detail::ForceSensorCalibData calibrator;
 
-        std::shared_ptr<mc_rbdyn::Contact> checkContact;
+        // std::shared_ptr<mc_rbdyn::Contact> checkContact;
 
         sva::PTransformd leftHandPosW;
         sva::MotionVecd leftHandVelW;
@@ -96,4 +97,4 @@ namespace mc_handover
     };
 } // namespace mc_control
     
-CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)
+// CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)

@@ -11,16 +11,19 @@ namespace mc_handover
     // Handover Controller constructor
     //
     //////////////
-    HandoverController::HandoverController(const std::shared_ptr<mc_rbdyn::RobotModule> & robot_module, 
-      const double & dt, const mc_rtc::Configuration & config) 
-      :mc_control::fsm::Controller({robot_module,
-       mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt, config)
-      // :mc_control::fsm::Controller(robot_module, dt, config)
+    HandoverController::HandoverController(std::shared_ptr<mc_rbdyn::RobotModule> robot_module, 
+      double dt, 
+      const mc_rtc::Configuration & config) 
+      :mc_control::fsm::Controller(
+        robot_module,
+        dt,
+        config)
+
+       // mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt, config)
     {
     
         // qpsolver->addConstraintSet(contactConstraint);
         qpsolver->addConstraintSet(kinematicsConstraint);
-        // qpsolver->addConstraintSet(dynamicsConstraint);
         qpsolver->addConstraintSet(selfCollisionConstraint);
     
 

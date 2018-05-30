@@ -4,9 +4,9 @@ set(CXX_DISABLE_WERROR 1)
 include(cmake/base.cmake)
 include(cmake/boost.cmake)
 
-set(PROJECT_NAME handover_controller)
+set(PROJECT_NAME mc_handover_controller)
 set(PROJECT_DESCRIPTION "human-robot tool handover controller for mc_rtc")
-set(PROJECT_URL https://gite.lirmm.fr/asheshvasalya_at_yahoo_in/mc_handover_controller)
+set(PROJECT_URL https://gite.lirmm.fr/ashesh/mc_handover_controller)
 
 setup_project()
 
@@ -15,14 +15,13 @@ if(NOT WIN32)
   add_definitions(-std=c++0x)
 endif()
 
-# INCLUDE_DIRECTORIES ( "${EIGEN3_INCLUDE_DIR}/usr/include/Eigen3" )
-
 # Use jrl-cmakemoduels to get mc_rtc depency
 set(PKG_CONFIG_ADDITIONAL_VARIABLES "${PKG_CONFIG_ADDITIONAL_VARIABLES} libdir")
 add_required_dependency(mc_rtc)
 
-add_subdirectory(src)
-add_subdirectory(states)
-# include_directories(${states})
+add_subdirectory(src states)
+
+install(FILES etc/Handover.conf
+    DESTINATION ${MC_RTC_LIBDIR}/mc_controller/etc/)
 
 setup_project_finalize()

@@ -16,19 +16,21 @@ namespace mc_handover
 		{
     		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
-			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
+			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 50.0,1e3));
+			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
 
-			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
-			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
+			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 50.0,1e3));
+			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
 		}
 
 		bool GoInitPoseStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 			
-			if(ctl.relEfTaskL->eval().norm() < threshold_eval_ && ctl.relEfTaskR->eval().norm() < threshold_eval_ &&
-				ctl.relEfTaskL->speed().norm() < threshold_speed_ && ctl.relEfTaskR->speed().norm() < threshold_speed_ && )
+			if(ctl.relEfTaskL->eval().norm() < threshold_eval_ &&
+			 	ctl.relEfTaskR->eval().norm() < threshold_eval_ &&
+				ctl.relEfTaskL->speed().norm() < threshold_speed_ &&
+				ctl.relEfTaskR->speed().norm() < threshold_speed_)
 			{
 				ctl.relEfTaskL->reset();
 				ctl.relEfTaskR->reset();
@@ -37,17 +39,17 @@ namespace mc_handover
 			}	
 			else
 			{
-				MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down	      
+				ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down	      
 
-		        BodyPosW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+		        BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
 		        initPosL <<  0.30, 0.35, 0.45;      
 		        ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
-		        ctl.solver().addTask(relEfTaskL);
+		        ctl.solver().addTask(ctl.relEfTaskL);
 
 		        initPosR <<  0.30, -0.35, 0.45;
 		        ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
-		        ctl.solver().addTask(relEfTaskR);
+		        ctl.solver().addTask(ctl.relEfTaskR);
 		        output("moving to initial pose");
 		        return true;
 		    }

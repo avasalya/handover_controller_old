@@ -1,5 +1,6 @@
 #include "CloseGrippersStep.h"
 
+
 namespace mc_handover
 {
 	namespace states {
@@ -11,30 +12,32 @@ namespace mc_handover
 
 		void CloseGrippersStep::start(mc_control::fsm::Controller & controller)
 		{
-    		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+			
+			ctl.solver().setContacts({
+	        {ctl.robots(), 0, 1, "l_gripper", "handoverPipe"},
+	        {ctl.robots(), 0, 1, "r_gripper", "handoverPipe"}
+	        });
+			
+			hasContacts = ctl.hasContact({ctl.solver().robot(contact->r1Index()).name(), ctl.solver().robot(contact->r2Index()).name(),contact->r1Surface()->name(), contact->r2Surface()->name()});
 		}
 
 		bool CloseGrippersStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-			
-			ctl.solver().setContacts({
-	        {ctl.robots(), 0, 1, "l_gripper", "cylinder1"}, // define cylinder1? ?
-	        {ctl.robots(), 0, 1, "r_gripper", "cylinder1"}
-	        });
 
-			if(ctl.checkContact->isFixed())
+			if(hasContacts) //(ctl.checkContact->isFixed())
 			{
+				auto  gripperL = ctl.grippers["l_gripper"].get();
+				auto  gripperR = ctl.grippers["r_gripper"].get();
+				
 				/* return true if contact with "object" established */
-				if(get L grpper target  >=1.0 &&  get R grpper target  >=1.0 )
-				{
-					
-					auto  gripper = ctl.grippers["l_gripper"].get();
-		    		gripper->setTargetQ({closeGrippers});
+				if( gripperL->curPosition()[0] >= 1.0 && gripperR->curPosition()[0] >= 1.0 )
+				{					
+		    		gripperL->setTargetQ({closeGrippers});
+		    		gripperR->setTargetQ({closeGrippers});
 
-		    		gripper = ctl.grippers["r_gripper"].get();
-		    		gripper->setTargetQ({closeGrippers});
-
+		    		output("contact with the object established");
 		    		return true;
 				}
 				else
