@@ -23,7 +23,7 @@ namespace mc_handover
     {
     
         // qpsolver->addConstraintSet(contactConstraint);
-        qpsolver->addConstraintSet(kinematicsConstraint);
+        //qpsolver->addConstraintSet(kinematicsConstraint);
         qpsolver->addConstraintSet(selfCollisionConstraint);
     
 
@@ -54,20 +54,6 @@ namespace mc_handover
 
         });
 
-
-        qpsolver->setContacts({
-        mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
-        mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
-        mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
-        mc_rbdyn::Contact(robots(), "LowerBack","AllGround")
-        });
-
-        comTask.reset(new mc_tasks::CoMTask(robots(), robots().robotIndex(), 2.0, 1e3));
-        solver().addTask(comTask);
-    
-        postureTask.reset(new mc_tasks::PostureTask(solver(), robots().robotIndex(), 1.0, 1e2));
-        qpsolver->addTask(postureTask.get());
-        
         // relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
         // oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
 
@@ -100,20 +86,8 @@ namespace mc_handover
         auto q = reset_data.q;
         MCController::reset({q});
 
-        postureTask->posture(q);
-
-        qpsolver->setContacts({
-        mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
-        mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
-        mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
-        mc_rbdyn::Contact(robots(), "LowerBack","AllGround")
-        });
-
-
-        comTask->reset();
-
-        relEfTaskL->reset();
-        relEfTaskR->reset();
+        //relEfTaskL->reset();
+        //relEfTaskR->reset();
 
 
 
@@ -199,7 +173,7 @@ namespace mc_handover
         }
 
 
-        gripperControl();
+        // gripperControl();
       }
 
       return ret;
@@ -264,18 +238,18 @@ namespace mc_handover
 
       if(token == "step1")
       {
-        // MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
-        // Eigen::Vector3d initPosR, initPosL;
-        // sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+        MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+        Eigen::Vector3d initPosR, initPosL;
+        sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-        // initPosR <<  0.30, -0.35, 0.45;
-        // relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-        // solver().addTask(relEfTaskR);
+        initPosR <<  0.30, -0.35, 0.45;
+        relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+        solver().addTask(relEfTaskR);
 
 
-        // initPosL <<  0.30, 0.35, 0.45;      
-        // relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-        // solver().addTask(relEfTaskL);     
+        initPosL <<  0.30, 0.35, 0.45;      
+        relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+        solver().addTask(relEfTaskL);     
    
         return true;
       }

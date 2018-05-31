@@ -21,6 +21,11 @@ add_required_dependency(mc_rtc)
 
 add_subdirectory(src states)
 
+configure_file(etc/mc_rtc.conf ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/etc)
+
 install(FILES etc/Handover.conf
     DESTINATION ${MC_RTC_LIBDIR}/mc_controller/etc/)
 

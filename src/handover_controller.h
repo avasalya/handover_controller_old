@@ -97,4 +97,4 @@ namespace mc_handover
     };
 } // namespace mc_control
     
-// CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)
+CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)
