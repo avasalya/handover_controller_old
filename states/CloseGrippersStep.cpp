@@ -7,47 +7,52 @@ namespace mc_handover
 
 		void CloseGrippersStep::configure(const mc_rtc::Configuration & config)
 		{
+			cout << "config " <<endl;
 			config("closeGrippers", closeGrippers);
 		}
 
 		void CloseGrippersStep::start(mc_control::fsm::Controller & controller)
-		{
+		{				
+
+			cout <<"start -- closing grippers" << endl;
+
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+
+			ctl.addContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
+			ctl.addContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
+
 			
-			ctl.solver().setContacts({
-	        {ctl.robots(), 0, 1, "l_gripper", "handoverPipe"},
-	        {ctl.robots(), 0, 1, "r_gripper", "handoverPipe"}
-	        });
-			
-			hasContacts = ctl.hasContact({ctl.solver().robot(contact->r1Index()).name(), ctl.solver().robot(contact->r2Index()).name(),contact->r1Surface()->name(), contact->r2Surface()->name()});
+			hasContacts = true;
 		}
 
 		bool CloseGrippersStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-
-			if(hasContacts) //(ctl.checkContact->isFixed())
-			{
+							
+				cout << "run " <<endl;
+				hasContacts = false;
 				auto  gripperL = ctl.grippers["l_gripper"].get();
 				auto  gripperR = ctl.grippers["r_gripper"].get();
 				
 				/* return true if contact with "object" established */
-				if( gripperL->curPosition()[0] >= 1.0 && gripperR->curPosition()[0] >= 1.0 )
+
+				cout <<  gripperL->curPosition()[0] << " " << gripperR->curPosition()[0] << endl;
+				if( (gripperL->curPosition()[0] >= 0.5) && (gripperR->curPosition()[0] >= 0.5) )
 				{					
 		    		gripperL->setTargetQ({closeGrippers});
 		    		gripperR->setTargetQ({closeGrippers});
 
-		    		output("contact with the object established");
+		    		cout <<"contact with the object established" <<endl;
+		    		output("OK");
 		    		return true;
 				}
 				else
 				{
-					output("gipper not closed, try again");
+					cout <<"gipper not closed, trying again" <<endl;
+		    		output("Repeat");
 					return false;
-				}
-				output("contact not fixed, try again");
-				return false;
-			}
+				}			
+			
 		    return false;
 		}
 

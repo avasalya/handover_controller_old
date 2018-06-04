@@ -66,9 +66,8 @@ namespace mc_handover
         void gripperControl();
 
         bool GripperOpeningMsg = true;
+        bool onlyOnce = true;
 
-      // private:
-        
         std::shared_ptr<mc_tasks::CoMTask> comTask;
 
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
@@ -87,6 +86,9 @@ namespace mc_handover
         // mc_rbdyn::detail::ForceSensorCalibData calibrator;
 
         // std::shared_ptr<mc_rbdyn::Contact> checkContact;
+    
+        std::map<std::string, mc_rbdyn::SurfacePtr> surf;
+    
 
         sva::PTransformd leftHandPosW;
         sva::MotionVecd leftHandVelW;
@@ -96,5 +98,3 @@ namespace mc_handover
 
     };
 } // namespace mc_control
-    
-CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)

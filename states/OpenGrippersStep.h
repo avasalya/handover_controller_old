@@ -16,18 +16,13 @@ namespace mc_handover
 
 				void start(mc_control::fsm::Controller&) override;
 
-				bool run(mc_control::fsm::Controller&) {
-					output("opening Grippers to max");
-					return true;
-				}
+				bool run(mc_control::fsm::Controller&) override;				
 
 				void teardown(mc_control::fsm::Controller&) override {}
 
 			private:
 				// Configs
-
-				double openGrippers =  1.0;
-				
+				double openGrippers{1.0};				
 
 
 		};

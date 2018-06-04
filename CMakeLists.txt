@@ -19,7 +19,8 @@ endif()
 set(PKG_CONFIG_ADDITIONAL_VARIABLES "${PKG_CONFIG_ADDITIONAL_VARIABLES} libdir")
 add_required_dependency(mc_rtc)
 
-add_subdirectory(src states)
+add_subdirectory(src)
+add_subdirectory(states)
 
 configure_file(etc/mc_rtc.conf ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf)
 

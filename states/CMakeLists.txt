@@ -19,9 +19,10 @@ endmacro()
 
 # INCLUDE_DIRECTORIES ( "${EIGEN3_INCLUDE_DIR}/usr/include/Eigen3" )
 
-add_fsm_handover_state(GoHalfSittingStep)
 add_fsm_handover_state(GoInitPoseStep)
 add_fsm_handover_state(OpenGrippersStep)
+add_fsm_handover_state(ApproachObjectStep)
 add_fsm_handover_state(CloseGrippersStep)
+# add_fsm_handover_state(GoDummyPoseStep)
 # add_fsm_state_simple(ForceControlGrippersStep)
-
+add_fsm_handover_state(GoHalfSittingStep)

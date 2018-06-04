@@ -6,6 +6,8 @@ namespace mc_handover
 
 		void GoInitPoseStep::configure(const mc_rtc::Configuration & config)
 		{
+			cout << "config" << endl;
+
 			threshold_eval_ = config("threshold_eval", 0.005);
 			threshold_speed_ = config("threshold_speed", 0.005);
 			stiffness_ = config("stiffness", 2.);
@@ -13,57 +15,52 @@ namespace mc_handover
 		}
 
 		void GoInitPoseStep::start(mc_control::fsm::Controller & controller)
-		{
-    		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+		{	
+			
+			cout << "start" << endl;
 
-			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 50.0,1e3));
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+
+			ctl.solver().setContacts({
+			mc_rbdyn::Contact(ctl.robots(), "LFullSole", "AllGround"),
+			mc_rbdyn::Contact(ctl.robots(), "RFullSole", "AllGround"),
+			mc_rbdyn::Contact(ctl.robots(), "Butthock", "AllGround"),
+			mc_rbdyn::Contact(ctl.robots(), "LowerBack","AllGround")              
+			});              
+
+
+			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 5.0,1e3));
 			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
 
-			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 50.0,1e3));
+			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 5.0,1e3));
 			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
+			
 		}
 
 		bool GoInitPoseStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-			
-			if(ctl.relEfTaskL->eval().norm() < threshold_eval_ &&
-			 	ctl.relEfTaskR->eval().norm() < threshold_eval_ &&
-				ctl.relEfTaskL->speed().norm() < threshold_speed_ &&
-				ctl.relEfTaskR->speed().norm() < threshold_speed_)
-			{
-				ctl.relEfTaskL->reset();
-				ctl.relEfTaskR->reset();
-				output("not moving yet");
-				return false;
-			}	
-			else
-			{
-				ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down	      
 
-		        BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
+			cout << "run" << endl;
+	        cout << "moving to initial pose" <<endl;
+		
+			controller.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down	      
 
-		        initPosL <<  0.30, 0.35, 0.45;      
-		        ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
-		        ctl.solver().addTask(ctl.relEfTaskL);
+	        BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
-		        initPosR <<  0.30, -0.35, 0.45;
-		        ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
-		        ctl.solver().addTask(ctl.relEfTaskR);
-		        output("moving to initial pose");
-		        return true;
-		    }
-		    return false;
-		}
+	        initPosL <<  0.30, 0.35, 0.3;      
+	        ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
 
-		void GoInitPoseStep::teardown(mc_control::fsm::Controller & controller)
-		{
-			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-			
-				ctl.solver().removeTask(ctl.relEfTaskL);
-				ctl.solver().removeTask(ctl.relEfTaskR);
-				ctl.solver().removeTask(ctl.oriTaskL);
-				ctl.solver().removeTask(ctl.oriTaskR);
+	        initPosR <<  0.30, -0.35, 0.3;
+	        ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
+	        
+	        			
+	        ctl.solver().addTask(ctl.relEfTaskL);
+	        ctl.solver().addTask(ctl.relEfTaskR);
+		
+	        output("OK");
+	        
+		    return true;
 		}
 
 	} // namespace states

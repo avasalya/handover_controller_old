@@ -9,7 +9,7 @@ namespace mc_handover
 {
 	namespace states
 	{
-		struct CloseGrippersStep : mc_control::fsm::State
+		struct GoDummyPoseStep : mc_control::fsm::State
 		{
 			public:
 				void configure(const mc_rtc::Configuration & config) override;
@@ -18,17 +18,21 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) override {}			
+				void teardown(mc_control::fsm::Controller&) override {}
+
 
 			private:
 				// Configs
+				double threshold_eval_;
+				double threshold_speed_;
+				double stiffness_;
+				double weight_;
 
-				double closeGrippers =  -0.25;
-				bool hasContacts = false;
+				Eigen::Vector3d posL, posR;
+				Eigen::Matrix3d getCurRotL, getCurRotR;				
 
-								
 		};
 	} // namespace states
 } // namespace mc_handover
 
-EXPORT_SINGLE_STATE("CloseGrippersStep", mc_handover::states::CloseGrippersStep)
+EXPORT_SINGLE_STATE("GoDummyPoseStep", mc_handover::states::GoDummyPoseStep)

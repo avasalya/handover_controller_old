@@ -3,6 +3,10 @@
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/fsm/State.h>
 
+#include <mc_rbdyn/Robot.h>
+#include <mc_rbdyn/Surface.h>
+#include <mc_rbdyn/surface_utils.h>
+
 #include "handover_controller.h"
 
 namespace mc_handover
@@ -18,7 +22,7 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) override;
+				void teardown(mc_control::fsm::Controller&) override {}
 
 			private:
 				// Configs

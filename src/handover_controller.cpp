@@ -18,15 +18,10 @@ namespace mc_handover
         robot_module,
         dt,
         config)
-
-       // mc_rbdyn::RobotLoader::get_robot_module("env", std::string(mc_rtc::MC_ENV_DESCRIPTION_PATH), std::string("ground"))}, dt, config)
     {
     
-        // qpsolver->addConstraintSet(contactConstraint);
-        //qpsolver->addConstraintSet(kinematicsConstraint);
         qpsolver->addConstraintSet(selfCollisionConstraint);
     
-
         selfCollisionConstraint.reset();
         selfCollisionConstraint.addCollisions(solver(), {
           mc_rbdyn::Collision("LARM_LINK3", "BODY", 0.1, 0.05, 0.),
@@ -54,13 +49,6 @@ namespace mc_handover
 
         });
 
-        // relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
-        // oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
-
-        // relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 50.0,1e3));
-        // oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
-
-
         LOG_SUCCESS("mc_handover_controller init done")
     }
 
@@ -85,17 +73,6 @@ namespace mc_handover
 
         auto q = reset_data.q;
         MCController::reset({q});
-
-        //relEfTaskL->reset();
-        //relEfTaskR->reset();
-
-
-
-        // gui()->addElement(
-        // {"Grippers"},
-        // mc_rtc::gui::Button("open_Grippers", [this]() {std::string msg = "openGrippers";  read_msg(msg); })
-        // mc_rtc::gui::Button("close_Grippers",[this]() {std::string msg = "closeGrippers"; read_msg(msg); })
-        // );
 
     }
 
@@ -168,10 +145,8 @@ namespace mc_handover
           }
 
           // cout << compliTaskR->getTargetWrench() << endl;
-
           // cout << compliTaskR->eval().norm() << endl;
         }
-
 
         // gripperControl();
       }
@@ -238,16 +213,35 @@ namespace mc_handover
 
       if(token == "step1")
       {
+
+       if (onlyOnce)
+        {
+           onlyOnce = false;
+           qpsolver->setContacts({
+              mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
+              mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
+              mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
+              mc_rbdyn::Contact(robots(), "LowerBack","AllGround")              
+              });              
+
+            relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 5.0,1e3));
+            oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
+
+            relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 5.0,1e3));
+            oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
+          }
+
+
         MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
         Eigen::Vector3d initPosR, initPosL;
         sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-        initPosR <<  0.30, -0.35, 0.45;
+        initPosR <<  0.30, -0.35, 0.3;
         relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
         solver().addTask(relEfTaskR);
 
 
-        initPosL <<  0.30, 0.35, 0.45;      
+        initPosL <<  0.30, 0.35, 0.3;      
         relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
         solver().addTask(relEfTaskL);     
    
@@ -259,13 +253,13 @@ namespace mc_handover
       if(token == "step2")
       { 
         //set ef pose 
-        Eigen::Vector3d tL( 0.15, 0.35, .65 );
+        Eigen::Vector3d tL( 0.7, 0.35, .3 );
         Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
         sva::PTransformd dtrL(getCurRotL, tL);
         relEfTaskL->set_ef_pose(dtrL);
 
 
-        Eigen::Vector3d tR( 0.15, -0.35, .65 );
+        Eigen::Vector3d tR( 0.7, -0.35, .3 );
         Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
         sva::PTransformd dtrR(getCurRotR, tR);
         relEfTaskR->set_ef_pose(dtrR);
@@ -275,6 +269,27 @@ namespace mc_handover
 
 
 
+      if(token == "robots")
+      { 
+        std::string robotName =  this->robot().name();
+
+        cout << robotName <<  endl;
+
+        return true;
+      }
+
+
+
+      if(token == "surfaces")
+      { 
+        surf =  this->robot().surfaces();
+
+        for(auto elem : surf)
+        {
+          std::cout << elem.first << " " << elem.second << endl;
+        }
+        return true;
+      }
 
       // gripper control actions //
 
@@ -345,7 +360,7 @@ namespace mc_handover
       {
         for (int i = 0; i<8; ++i)
         {
-          ss << "RARM_JOINT" << i;
+          ss << "LARM_JOINT" << i;
           std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
         }
         std::cout<<std::endl;
@@ -374,3 +389,5 @@ namespace mc_handover
 
    
 } //namespace mc_control
+
+CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)
