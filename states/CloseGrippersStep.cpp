@@ -21,22 +21,23 @@ namespace mc_handover
 			ctl.addContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 			ctl.addContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
 
-			
-			hasContacts = true;
+			ctl.solver().setContacts({
+              mc_rbdyn::Contact(ctl.robots(), "LFullSole", "AllGround"),
+              mc_rbdyn::Contact(ctl.robots(), "RFullSole", "AllGround"),
+              mc_rbdyn::Contact(ctl.robots(), "Butthock", "AllGround"),
+              mc_rbdyn::Contact(ctl.robots(), "LowerBack","AllGround")
+              });
 		}
 
 		bool CloseGrippersStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 							
-				cout << "run " <<endl;
-				hasContacts = false;
+				cout << "run " <<endl;				
 				auto  gripperL = ctl.grippers["l_gripper"].get();
 				auto  gripperR = ctl.grippers["r_gripper"].get();
 				
 				/* return true if contact with "object" established */
-
-				cout <<  gripperL->curPosition()[0] << " " << gripperR->curPosition()[0] << endl;
 				if( (gripperL->curPosition()[0] >= 0.5) && (gripperR->curPosition()[0] >= 0.5) )
 				{					
 		    		gripperL->setTargetQ({closeGrippers});
@@ -55,6 +56,19 @@ namespace mc_handover
 			
 		    return false;
 		}
+
+		// void CloseGrippersStep::teardown(mc_control::fsm::Controller& controller)
+		// {
+
+		// 	auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+							
+		// 	cout << "teardown " <<endl;
+
+		// 	ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
+		// 	ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
+
+		// }
+
 
 	} // namespace states
 

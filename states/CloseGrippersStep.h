@@ -18,14 +18,12 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) override {}			
+				void teardown(mc_control::fsm::Controller&) override {};
 
 			private:
 				// Configs
 
 				double closeGrippers =  -0.25;
-				bool hasContacts = false;
-
 								
 		};
 	} // namespace states

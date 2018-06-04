@@ -61,12 +61,12 @@ namespace mc_handover
     //////////////
     void HandoverController::reset(const ControllerResetData & reset_data)
     {   
-        /* Force Sensor */
-        if(initForceSensor){LOG_INFO("ForceSensor enabled")}else{LOG_WARNING("ForceSensor disabled")}
-        /* Compliance Task */
-        if(initComplianceTask){LOG_INFO("ComplianceTask initialized")}else{LOG_WARNING("complianceTask not initialized")}        
-         /* FSM */
-        if(initFSM){LOG_INFO("FSM initialized")}else{LOG_WARNING("FSM not initialized")}
+        // /* Force Sensor */
+        // if(initForceSensor){LOG_INFO("ForceSensor enabled")}else{LOG_WARNING("ForceSensor disabled")}
+        // /* Compliance Task */
+        // if(initComplianceTask){LOG_INFO("ComplianceTask initialized")}else{LOG_WARNING("complianceTask not initialized")}        
+        //  /* FSM */
+        // if(initFSM){LOG_INFO("FSM initialized")}else{LOG_WARNING("FSM not initialized")}
 
 
         mc_control::fsm::Controller::reset(reset_data);
@@ -89,64 +89,64 @@ namespace mc_handover
 
       if(ret)
       {
-        /* Force Sensor*/
-        if(initForceSensor)
-        {        
-          // transform from Vrep force sensor reference system to solver force sensor reference system
-          wrenches["LeftHandForceSensor"] = 
-                    this->robot().forceSensor("LeftHandForceSensor").wrench();
-          wrenchLt = wrenches.at("LeftHandForceSensor");
-          wrenches.at("LeftHandForceSensor").couple() << wrenchLt.couple()[2],wrenchLt.couple()[1],-wrenchLt.couple()[0];
-          wrenches.at("LeftHandForceSensor").force() << wrenchLt.force()[2],wrenchLt.force()[1],-wrenchLt.force()[0];
-          // cout << "left hand "<< wrenchLt << '\n';
+        // /* Force Sensor*/
+        // if(initForceSensor)
+        // {        
+        //   // transform from Vrep force sensor reference system to solver force sensor reference system
+        //   wrenches["LeftHandForceSensor"] = 
+        //             this->robot().forceSensor("LeftHandForceSensor").wrench();
+        //   wrenchLt = wrenches.at("LeftHandForceSensor");
+        //   wrenches.at("LeftHandForceSensor").couple() << wrenchLt.couple()[2],wrenchLt.couple()[1],-wrenchLt.couple()[0];
+        //   wrenches.at("LeftHandForceSensor").force() << wrenchLt.force()[2],wrenchLt.force()[1],-wrenchLt.force()[0];
+        //   // cout << "left hand "<< wrenchLt << '\n';
 
-          wrenches["RightHandForceSensor"] =
-                    this->robot().forceSensor("RightHandForceSensor").wrench();
-          wrenchRt = wrenches.at("RightHandForceSensor");   
-          wrenches.at("RightHandForceSensor").couple() << wrenchRt.couple()[2],wrenchRt.couple()[1],-wrenchRt.couple()[0];
-          wrenches.at("RightHandForceSensor").force() << wrenchRt.force()[2],wrenchRt.force()[1],-wrenchRt.force()[0];
-          // cout <<  "right hand " << wrenchRt.force().eval().norm() << endl;
+        //   wrenches["RightHandForceSensor"] =
+        //             this->robot().forceSensor("RightHandForceSensor").wrench();
+        //   wrenchRt = wrenches.at("RightHandForceSensor");   
+        //   wrenches.at("RightHandForceSensor").couple() << wrenchRt.couple()[2],wrenchRt.couple()[1],-wrenchRt.couple()[0];
+        //   wrenches.at("RightHandForceSensor").force() << wrenchRt.force()[2],wrenchRt.force()[1],-wrenchRt.force()[0];
+        //   // cout <<  "right hand " << wrenchRt.force().eval().norm() << endl;
 
-        }
+        // }
 
 
-         /* Compliance Task*/
-        if(initComplianceTask)
-        {
-          if(relEfTaskR && relEfTaskR->eval().norm() < 1e-1 && relEfTaskR->speed().norm() < 1e-2)
-          {
-            cout << "initiating compliance task" <<  endl;
+        //  /* Compliance Task*/
+        // if(initComplianceTask)
+        // {
+        //   if(relEfTaskR && relEfTaskR->eval().norm() < 1e-1 && relEfTaskR->speed().norm() < 1e-2)
+        //   {
+        //     cout << "initiating compliance task" <<  endl;
 
-            solver().removeTask(relEfTaskR);
-            relEfTaskR->reset();
+        //     solver().removeTask(relEfTaskR);
+        //     relEfTaskR->reset();
 
-            compliTaskR.reset(new mc_handover::HandoverComplianceTask(robots(), robots().robotIndex(), robots().robot().forceSensor("RightHandForceSensor").parentBody(), 0.005, Eigen::Matrix6d::Identity(),5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));
-            compliTaskR->setTargetWrench(sva::ForceVecd(Eigen::Vector3d(0., 0., 0.),Eigen::Vector3d(0., 0., 50.)));
-            compliTaskR->addToSolver(solver());
-          }
+        //     compliTaskR.reset(new mc_handover::HandoverComplianceTask(robots(), robots().robotIndex(), robots().robot().forceSensor("RightHandForceSensor").parentBody(), 0.005, Eigen::Matrix6d::Identity(),5, 1e3, 3, 1, {0.02, 0.005}, {0.2, 0.05}));
+        //     compliTaskR->setTargetWrench(sva::ForceVecd(Eigen::Vector3d(0., 0., 0.),Eigen::Vector3d(0., 0., 50.)));
+        //     compliTaskR->addToSolver(solver());
+        //   }
           
-          if(compliTaskR)
-          {
-            cout << "initialized compliance task" <<  endl;
-            compliTaskR->update();
-            if(compliTaskR->eval().norm() < 25 && compliTaskR->speed().norm() < 0.001)
-            {
-              LOG_SUCCESS("Contact established")
-              compliTaskR->removeFromSolver(solver());
-              compliTaskR->reset();
-              qpsolver->setContacts({
-              mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
-              mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
-              mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
-              mc_rbdyn::Contact(robots(), "LowerBack","AllGround"),
-              mc_rbdyn::Contact(robots(), "RightFingers","AllGround")
-              });              
-            }
-          }
+        //   if(compliTaskR)
+        //   {
+        //     cout << "initialized compliance task" <<  endl;
+        //     compliTaskR->update();
+        //     if(compliTaskR->eval().norm() < 25 && compliTaskR->speed().norm() < 0.001)
+        //     {
+        //       LOG_SUCCESS("Contact established")
+        //       compliTaskR->removeFromSolver(solver());
+        //       compliTaskR->reset();
+        //       qpsolver->setContacts({
+        //       mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
+        //       mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
+        //       mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
+        //       mc_rbdyn::Contact(robots(), "LowerBack","AllGround"),
+        //       mc_rbdyn::Contact(robots(), "RightFingers","AllGround")
+        //       });              
+        //     }
+        //   }
 
-          // cout << compliTaskR->getTargetWrench() << endl;
-          // cout << compliTaskR->eval().norm() << endl;
-        }
+        //   // cout << compliTaskR->getTargetWrench() << endl;
+        //   // cout << compliTaskR->eval().norm() << endl;
+        // }
 
         // gripperControl();
       }
@@ -164,33 +164,33 @@ namespace mc_handover
     // Handover Controller check Gripper control
     //
     //////////////
-    void HandoverController::gripperControl()
-    {
-      cout << "force().eval().norm()  " << wrenches.at("RightHandForceSensor").force().eval().norm() << '\n';
-      if(wrenches.at("RightHandForceSensor").force().eval().norm() > 6){
+    // void HandoverController::gripperControl()
+    // {
+    //   cout << "force().eval().norm()  " << wrenches.at("RightHandForceSensor").force().eval().norm() << '\n';
+    //   if(wrenches.at("RightHandForceSensor").force().eval().norm() > 6){
 
-        if(GripperOpeningMsg){
-          GripperOpeningMsg = false;
-          cout << "opening grippers" << endl;
-        }        
+    //     if(GripperOpeningMsg){
+    //       GripperOpeningMsg = false;
+    //       cout << "opening grippers" << endl;
+    //     }        
 
-        /* setTargetWrench */
-        wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d(0., 0., 0.);
+    //     /* setTargetWrench */
+    //     wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d(0., 0., 0.);
 
-        for(const auto & g : grippers)
-        {
-          g.second->setTargetOpening(1.0);
-        } 
-      }
-      else
-      {
-        cout << "forces not enough to open grippers, pull harder" << endl;
-      }
-        cout <<"right hand force sensor" << wrenches.at("RightHandForceSensor").force().transpose() << endl;
+    //     for(const auto & g : grippers)
+    //     {
+    //       g.second->setTargetOpening(1.0);
+    //     } 
+    //   }
+    //   else
+    //   {
+    //     cout << "forces not enough to open grippers, pull harder" << endl;
+    //   }
+    //     cout <<"right hand force sensor" << wrenches.at("RightHandForceSensor").force().transpose() << endl;
 
-      // cout << wrenches.at("RightHandForceSensor").force() << endl;
-      // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d(0., 0., 0.);
-    }
+    //   // cout << wrenches.at("RightHandForceSensor").force() << endl;
+    //   // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d(0., 0., 0.);
+    // }
 
 
 
@@ -297,6 +297,7 @@ namespace mc_handover
       {
         auto gripper = grippers["r_gripper"].get();
         gripper->setTargetQ({1});
+      
         return true;
       }
       if(token == "closeGripperR")

@@ -37,7 +37,7 @@
 
 
 #define initComplianceTask  0        //1 to initialize complianceTask
-#define initForceSensor     1        //1 to  enable ForceSensor code
+#define initForceSensor     0        //1 to  enable ForceSensor code
 #define initFSM             1        //1 to  initialize FSM
 
 using namespace std;

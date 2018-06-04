@@ -20,11 +20,15 @@ namespace mc_handover
 			cout << "start" << endl;
     		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+    		// try translate_ef(const Eigen::Vector3d & t)
 	        posL << 0.6, 0.35, .3;
 	        getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();	      
 
 	        posR << 0.6, -0.35, .3;
 	        getCurRotR = ctl.relEfTaskR->get_ef_pose().rotation();	        
+		
+			ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+			controller.set_joint_pos("HEAD_JOINT0",  0.4); //+ve to move head down
 		}
 
 		bool ApproachObjectStep::run(mc_control::fsm::Controller & controller)
@@ -34,7 +38,16 @@ namespace mc_handover
 			cout << "run" << endl;
 			cout << "object appproaching pose" << endl;
 		
-			controller.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down	      
+
+			// controller.getPostureTask(ctl.robot().name())->target({{"HEAD_JOINT0",{0.4}}});
+
+			// unsigned int pan_i = ctl.robot().jointIndexByName("HEAD_JOINT0");
+			// unsigned int tilt_i = ctl.robot().jointIndexByName("HEAD_JOINT1");
+			// auto p = ctl.postureTask->posture();
+			// p[pan_i][0] = -0.4;
+			// p[tilt_i][0] = 0.4;
+			// ctl.postureTask->posture(p);
+
         
 	        sva::PTransformd dtrL(getCurRotL, posL);	
 	        ctl.relEfTaskL->set_ef_pose(dtrL);
