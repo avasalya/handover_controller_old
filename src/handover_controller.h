@@ -67,6 +67,7 @@ namespace mc_handover
 
         bool GripperOpeningMsg = true;
         bool onlyOnce = true;
+        bool addGUIonlyOnce = true;
 
         std::shared_ptr<mc_tasks::CoMTask> comTask;
 

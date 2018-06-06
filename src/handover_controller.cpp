@@ -77,7 +77,13 @@ namespace mc_handover
 
         /* gripper control */
         gui()->addElement({"HandoverElements"},
-        
+          
+          mc_rtc::gui::Button("publish_current_wrench", [this]() {  
+            std::cout << "right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+            std::cout << "left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+          }),
+
+
           mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
             read_msg(msg); 
             std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
