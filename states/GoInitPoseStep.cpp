@@ -21,14 +21,6 @@ namespace mc_handover
 
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			ctl.solver().setContacts({
-			mc_rbdyn::Contact(ctl.robots(), "LFullSole", "AllGround"),
-			mc_rbdyn::Contact(ctl.robots(), "RFullSole", "AllGround"),
-			mc_rbdyn::Contact(ctl.robots(), "Butthock", "AllGround"),
-			mc_rbdyn::Contact(ctl.robots(), "LowerBack","AllGround")              
-			});              
-
-
 			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 2.0,1e3));
 			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
 

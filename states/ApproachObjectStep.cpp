@@ -35,10 +35,6 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			cout << "run" << endl;
-			cout << "object appproaching pose" << endl;
-		
-
 			// controller.getPostureTask(ctl.robot().name())->target({{"HEAD_JOINT0",{0.4}}});
 
 			// unsigned int pan_i = ctl.robot().jointIndexByName("HEAD_JOINT0");

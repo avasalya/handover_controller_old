@@ -18,15 +18,9 @@ namespace mc_handover
 
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+      ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 			ctl.addContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 			ctl.addContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
-
-			ctl.solver().setContacts({
-              mc_rbdyn::Contact(ctl.robots(), "LFullSole", "AllGround"),
-              mc_rbdyn::Contact(ctl.robots(), "RFullSole", "AllGround"),
-              mc_rbdyn::Contact(ctl.robots(), "Butthock", "AllGround"),
-              mc_rbdyn::Contact(ctl.robots(), "LowerBack","AllGround")
-              });
 		}
 
 		bool CloseGrippersStep::run(mc_control::fsm::Controller & controller)

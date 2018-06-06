@@ -176,13 +176,6 @@ namespace mc_handover
        if (onlyOnce)
         {
            onlyOnce = false;
-           qpsolver->setContacts({
-              mc_rbdyn::Contact(robots(), "LFullSole", "AllGround"),
-              mc_rbdyn::Contact(robots(), "RFullSole", "AllGround"),
-              mc_rbdyn::Contact(robots(), "Butthock", "AllGround"),
-              mc_rbdyn::Contact(robots(), "LowerBack","AllGround")              
-              });              
-
             relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 5.0,1e3));
             oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
 

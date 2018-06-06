@@ -41,7 +41,7 @@ namespace mc_handover
 
 				/*add com task -- position it lower and bit backward */
 				comTask = std::make_shared<mc_tasks::CoMTask>
-												(ctl.robots(), ctl.robots().robotIndex(), 2.0, 100.);
+												(ctl.robots(), ctl.robots().robotIndex(), 2.0, 10000.);
 				ctl.solver().addTask(comTask);
 
 				// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));    		
