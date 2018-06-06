@@ -35,17 +35,6 @@ namespace mc_handover
 			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 5.0,1e3));
 			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
 			
-			// /* gripper control */
-			// ctl.gui()->addElement(
-			// {"HandoverElements"},
-			// mc_rtc::gui::Button("open_Grippers", [&ctl]() { std::string msg = "openGrippers"; 
-			// 	ctl.read_msg(msg); }),
-			// mc_rtc::gui::Button("close_Grippers",[&ctl]() { std::string msg = "closeGrippers"; ctl.read_msg(msg); }),
-			// mc_rtc::gui::Button("open_Right_Gripper",[&ctl]() { std::string msg = "openGripperR"; ctl.read_msg(msg); }),
-			// mc_rtc::gui::Button("close_Right_Gripper",[&ctl]() { std::string msg = "closeGripperR"; ctl.read_msg(msg); }),
-			// mc_rtc::gui::Button("open_Left_Gripper",[&ctl]() { std::string msg = "openGripperL"; ctl.read_msg(msg); }),
-			// mc_rtc::gui::Button("close_Left_Gripper",[&ctl]() { std::string msg = "closeGripperL"; ctl.read_msg(msg); })
-			// );
 		}
 
 		bool GoInitPoseStep::run(mc_control::fsm::Controller & controller)
@@ -88,3 +77,18 @@ namespace mc_handover
 			// 	ctl.solver().removeTask(ctl.oriTaskL);
 			// 	ctl.solver().removeTask(ctl.oriTaskR);				
 			// }	
+			
+
+
+
+			// /* gripper control */
+			// ctl.gui()->addElement(
+			// {"HandoverElements"},
+			// mc_rtc::gui::Button("open_Grippers", [&ctl]() { std::string msg = "openGrippers"; 
+			// 	ctl.read_msg(msg); }),
+			// mc_rtc::gui::Button("close_Grippers",[&ctl]() { std::string msg = "closeGrippers"; ctl.read_msg(msg); }),
+			// mc_rtc::gui::Button("open_Right_Gripper",[&ctl]() { std::string msg = "openGripperR"; ctl.read_msg(msg); }),
+			// mc_rtc::gui::Button("close_Right_Gripper",[&ctl]() { std::string msg = "closeGripperR"; ctl.read_msg(msg); }),
+			// mc_rtc::gui::Button("open_Left_Gripper",[&ctl]() { std::string msg = "openGripperL"; ctl.read_msg(msg); }),
+			// mc_rtc::gui::Button("close_Left_Gripper",[&ctl]() { std::string msg = "closeGripperL"; ctl.read_msg(msg); })
+			// );

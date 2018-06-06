@@ -18,16 +18,23 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) override;
+				void teardown(mc_control::fsm::Controller&) override {};
 
-				std::shared_ptr<mc_rbdyn::Contact> contact;
+				Eigen::MatrixXd handForces  = Eigen::MatrixXd::Zero(4,3);
+				Eigen::MatrixXd handTorques = Eigen::MatrixXd::Zero(4,3);
 
 			private:
 
 				//configs 
-				double ForceThresh_eval_;
-				double ForceThresh_speed_;
-								
+				Eigen::Vector3d leftHandForcesTh, rightHandForcesTh;
+				Eigen::Vector3d leftHandForcesDir, rightHandForcesDir;
+
+				Eigen::Vector3d leftHandTorquesTh, rightHandTorquesTh;
+				Eigen::Vector3d leftHandTorquesDir, rightHandTorquesDir;
+
+				double openGrippers{0.5};
+				double CloseGrippers{0.2};
+
 		};
 	} // namespace states
 } // namespace mc_handover

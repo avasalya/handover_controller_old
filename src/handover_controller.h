@@ -89,7 +89,11 @@ namespace mc_handover
     
         std::map<std::string, mc_rbdyn::SurfacePtr> surf;
     
+    private:
 
+        double openG{0.5};
+        double closeG{0.2};
+        
         sva::PTransformd leftHandPosW;
         sva::MotionVecd leftHandVelW;
         sva::PTransformd rightHandPosW;

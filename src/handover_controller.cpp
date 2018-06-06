@@ -141,8 +141,8 @@ namespace mc_handover
           // cout <<  "right hand " << wrenchRt.force().eval().norm() << endl;
 
           /* set wrench manually */
-          // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d (4,5,6);
-
+          // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d (1,1,5);
+          // wrenches.at("LeftHandForceSensor").force()  = Eigen::Vector3d (1,1,5);
         }
 
 
@@ -332,14 +332,14 @@ namespace mc_handover
       if(token == "openGripperR")
       {
         auto gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({1});
+        gripper->setTargetQ({openG});
       
         return true;
       }
       if(token == "closeGripperR")
       {
         auto gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({-0.25});
+        gripper->setTargetQ({closeG});
         return true;
       }
 
@@ -348,13 +348,13 @@ namespace mc_handover
       if(token == "openGripperL")
       {
         auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({1});
+        gripper->setTargetQ({openG});
         return true;
       }
       if(token == "closeGripperL")
       {
         auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({-0.25});
+        gripper->setTargetQ({closeG});
         return true;
       }
 
@@ -363,17 +363,17 @@ namespace mc_handover
       if(token == "openGrippers")
       {
         auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({1});
+        gripper->setTargetQ({openG});
         gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({1});
+        gripper->setTargetQ({openG});
         return true;
       }
       if(token == "closeGrippers")
       {
         auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({-0.25});
+        gripper->setTargetQ({closeG});
         gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({-0.25});
+        gripper->setTargetQ({closeG});
         return true;
       }
 
@@ -425,6 +425,11 @@ namespace mc_handover
     }
 
    
+   // HandoverController::~HandoverController()
+   // {
+   //    /* reset tasks here */
+   // }
+
 } //namespace mc_control
 
 CONTROLLER_CONSTRUCTOR("Handover", mc_handover::HandoverController)

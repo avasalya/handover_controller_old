@@ -37,24 +37,30 @@ namespace mc_handover
 				auto  gripperL = ctl.grippers["l_gripper"].get();
 				auto  gripperR = ctl.grippers["r_gripper"].get();
 				
+				gripperL->setTargetQ({closeGrippers});
+		    	gripperR->setTargetQ({closeGrippers});
+				cout <<"contact with the object established" <<endl;
+	    		output("OK");
+	    		return true;
+	    		
 				/* return true if contact with "object" established */
-				if( (gripperL->curPosition()[0] >= 0.5) && (gripperR->curPosition()[0] >= 0.5) )
-				{					
-		    		gripperL->setTargetQ({closeGrippers});
-		    		gripperR->setTargetQ({closeGrippers});
+				// if( (gripperL->curPosition()[0] >= 0.5) && (gripperR->curPosition()[0] >= 0.5) )
+				// {					
+		  //   		gripperL->setTargetQ({closeGrippers});
+		  //   		gripperR->setTargetQ({closeGrippers});
 
-		    		cout <<"contact with the object established" <<endl;
-		    		output("OK");
-		    		return true;
-				}
-				else
-				{
-					cout <<"gipper not closed, trying again" <<endl;
-		    		output("Repeat");
-					return false;
-				}			
+		  //   		cout <<"contact with the object established" <<endl;
+		  //   		output("OK");
+		  //   		return true;
+				// }
+				// else
+				// {
+				// 	cout <<"gipper not closed, trying again" <<endl;
+		  //   		output("Repeat");
+				// 	return false;
+				// }			
 			
-		    return false;
+		    // return false;
 		}
 
 		// void CloseGrippersStep::teardown(mc_control::fsm::Controller& controller)
