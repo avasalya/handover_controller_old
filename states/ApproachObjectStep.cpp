@@ -21,10 +21,10 @@ namespace mc_handover
     		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
     		// try translate_ef(const Eigen::Vector3d & t)
-	        posL << 0.6, 0.30, .3;
+	        posL << 0.45, 0.30, .3;
 	        getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();	      
 
-	        posR << 0.6, -0.30, .3;
+	        posR << 0.45, -0.30, .3;
 	        getCurRotR = ctl.relEfTaskR->get_ef_pose().rotation();	        
 		
 			ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
