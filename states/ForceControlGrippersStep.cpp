@@ -108,7 +108,7 @@ namespace mc_handover
 			
 			
 			if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0]) > leftHandForcesTh[0]	
-				&& fabs(ctl.wrenches.at("rightHandForceSensor").force()[0]) > rightHandForcesTh[0])
+				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) > rightHandForcesTh[0])
 			{
 				auto  gripper = ctl.grippers["l_gripper"].get();
 				gripper->setTargetQ({openGrippers});
@@ -136,7 +136,7 @@ namespace mc_handover
 			}
 
 			else if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[2]) > leftHandForcesTh[2]	
-				&& fabs(ctl.wrenches.at("rightHandForceSensor").force()[2] > rightHandForcesTh[2]))
+				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[2] > rightHandForcesTh[2]))
 			{
 				auto  gripper = ctl.grippers["l_gripper"].get();
 				gripper->setTargetQ({openGrippers});
@@ -152,7 +152,7 @@ namespace mc_handover
 
 
 			else if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0]) > leftHandForcesTh[0]	
-				&& fabs(ctl.wrenches.at("rightHandForceSensor").force()[0]) < rightHandForcesTh[0])
+				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) < rightHandForcesTh[0])
 			{
 				auto  gripper = ctl.grippers["l_gripper"].get();
 				gripper->setTargetQ({openGrippers});
@@ -180,7 +180,7 @@ namespace mc_handover
 			}
 
 			else if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[2]) > leftHandForcesTh[2]	
-				&& fabs(ctl.wrenches.at("rightHandForceSensor").force()[2] < rightHandForcesTh[2]))
+				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[2] < rightHandForcesTh[2]))
 			{
 				auto  gripper = ctl.grippers["l_gripper"].get();
 				gripper->setTargetQ({openGrippers});
@@ -197,7 +197,7 @@ namespace mc_handover
 
 
 			else if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0]) < leftHandForcesTh[0]	
-				&& fabs(ctl.wrenches.at("rightHandForceSensor").force()[0]) > rightHandForcesTh[0])
+				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) > rightHandForcesTh[0])
 			{
 				auto  gripper = ctl.grippers["l_gripper"].get();
 				gripper->setTargetQ({openGrippers});
@@ -225,7 +225,7 @@ namespace mc_handover
 			}
 
 			else if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[2]) < leftHandForcesTh[2]	
-				&& fabs(ctl.wrenches.at("rightHandForceSensor").force()[2] > rightHandForcesTh[2]))
+				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[2] > rightHandForcesTh[2]))
 			{
 				auto  gripper = ctl.grippers["l_gripper"].get();
 				gripper->setTargetQ({openGrippers});
