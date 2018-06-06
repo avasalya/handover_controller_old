@@ -69,8 +69,6 @@ namespace mc_handover
         bool onlyOnce = true;
         bool addGUIonlyOnce = true;
 
-        std::shared_ptr<mc_tasks::CoMTask> comTask;
-
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
         

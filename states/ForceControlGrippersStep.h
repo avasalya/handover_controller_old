@@ -24,7 +24,7 @@ namespace mc_handover
 				Eigen::MatrixXd handTorques = Eigen::MatrixXd::Zero(4,3);
 
 			private:
-
+				
 				//configs 
 				Eigen::Vector3d leftHandForcesTh, rightHandForcesTh;
 				Eigen::Vector3d leftHandForcesDir, rightHandForcesDir;
@@ -34,6 +34,10 @@ namespace mc_handover
 
 				double openGrippers{0.5};
 				double CloseGrippers{0.2};
+
+				std::shared_ptr<mc_tasks::CoMTask> comTask;
+				Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
+				Eigen::Vector3d move, target;
 
 		};
 	} // namespace states

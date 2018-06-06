@@ -63,19 +63,6 @@ namespace mc_handover
 		    // return false;
 		}
 
-		// void CloseGrippersStep::teardown(mc_control::fsm::Controller& controller)
-		// {
-
-		// 	auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-							
-		// 	cout << "teardown " <<endl;
-
-		// 	ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
-		// 	ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
-
-		// }
-
-
 	} // namespace states
 
 } // namespace mc_torquing_controller

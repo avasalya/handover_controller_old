@@ -26,7 +26,6 @@ namespace mc_handover
 		}
 		void ForceControlGrippersStep::start(mc_control::fsm::Controller & controller)
 		{	
-
 			cout << "start -- ForceControlGrippersStep " << endl;
     		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
@@ -40,9 +39,35 @@ namespace mc_handover
 			{			
 				ctl.addGUIonlyOnce = false;
 
-				/* handover gui elements */ 				
-				ctl.gui()->addElement({"HandoverElements"},
+				/*add com task -- position it lower and bit backward */
+				comTask = std::make_shared<mc_tasks::CoMTask>
+												(ctl.robots(), ctl.robots().robotIndex(), 2.0, 100.);
+				ctl.solver().addTask(comTask);
+
+				// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));    		
 			
+				/* handover gui elements */ 			
+				ctl.gui()->addElement({"HandoverElements"},
+
+
+					mc_rtc::gui::NumberInput("move COM X",
+											[this]() { return move[0]; },
+											[this](double comX){ move[0] = comX; 
+											cout << " com X set to : " << initialCom[0] + move[0] << endl;}),
+
+					mc_rtc::gui::NumberInput("move COM Y",
+											[this]() { return move[1]; },
+											[this](double comY){ move[1] = comY; 
+											cout << " com Y set to : " << initialCom[1] + move[1] << endl;}),
+
+					mc_rtc::gui::NumberInput("move COM Z",
+											[this]() { return move[2]; },
+											[this](double comZ){ move[2] = comZ; 
+											cout << " com Z set to : " << initialCom[2] + move[2] << endl;}),
+
+
+
+
 					mc_rtc::gui::NumberInput("leftHand_ForceX_Th",
 											[this]() { return leftHandForcesTh[0]; },
 											[this](double lFx){ leftHandForcesTh[0] = lFx; 
@@ -73,10 +98,10 @@ namespace mc_handover
 											[this]() { return rightHandForcesTh[2]; },
 											[this](double rFz){ rightHandForcesTh[2] = rFz;
 											cout << "rFz set to : " << rightHandForcesTh[2] << endl;}),
-	
-	
-	
-					
+
+
+
+
 					mc_rtc::gui::NumberInput("leftHand_TorqueX_Th",
 											[this]() { return leftHandTorquesTh[0]; },
 											[this](double lTx){ leftHandTorquesTh[0] = lTx;
@@ -110,14 +135,26 @@ namespace mc_handover
 			
 				);
 			}
+			
+			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
+			
+    		cout << "initial_com X " << endl << initialCom[0] << endl;
+    		cout << "initial_com Y " << endl << initialCom[1] << endl;
+    		cout << "initial_com Z " << endl << initialCom[2] << endl;
 		}
+
+
+
 
 		bool ForceControlGrippersStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+						
+    		
+    		target = initialCom + move;
+    		comTask->com(target);
 			
-			
-			
+
 			if(fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0]) > leftHandForcesTh[0]	
 				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) > rightHandForcesTh[0])
 			{
@@ -159,6 +196,7 @@ namespace mc_handover
 				cout << "left hand wrenches " << ctl.wrenches.at("LeftHandForceSensor") <<  endl;
 				cout << "right hand wrenches " << ctl.wrenches.at("RightHandForceSensor") <<  endl;
 			}
+
 
 
 
@@ -254,7 +292,11 @@ namespace mc_handover
 			output("Repeat");
 			if(leftHandForcesTh[0] == 0)
 			{	
-				return true;				
+				// cout << "final_com X " << endl << target[0] << endl;
+				// cout << "final_com Y " << endl << target[1] << endl;
+				// cout << "final_com Z " << endl << target[2] << endl;
+
+				return true;
 			}
 	    	return false;
 		}
@@ -262,86 +304,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_torquing_controller
-
-
-
-
-
-// mc_rtc::gui::Button("open_Grippers", [&ctl]() { std::string msg = "openGrippers"; ctl.read_msg(msg); 
-// std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-// std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-// }),
-
-// mc_rtc::gui::Button("close_Grippers",[&ctl]() { std::string msg = "closeGrippers"; ctl.read_msg(msg); 
-// std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-// std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-// }),
-
-// mc_rtc::gui::Button("open_Right_Gripper",[&ctl]() { std::string msg = "openGripperR"; ctl.read_msg(msg); 
-// std::cout << "at right gripper opening: right hand wrench:: Torques, Forces " << ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-// }),
-
-// mc_rtc::gui::Button("close_Right_Gripper",[&ctl]() { std::string msg = "closeGripperR"; ctl.read_msg(msg); 
-// std::cout << "at right gripper closing: right hand wrench:: Torques, Forces " << ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;          
-// }),
-
-// mc_rtc::gui::Button("open_Left_Gripper",[&ctl]() { std::string msg = "openGripperL"; ctl.read_msg(msg); 
-// std::cout << "at left gripper opening: left hand wrench:: Torques, Forces " << ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-// }),
-
-// mc_rtc::gui::Button("close_Left_Gripper",[&ctl]() { std::string msg = "closeGripperL"; ctl.read_msg(msg); 
-// std::cout << "at left gripper closing: left hand wrench:: Torques, Forces " << ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-// }),
-
-
-
-
-
-
-
-
-		
-			// ctl.wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d (4,5,6);
-
-			// ctl.wrenches.at("LeftHandForceSensor").force() = Eigen::Vector3d (1,2,3);
-
-
-			// ctl.wrenches["RightHandForceSensor"] =
-			//         ctl.robots().robot().forceSensor("RightHandForceSensor").wrench();          
-			// ctl.wrenchRt = ctl.wrenches.at("RightHandForceSensor");
-			// ctl.wrenches.at("RightHandForceSensor").couple() << ctl.wrenchRt.couple()[2], ctl.wrenchRt.couple()[1], -ctl.wrenchRt.couple()[0];
-			// ctl.wrenches.at("RightHandForceSensor").force() << ctl.wrenchRt.force()[2], ctl.wrenchRt.force()[1], -ctl.wrenchRt.force()[0];
-			
-			// cout <<"right hand force sensor" << ctl.wrenches.at("RightHandForceSensor").force().transpose() << endl;
-
-
-
-			// ctl.wrenches["LeftHandForceSensor"] =
-			//         ctl.robots().robot().forceSensor("LeftHandForceSensor").wrench();          
-			// ctl.wrenchRt = ctl.wrenches.at("LeftHandForceSensor");
-			// ctl.wrenches.at("LeftHandForceSensor").couple() << ctl.wrenchRt.couple()[2], ctl.wrenchRt.couple()[1], -ctl.wrenchRt.couple()[0];
-			// ctl.wrenches.at("LeftHandForceSensor").force() << ctl.wrenchRt.force()[2], ctl.wrenchRt.force()[1], -ctl.wrenchRt.force()[0];
-
-			// cout <<"left hand force sensor" << ctl.wrenches.at("LeftHandForceSensor").force().transpose() << endl;
-
-
-
-
-
-
-
-
-
-
-
-
-		// void ForceControlGrippersStep::teardown(mc_control::fsm::Controller & controller)
-		// {
-		// 	auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-		
-		// 	cout << "teardown" << endl;
-
-		// 	// ctl.gui()->removeElement({"HandoverElements"}, "openGrippers");
-		// 	// ctl.gui()->removeElement({"HandoverElements"}, "closeGrippers");
-			
-		// }
