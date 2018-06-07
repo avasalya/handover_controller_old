@@ -13,19 +13,19 @@ namespace mc_handover
 		void OpenGrippersStep::start(mc_control::fsm::Controller & controller)
 		{	
 			cout << "start -- opening grippers " <<endl;
-    		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-    		auto  gripper = ctl.grippers["l_gripper"].get();
-    		gripper->setTargetQ({openGrippers});
+			auto  gripper = ctl.grippers["l_gripper"].get();
+			gripper->setTargetQ({openGrippers});
 
-    		gripper = ctl.grippers["r_gripper"].get();
-    		gripper->setTargetQ({openGrippers});
+			gripper = ctl.grippers["r_gripper"].get();
+			gripper->setTargetQ({openGrippers});
 		}
 
 		// bool OpenGrippersStep::run(mc_control::fsm::Controller & controller)
-		// {	
+		// {
 		// 	cout << "run " <<endl;
-  //   		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+		// auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 		
 		// 	// auto  gripperL = ctl.grippers["l_gripper"].get();
 		// 	// auto  gripperR = ctl.grippers["r_gripper"].get();

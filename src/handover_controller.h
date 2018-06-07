@@ -36,10 +36,6 @@
 #include "handover_complianceTask.h"
 
 
-#define initComplianceTask  0        //1 to initialize complianceTask
-#define initForceSensor     1        //1 to  enable ForceSensor code
-#define initFSM             1        //1 to  initialize FSM
-
 using namespace std;
 using namespace mc_control;
 
@@ -65,8 +61,8 @@ namespace mc_handover
         
         void gripperControl();
 
-        bool GripperOpeningMsg = true;
-        bool onlyOnce = true;
+        // bool GripperOpeningMsg = true;
+        
         bool addGUIonlyOnce = true;
 
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;

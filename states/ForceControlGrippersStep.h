@@ -26,11 +26,8 @@ namespace mc_handover
 			private:
 				
 				//configs 
-				Eigen::Vector3d leftHandForcesTh, rightHandForcesTh;
-				Eigen::Vector3d leftHandForcesDir, rightHandForcesDir;
-
-				Eigen::Vector3d leftHandTorquesTh, rightHandTorquesTh;
-				Eigen::Vector3d leftHandTorquesDir, rightHandTorquesDir;
+				Eigen::Vector6d leftHandWrenchTh, rightHandWrenchTh;
+				Eigen::Vector6d leftHandWrenchDir, rightHandWrenchDir;
 
 				double openGrippers{0.5};
 				double CloseGrippers{0.2};

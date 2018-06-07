@@ -26,6 +26,20 @@ namespace mc_handover
 
 			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 2.0,1e3));
 			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
+
+			/* CHEST */
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+
+
+			Eigen::Matrix3d ori; 
+			ori = chestOriTask->orientation();
+			cout <<"CHEST_LINK1 orientation\n"<< ori << endl;
+
+			// Eigen::VectorXd dimW(3);
+			// dimW << 1., 1., 1.;
+			// chestPosTask->dimWeight(dimW);
+
 			
 		}
 
@@ -34,32 +48,38 @@ namespace mc_handover
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
 			cout << "run" << endl;
-	        cout << "moving to initial pose" <<endl;
-		
+			cout << "moving to initial pose" <<endl;
+
 			controller.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down	      
 
-	        BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
+			BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
-	        initPosL <<  0.30, 0.35, 0.3;      
-	        ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
+			initPosL <<  0.30, 0.35, 0.3;      
+			ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
 
-	        initPosR <<  0.30, -0.35, 0.3;
-	        ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
-	        
-	        			
-	        ctl.solver().addTask(ctl.relEfTaskL);
-	        ctl.solver().addTask(ctl.relEfTaskR);
-		
-	        output("OK");
-	        
-		    return true;
+			initPosR <<  0.30, -0.35, 0.3;
+			ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
+
+
+			ctl.solver().addTask(ctl.relEfTaskL);
+			ctl.solver().addTask(ctl.relEfTaskR);
+
+			ctl.solver().addTask(chestPosTask);
+			ctl.solver().addTask(chestOriTask);
+
+			output("OK");
+
+			return true;
 		}
 
 	} // namespace states
 
 } // namespace mc_torquing_controller
 
-		// if(ctl.relEfTaskL->eval().norm() < threshold_eval_ &&
+
+
+
+			// if(ctl.relEfTaskL->eval().norm() < threshold_eval_ &&
 			//  	ctl.relEfTaskR->eval().norm() < threshold_eval_ &&
 			// 	ctl.relEfTaskL->speed().norm() < threshold_speed_ &&
 			// 	ctl.relEfTaskR->speed().norm() < threshold_speed_)

@@ -22,9 +22,8 @@ namespace mc_handover
 
 			private:
 				// Configs
-
 				double closeGrippers{0.2};
-								
+
 		};
 	} // namespace states
 } // namespace mc_handover

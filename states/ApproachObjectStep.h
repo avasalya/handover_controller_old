@@ -29,7 +29,7 @@ namespace mc_handover
 				double weight_;
 
 				Eigen::Vector3d posL, posR;
-				Eigen::Matrix3d getCurRotL, getCurRotR;				
+				Eigen::Matrix3d getCurRotL, getCurRotR;
 
 		};
 	} // namespace states

@@ -19,13 +19,13 @@ namespace mc_handover
 				bool run(mc_control::fsm::Controller&) override {
 					output("OK");
 					return true;
-				}				
+				}
 
 				void teardown(mc_control::fsm::Controller&) override {}
 
 			private:
 				// Configs
-				double openGrippers{0.5};				
+				double openGrippers{0.5};
 
 
 		};

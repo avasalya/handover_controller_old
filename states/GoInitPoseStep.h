@@ -32,7 +32,12 @@ namespace mc_handover
 				double weight_;
 
 				Eigen::Vector3d initPosR, initPosL;
-	        	sva::PTransformd BodyPosW;
+				sva::PTransformd BodyPosW;
+
+				std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
+				std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
+
+
 
 		};
 	} // namespace states

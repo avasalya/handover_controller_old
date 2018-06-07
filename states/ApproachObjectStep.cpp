@@ -15,45 +15,35 @@ namespace mc_handover
 			weight_ = config("weight", 1500.);
 		}
 		void ApproachObjectStep::start(mc_control::fsm::Controller & controller)
-		{	
+		{	 
 
 			cout << "start" << endl;
-    		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-    		// try translate_ef(const Eigen::Vector3d & t)
-	        posL << 0.45, 0.30, .3;
-	        getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();	      
+			// try translate_ef(const Eigen::Vector3d & t)
+			posL << 0.45, 0.30, .3;
+			getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();
 
-	        posR << 0.45, -0.30, .3;
-	        getCurRotR = ctl.relEfTaskR->get_ef_pose().rotation();	        
-		
-			ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
-			controller.set_joint_pos("HEAD_JOINT0",  0.4); //+ve to move head down
+			posR << 0.45, -0.30, .3;
+			getCurRotR = ctl.relEfTaskR->get_ef_pose().rotation();
+
+			// ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+			// controller.set_joint_pos("HEAD_JOINT0",  0.4); //+ve to move head down
 		}
 
 		bool ApproachObjectStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			// controller.getPostureTask(ctl.robot().name())->target({{"HEAD_JOINT0",{0.4}}});
+			sva::PTransformd dtrL(getCurRotL, posL);
+			ctl.relEfTaskL->set_ef_pose(dtrL);
 
-			// unsigned int pan_i = ctl.robot().jointIndexByName("HEAD_JOINT0");
-			// unsigned int tilt_i = ctl.robot().jointIndexByName("HEAD_JOINT1");
-			// auto p = ctl.postureTask->posture();
-			// p[pan_i][0] = -0.4;
-			// p[tilt_i][0] = 0.4;
-			// ctl.postureTask->posture(p);
+			sva::PTransformd dtrR(getCurRotR, posR);
+			ctl.relEfTaskR->set_ef_pose(dtrR);
+ 
+			output("OK");
 
-        
-	        sva::PTransformd dtrL(getCurRotL, posL);	
-	        ctl.relEfTaskL->set_ef_pose(dtrL);
-	        
-	        sva::PTransformd dtrR(getCurRotR, posR);
-	        ctl.relEfTaskR->set_ef_pose(dtrR);
-	
-	        output("OK");	       
-
-		    return true;
+			return true;
 		}
 
 
@@ -63,6 +53,15 @@ namespace mc_handover
 } // namespace mc_torquing_controller
 		
 
+
+			// controller.getPostureTask(ctl.robot().name())->target({{"HEAD_JOINT0",{0.4}}});
+
+			// unsigned int pan_i = ctl.robot().jointIndexByName("HEAD_JOINT0");
+			// unsigned int tilt_i = ctl.robot().jointIndexByName("HEAD_JOINT1");
+			// auto p = ctl.postureTask->posture();
+			// p[pan_i][0] = -0.4;
+			// p[tilt_i][0] = 0.4;
+			// ctl.postureTask->posture(p);
 
 
 

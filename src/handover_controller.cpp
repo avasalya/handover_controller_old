@@ -61,14 +61,6 @@ namespace mc_handover
     //////////////
     void HandoverController::reset(const ControllerResetData & reset_data)
     {   
-        /* Force Sensor */
-        if(initForceSensor){LOG_INFO("ForceSensor enabled")}else{LOG_WARNING("ForceSensor disabled")}
-        /* Compliance Task */
-        if(initComplianceTask){LOG_INFO("ComplianceTask initialized")}else{LOG_WARNING("complianceTask not initialized")}        
-         /* FSM */
-        if(initFSM){LOG_INFO("FSM initialized")}else{LOG_WARNING("FSM not initialized")}
-
-
         mc_control::fsm::Controller::reset(reset_data);
 
         auto q = reset_data.q;
@@ -128,27 +120,30 @@ namespace mc_handover
       if(ret)
       {
         /* Force Sensor*/
-        if(initForceSensor)
-        {        
           // transform from Vrep force sensor reference system to solver force sensor reference system
           wrenches["LeftHandForceSensor"] = 
-                    this->robot().forceSensor("LeftHandForceSensor").wrench();
+                    this->robot().forceSensor("LeftHandForceSensor").removeGravity(this->robot());
+          // cout << "left hand "<< wrenches["LeftHandForceSensor"] << '\n';
+
           // wrenchLt = wrenches.at("LeftHandForceSensor");
           // wrenches.at("LeftHandForceSensor").couple() << wrenchLt.couple()[2],wrenchLt.couple()[1],-wrenchLt.couple()[0];
           // wrenches.at("LeftHandForceSensor").force() << wrenchLt.force()[2],wrenchLt.force()[1],-wrenchLt.force()[0];
           // cout << "left hand "<< wrenchLt << '\n';
 
+
           wrenches["RightHandForceSensor"] =
-                    this->robot().forceSensor("RightHandForceSensor").wrench();
+                    this->robot().forceSensor("RightHandForceSensor").removeGravity(this->robot());
+          // cout << "right hand "<< wrenches["RightHandForceSensor"] << '\n';
+
           // wrenchRt = wrenches.at("RightHandForceSensor");   
           // wrenches.at("RightHandForceSensor").couple() << wrenchRt.couple()[2],wrenchRt.couple()[1],-wrenchRt.couple()[0];
           // wrenches.at("RightHandForceSensor").force() << wrenchRt.force()[2],wrenchRt.force()[1],-wrenchRt.force()[0];
           // cout <<  "right hand " << wrenchRt.force().eval().norm() << endl;
 
+
           /* set wrench manually */
-          // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d (1,1,5);
-          // wrenches.at("LeftHandForceSensor").force()  = Eigen::Vector3d (1,1,5);
-        }
+          // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d::Random()*10;
+          // wrenches.at("LeftHandForceSensor").force()  = Eigen::Vector3d::Random()*10;
       }
 
       return ret;
@@ -172,17 +167,6 @@ namespace mc_handover
 
       if(token == "step1")
       {
-
-       if (onlyOnce)
-        {
-           onlyOnce = false;
-            relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", robots(), robots().robotIndex(), "", 5.0,1e3));
-            oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
-
-            relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", robots(), robots().robotIndex(), "", 5.0,1e3));
-            oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", robots(), robots().robotIndex(),3.0,1e2));
-          }
-
 
         MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
         Eigen::Vector3d initPosR, initPosL;
