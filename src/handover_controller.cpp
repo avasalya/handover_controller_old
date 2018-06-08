@@ -113,30 +113,10 @@ namespace mc_handover
       if(ret)
       {
         /* Force Sensor*/
-          // transform from Vrep force sensor reference system to solver force sensor reference system
           wrenches["LeftHandForceSensor"] = 
                     this->robot().forceSensor("LeftHandForceSensor").removeGravity(this->robot());
-          // cout << "left hand "<< wrenches["LeftHandForceSensor"] << '\n';
-
-          // wrenchLt = wrenches.at("LeftHandForceSensor");
-          // wrenches.at("LeftHandForceSensor").couple() << wrenchLt.couple()[2],wrenchLt.couple()[1],-wrenchLt.couple()[0];
-          // wrenches.at("LeftHandForceSensor").force() << wrenchLt.force()[2],wrenchLt.force()[1],-wrenchLt.force()[0];
-          // cout << "left hand "<< wrenchLt << '\n';
-
-
           wrenches["RightHandForceSensor"] =
                     this->robot().forceSensor("RightHandForceSensor").removeGravity(this->robot());
-          // cout << "right hand "<< wrenches["RightHandForceSensor"] << '\n';
-
-          // wrenchRt = wrenches.at("RightHandForceSensor");   
-          // wrenches.at("RightHandForceSensor").couple() << wrenchRt.couple()[2],wrenchRt.couple()[1],-wrenchRt.couple()[0];
-          // wrenches.at("RightHandForceSensor").force() << wrenchRt.force()[2],wrenchRt.force()[1],-wrenchRt.force()[0];
-          // cout <<  "right hand " << wrenchRt.force().eval().norm() << endl;
-
-
-          /* set wrench manually */
-          // wrenches.at("RightHandForceSensor").force() = Eigen::Vector3d::Random()*10;
-          // wrenches.at("LeftHandForceSensor").force()  = Eigen::Vector3d::Random()*10;
       }
 
       return ret;
