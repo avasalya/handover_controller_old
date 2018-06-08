@@ -28,6 +28,11 @@ namespace mc_handover
 				ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
 				}),
 
+				// mc_rtc::gui::NumberSlider("move COM pos",
+				// 	[this](){ return move[0]; },
+				// 	[this](double v) { move[0] = v; },
+				// 	-10.0, 10.0),
+
 				mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
 					[this]() { return move; },
 					[this](const Eigen::Vector3d v) { move = v;
@@ -64,8 +69,8 @@ namespace mc_handover
 			target = initialCom + move;
 			comTask->com(target);
 
-    		leftHandWrenchTh << handsWrenchTh[0], handsWrenchTh[1], handsWrenchTh[2];
-    		rightHandWrenchTh << handsWrenchTh[6], handsWrenchTh[7], handsWrenchTh[8];
+    		leftHandWrenchTh << handsWrenchTh[0], handsWrenchTh[1], handsWrenchTh[2], handsWrenchTh[3], handsWrenchTh[4], handsWrenchTh[5];
+    		rightHandWrenchTh << handsWrenchTh[6], handsWrenchTh[7], handsWrenchTh[8], handsWrenchTh[9], handsWrenchTh[10], handsWrenchTh[11];
 
 			if(ctl.runOnce
 				&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0]) > leftHandWrenchTh[0]	
