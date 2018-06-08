@@ -58,12 +58,6 @@ namespace mc_handover
 
         virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
-        
-        void gripperControl();
-
-        // bool GripperOpeningMsg = true;
-        
-        bool addGUIonlyOnce = true;
 
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
         std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
@@ -76,13 +70,11 @@ namespace mc_handover
 
         std::map<std::string, sva::ForceVecd> wrenches;
         sva::ForceVecd wrenchLt, wrenchRt;
-        
-        // std::shared_ptr<mc_rbdyn::ForceSensor> forceSensor;
-        // mc_rbdyn::detail::ForceSensorCalibData calibrator;
-
-        // std::shared_ptr<mc_rbdyn::Contact> checkContact;
-    
+            
         std::map<std::string, mc_rbdyn::SurfacePtr> surf;
+
+        bool publishWrench();
+        bool runOnce = true;
     
     private:
 

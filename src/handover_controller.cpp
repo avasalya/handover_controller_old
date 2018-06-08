@@ -66,16 +66,9 @@ namespace mc_handover
         auto q = reset_data.q;
         MCController::reset({q});
 
-
         /* gripper control */
-        gui()->addElement({"HandoverElements"},
+        gui()->addElement({"FSM", "GripperControl"},
           
-          mc_rtc::gui::Button("publish_current_wrench", [this]() {  
-            std::cout << "right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-            std::cout << "left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
-
-
           mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
             read_msg(msg); 
             std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
@@ -150,6 +143,22 @@ namespace mc_handover
     }
 
 
+
+
+    //////////////
+    //
+    // Handover Controller printWrench
+    //
+    //////////////
+    bool HandoverController::publishWrench()
+    {
+      cout << "left hand wrenches " << wrenches.at("LeftHandForceSensor") <<  endl;
+      cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
+
+      runOnce = false;
+      // this will make initial_COM to set on previous given pos
+      return true;  // always return true, to repeat state
+    }
 
 
     //////////////

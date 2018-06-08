@@ -57,6 +57,21 @@ namespace mc_handover
 			return false;
 		}
 
+
+		void CloseGrippersStep::teardown(mc_control::fsm::Controller & Controller)
+		{
+			auto & ctl = static_cast<mc_handover::HandoverController&> (Controller);
+
+			/* remove  Relative EF Tasks */
+			ctl.solver().removeTask(ctl.relEfTaskL);
+			ctl.solver().removeTask(ctl.relEfTaskR);
+			ctl.solver().removeTask(ctl.oriTaskL);
+			ctl.solver().removeTask(ctl.oriTaskR);
+		}
+
+
+
+
 	} // namespace states
 
 } // namespace mc_torquing_controller
