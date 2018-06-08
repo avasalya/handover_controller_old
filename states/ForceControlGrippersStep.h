@@ -32,10 +32,10 @@ namespace mc_handover
 				Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
 				Eigen::Vector3d move, target;
 				 
-				Eigen::VectorXd handsWrenchTh	= Eigen::VectorXd::Zero(12);
-				Eigen::VectorXd handsWrenchDir	= Eigen::VectorXd::Zero(12);
+				Eigen::VectorXd handsWrenchTh	= Eigen::VectorXd::Zero(11);
+				Eigen::VectorXd handsWrenchDir	= Eigen::VectorXd::Zero(11);
 
-				Eigen::Vector6d leftHandWrenchTh, rightHandWrenchTh;
+				sva::ForceVecd leftHandWrenchTh, rightHandWrenchTh;
 				Eigen::Vector6d leftHandWrenchDir, rightHandWrenchDir;
 
 
