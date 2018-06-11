@@ -26,17 +26,21 @@ namespace mc_handover
 			private:
 				
 				double openGrippers{0.5};
-				double CloseGrippers{0.2};
+				double closeGrippers{0.2};
 
 				std::shared_ptr<mc_tasks::CoMTask> comTask;
 				Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
 				Eigen::Vector3d move, target;
 				 
-				Eigen::VectorXd handsWrenchTh	= Eigen::VectorXd::Zero(11);
-				Eigen::VectorXd handsWrenchDir	= Eigen::VectorXd::Zero(11);
 
-				sva::ForceVecd leftHandWrenchTh, rightHandWrenchTh;
-				Eigen::Vector6d leftHandWrenchDir, rightHandWrenchDir;
+				std::vector<double> handsWrenchTh;
+				sva::ForceVecd leftHandWrenchTh;
+				sva::ForceVecd rightHandWrenchTh;
+				
+				std::vector<bool> handsWrenchDir;
+				std::vector<bool> leftHandWrenchDir;
+				std::vector<bool> rightHandWrenchDir;
+
 
 
 		};

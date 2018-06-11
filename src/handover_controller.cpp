@@ -67,18 +67,8 @@ namespace mc_handover
         MCController::reset({q});
 
         /* gripper control */
-        gui()->addElement({"FSM", "GripperControl"},
+        gui()->addElement({"FSM", "HandoverElements"},
           
-          mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
-            read_msg(msg); 
-            std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-            std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
-
-          mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
-            std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-            std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
 
           mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 
             std::cout << "at right gripper opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
@@ -94,6 +84,17 @@ namespace mc_handover
           
           mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg); 
             std::cout << "at left gripper closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+          }),
+          
+          mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
+            read_msg(msg); 
+            std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+            std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+          }),
+
+          mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
+            std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+            std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
           })
 
         );

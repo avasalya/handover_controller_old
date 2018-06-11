@@ -22,17 +22,17 @@ namespace mc_handover
 			/* handover gui elements */
 			ctl.gui()->addElement({"FSM", "HandoverElements"},
 
+				// mc_rtc::gui::NumberSlider("move COM pos",
+				// 	[this](){ return move[0]; },
+				// 	[this](double v) { move[0] = v; },
+				// 	-10.0, 10.0),
+
 				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {  
 				std::cout << "left hand wrench:: Torques, Forces " <<
 				ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
 				std::cout << "right hand wrench:: Torques, Forces " <<
 				ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
 				}),
-
-				// mc_rtc::gui::NumberSlider("move COM pos",
-				// 	[this](){ return move[0]; },
-				// 	[this](double v) { move[0] = v; },
-				// 	-10.0, 10.0),
 
 				mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
 					[this]() { return move; },
@@ -42,8 +42,10 @@ namespace mc_handover
 				mc_rtc::gui::ArrayInput("change Hands Wrench thresholds",
 					{"lFx", "lFy", "lFz", "lTx", "lTy", "lTz", "rFx", "rFy", "rFz", "rTx", "rTy", "rTz"},
 					[this]() { return handsWrenchTh; },
-					[this](const Eigen::VectorXd lrw){handsWrenchTh = lrw;
-					cout<<" Hand Wrenches threshold set to:\n"<<handsWrenchTh<<endl;
+					[this](const std::vector<double> lrw){handsWrenchTh = lrw;
+					cout<<" Hands Wrench thresholds set to:\n";
+					for (auto i: handsWrenchTh)
+					cout << i << endl;
 				})
 			);
 			
@@ -71,11 +73,11 @@ namespace mc_handover
 			comTask->com(target);
       
 
-			leftHandWrenchTh.force()  <<  handsWrenchTh[0], handsWrenchTh[1], handsWrenchTh[2];
-			leftHandWrenchTh.couple() <<  handsWrenchTh[3], handsWrenchTh[4], handsWrenchTh[5];
+			leftHandWrenchTh.force()  <<  handsWrenchTh.at(0), handsWrenchTh.at(1), handsWrenchTh.at(2);
+			leftHandWrenchTh.couple() <<  handsWrenchTh.at(3), handsWrenchTh.at(4), handsWrenchTh.at(5);
     
-			rightHandWrenchTh.force()  << handsWrenchTh[6], handsWrenchTh[7], handsWrenchTh[8];
-			rightHandWrenchTh.couple() << handsWrenchTh[9], handsWrenchTh[10], handsWrenchTh[11];
+			rightHandWrenchTh.force()  << handsWrenchTh.at(6), handsWrenchTh.at(7), handsWrenchTh.at(8);
+			rightHandWrenchTh.couple() << handsWrenchTh.at(9), handsWrenchTh.at(10), handsWrenchTh.at(11);
 
 			
 			if(ctl.runOnce
@@ -215,7 +217,10 @@ namespace mc_handover
 			
 			ctl.solver().removeTask(comTask);
 
-			ctl.gui()->removeCategory({"FSM", "HandoverElements"});		
+			ctl.gui()->removeElement({"FSM", "HandoverElements"},"publish_current_wrench");		
+			ctl.gui()->removeElement({"FSM", "HandoverElements"}, "Move Com Pos");
+			ctl.gui()->removeElement({"FSM", "HandoverElements"}, "change Hands Wrench thresholds");
+
 		}
 
 
