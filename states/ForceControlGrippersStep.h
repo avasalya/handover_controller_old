@@ -11,6 +11,7 @@ namespace mc_handover
 	{
 		struct ForceControlGrippersStep : mc_control::fsm::State
 		{
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 			public:
 				void configure(const mc_rtc::Configuration & config) override;
 
@@ -33,10 +34,8 @@ namespace mc_handover
 				Eigen::Vector3d move, target;
 				 
 
-				std::vector<double> handsWrenchTh;
-				sva::ForceVecd leftHandWrenchTh;
-				sva::ForceVecd rightHandWrenchTh;
-				
+        Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
+
 				std::vector<bool> handsWrenchDir;
 				std::vector<bool> leftHandWrenchDir;
 				std::vector<bool> rightHandWrenchDir;

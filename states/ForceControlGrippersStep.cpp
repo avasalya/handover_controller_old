@@ -9,7 +9,7 @@ namespace mc_handover
 		{
 			cout << "config" << endl;
 
-			handsWrenchTh		= config("handsWrenchTh");
+			thresh		= config("handsWrenchTh");
 			handsWrenchDir		= config("handsWrenchDir");
 			
 		}
@@ -39,16 +39,17 @@ namespace mc_handover
 					[this](const Eigen::Vector3d v) { move = v;
 					cout << " com pos set to:\n" << initialCom + move << endl;}),
 
-				mc_rtc::gui::ArrayInput("change Hands Wrench thresholds",
-					{"lFx", "lFy", "lFz", "lTx", "lTy", "lTz", "rFx", "rFy", "rFz", "rTx", "rTy", "rTz"},
-					[this]() { return handsWrenchTh; },
-					[this](const std::vector<double> lrw){handsWrenchTh = lrw;
-					cout<<" Hands Wrench thresholds set to:\n";
-					for (auto i: handsWrenchTh)
-					cout << i << endl;
-				})
-			);
-			
+
+        mc_rtc::gui::ArrayInput("Threshold",
+                                {"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
+                                [this]() { return thresh; },
+                                [this](const Eigen::VectorXd & t)
+                                {
+                                  LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
+                                  thresh = t;
+                                })
+    );
+
 			/*add com task -- position it lower and bit backward */
 			comTask = std::make_shared<mc_tasks::CoMTask>
 				(ctl.robots(), ctl.robots().robotIndex(), 2., 10000.);
@@ -59,6 +60,8 @@ namespace mc_handover
     		cout << "initial_com X " << endl << initialCom[0] << endl;
     		cout << "initial_com Y " << endl << initialCom[1] << endl;
     		cout << "initial_com Z " << endl << initialCom[2] << endl;
+
+      ctl.runOnce = true;
 		}
 
 
@@ -71,142 +74,60 @@ namespace mc_handover
 			/* set com pose */
 			target = initialCom + move;
 			comTask->com(target);
-      
 
-			leftHandWrenchTh.force()  <<  handsWrenchTh.at(0), handsWrenchTh.at(1), handsWrenchTh.at(2);
-			leftHandWrenchTh.couple() <<  handsWrenchTh.at(3), handsWrenchTh.at(4), handsWrenchTh.at(5);
-    
-			rightHandWrenchTh.force()  << handsWrenchTh.at(6), handsWrenchTh.at(7), handsWrenchTh.at(8);
-			rightHandWrenchTh.couple() << handsWrenchTh.at(9), handsWrenchTh.at(10), handsWrenchTh.at(11);
+      auto leftTh = thresh.head(6);
+      auto rightTh = thresh.tail(6);
+      auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
+      auto rightForce = ctl.wrenches.at("RightHandForceSensor").force();
 
-			
-			if(ctl.runOnce
-				&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0]) > leftHandWrenchTh.force()[0]	
-				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) > rightHandWrenchTh.force()[0])
-			{
-				auto  gripper = ctl.grippers["l_gripper"].get();
-				gripper->setTargetQ({openGrippers});
+      auto open_grippers = [&]()
+      {
+        ctl.publishWrench();
+        auto  gripper = ctl.grippers["l_gripper"].get();
+        gripper->setTargetQ({openGrippers});
 
-				gripper = ctl.grippers["r_gripper"].get();
-				gripper->setTargetQ({openGrippers});
+        gripper = ctl.grippers["r_gripper"].get();
+        gripper->setTargetQ({openGrippers});
 
-				cout << "opening grippers: Fx Forces crossed thresholds " << endl;
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state
-			}
+        output("Repeat");
+        ctl.runOnce = false;
+      };
 
-			if(ctl.runOnce
-				&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[1]) > leftHandWrenchTh.force()[1]	
-				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[1]) > rightHandWrenchTh.force()[1])
-			{
-				auto  gripper = ctl.grippers["l_gripper"].get();
-				gripper->setTargetQ({openGrippers});
+      auto compareLogic = [&](const char * axis_name, int idx)
+      {
+        if(fabs(leftForce[idx]) > leftTh[idx+3])
+        {
+          if(fabs(rightForce[idx]) > rightTh[idx+3])
+          {
+            LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
+          }
+          else
+          {
+            LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
+          }
+          open_grippers();
+          return true;
+        }
+        else
+        {
+          if(fabs(rightForce[idx]) > rightTh[idx+3])
+          {
+            LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
+            open_grippers();
+            return true;
+          }
+          return false;
+        }
+      };
 
-				gripper = ctl.grippers["r_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening grippers: Fy Forces crossed thresholds " << endl;
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state	
-			}
-
-			if(ctl.runOnce
-				&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[2]) > leftHandWrenchTh.force()[2]	
-				&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[2] > rightHandWrenchTh.force()[2]))
-			{
-				auto  gripper = ctl.grippers["l_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				gripper = ctl.grippers["r_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening grippers: Fz Forces crossed thresholds " << endl;
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-
-
-
-			if(ctl.runOnce
-			&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0])  > leftHandWrenchTh.force()[0]	
-			&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) < rightHandWrenchTh.force()[0])
-			{
-				auto  gripper = ctl.grippers["l_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening left gripper: lFx > threshold, rFx < threshold " << endl;
-
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-			if(ctl.runOnce
-			&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[1])  > leftHandWrenchTh.force()[1]	
-			&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[1]) < rightHandWrenchTh.force()[1])
-			{
-				auto  gripper = ctl.grippers["l_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening left gripper: lFy > threshold, rFy < threshold " << endl;
-
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-			if(ctl.runOnce
-			&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[2]) > leftHandWrenchTh.force()[2]	
-			&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[2] < rightHandWrenchTh.force()[2]))
-			{
-				auto  gripper = ctl.grippers["l_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening left gripper: lFz > threshold, rFz < threshold " << endl;
-				
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-
-
-
-			if(ctl.runOnce
-			&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[0])  < leftHandWrenchTh.force()[0]	
-			&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[0]) > rightHandWrenchTh.force()[0])
-			{
-				auto  gripper = ctl.grippers["r_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening right gripper: lFx < threshold, rFx > threshold " << endl;
-
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-			if(ctl.runOnce
-			&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[1])  < leftHandWrenchTh.force()[1]	
-			&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[1]) > rightHandWrenchTh.force()[1])
-			{
-				auto  gripper = ctl.grippers["r_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening right gripper: lFy < threshold, rFy > threshold " << endl;
-
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-			if(ctl.runOnce
-			&& fabs(ctl.wrenches.at("LeftHandForceSensor").force()[2]) < leftHandWrenchTh.force()[2]	
-			&& fabs(ctl.wrenches.at("RightHandForceSensor").force()[2] > rightHandWrenchTh.force()[2]))
-			{
-				auto  gripper = ctl.grippers["r_gripper"].get();
-				gripper->setTargetQ({openGrippers});
-
-				cout << "opening right gripper: lFz < threshold, rFz > threshold " << endl;
-				
-				ctl.publishWrench(); output("Repeat"); return true;// always return true to repeat state 
-			}
-
-
- 			else
- 			{	
- 				ctl.runOnce = true;
-	 			output("Repeat");
-				return false;	// to repeat within state
- 			}	
+      if(ctl.runOnce)
+      {
+        return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
+      }
+      else
+      {
+        return true;
+      }
 
 		}
 
@@ -219,7 +140,7 @@ namespace mc_handover
 
 			ctl.gui()->removeElement({"FSM", "HandoverElements"},"publish_current_wrench");		
 			ctl.gui()->removeElement({"FSM", "HandoverElements"}, "Move Com Pos");
-			ctl.gui()->removeElement({"FSM", "HandoverElements"}, "change Hands Wrench thresholds");
+			ctl.gui()->removeElement({"FSM", "HandoverElements"}, "Threshold");
 
 		}
 
