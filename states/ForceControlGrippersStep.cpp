@@ -9,8 +9,8 @@ namespace mc_handover
 		{
 			cout << "config" << endl;
 
-			thresh		= config("handsWrenchTh");
-			handsWrenchDir		= config("handsWrenchDir");
+			thresh         = config("handsWrenchTh");
+			handsWrenchDir = config("handsWrenchDir");
 			
 		}
 		void ForceControlGrippersStep::start(mc_control::fsm::Controller & controller)
@@ -35,9 +35,9 @@ namespace mc_handover
 				}),
 
 				mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
-					[this]() { return move; },
-					[this](const Eigen::Vector3d v) { move = v;
-					cout << " com pos set to:\n" << initialCom + move << endl;}),
+                      					[this]() { return move; },
+                      					[this](const Eigen::Vector3d v) { move = v;
+                      					cout << " com pos set to:\n" << initialCom + move << endl;}),
 
 
         mc_rtc::gui::ArrayInput("Threshold",
@@ -83,7 +83,7 @@ namespace mc_handover
       auto open_grippers = [&]()
       {
         ctl.publishWrench();
-        auto  gripper = ctl.grippers["l_gripper"].get();
+        auto gripper = ctl.grippers["l_gripper"].get();
         gripper->setTargetQ({openGrippers});
 
         gripper = ctl.grippers["r_gripper"].get();
@@ -148,14 +148,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_torquing_controller
-
-
-
-// cout << leftHandWrenchTh.force()[0] << " "<< leftHandWrenchTh.force()[1] << " "<< leftHandWrenchTh.force()[2] << " "<< endl;
-// cout  << handsWrenchTh[0] << " " <<  handsWrenchTh[1] << " " <<  handsWrenchTh[2] << endl;
-// cout << leftHandWrenchTh.couple()[0] << " "<< leftHandWrenchTh.couple()[1] << " "<< leftHandWrenchTh.couple()[2] << " "<< endl;
-// cout  << handsWrenchTh[3] << " " <<  handsWrenchTh[4] << " " <<  handsWrenchTh[5] << endl;
-// cout << rightHandWrenchTh.force()[0] << " "<< rightHandWrenchTh.force()[1] << " "<< rightHandWrenchTh.force()[2] << " "<< endl;
-// cout << handsWrenchTh[6] << " " <<  handsWrenchTh[7] << " " <<  handsWrenchTh[8] << endl;
-// cout << rightHandWrenchTh.couple()[0] << " "<< rightHandWrenchTh.couple()[1] << " "<< rightHandWrenchTh.couple()[2] << " "<< endl;
-// cout << handsWrenchTh[9] << " " <<  handsWrenchTh[10] << " " <<  handsWrenchTh[11] << endl;

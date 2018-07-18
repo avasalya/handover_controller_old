@@ -97,7 +97,7 @@ namespace mc_handover
             std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
           })
 
-        );
+        );    
     }
 
 

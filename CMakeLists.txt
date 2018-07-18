@@ -21,6 +21,7 @@ add_required_dependency(mc_rtc)
 
 add_subdirectory(src)
 add_subdirectory(states)
+add_subdirectory(cortex)
 
 configure_file(etc/mc_rtc.conf ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf)
 
