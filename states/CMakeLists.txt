@@ -17,7 +17,6 @@ macro(add_fsm_handover_state state_name)
 endmacro()
 
 
-# INCLUDE_DIRECTORIES ( "${EIGEN3_INCLUDE_DIR}/usr/include/Eigen3" )
 
 add_fsm_handover_state(GoInitPoseStep)
 add_fsm_handover_state(OpenGrippersStep)
@@ -27,3 +26,4 @@ add_fsm_handover_state(ForceControlGrippersStep)
 add_fsm_handover_state(GoDummyPoseStep)
 add_fsm_handover_state(GoHalfSittingStep)
 add_fsm_handover_state(StartMocapStep)
+target_link_libraries(StartMocapStep cortex_sdk pthread m)

@@ -41,7 +41,7 @@ int main()
 {
 
   sBodyDefs* pBodyDefs = NULL;
-  sFrameOfData* FrameofData = NULL;
+  sFrameOfData* pFrameOfData = NULL;
   
   std::vector<int> bodyMarkers;
 
@@ -79,46 +79,41 @@ int main()
   } 
   else 
   { 
-    cout << "total no of bodies tracked " << pBodyDefs->nBodyDefs << endl;
-    for(int iBody=0; iBody<pBodyDefs->nBodyDefs; iBody++)
-    {
-      bodyMarkers.push_back(pBodyDefs->BodyDefs[iBody].nMarkers);
-      sBodyDef* pBody = &pBodyDefs->BodyDefs[iBody];
-      cout << "number of markers defined in body " << iBody+1 << " (\"" << pBody->szName << "\") : " << bodyMarkers.at(iBody) << endl;    
+    // cout << "total no of bodies tracked " << pBodyDefs->nBodyDefs << endl;
+    // for(int iBody=0; iBody<pBodyDefs->nBodyDefs; iBody++)
+    // {
+    //   bodyMarkers.push_back(pBodyDefs->BodyDefs[iBody].nMarkers);
+    //   sBodyDef* pBody = &pBodyDefs->BodyDefs[iBody];
+    //   cout << "number of markers defined in body " << iBody+1 << " (\"" << pBody->szName << "\") : " << bodyMarkers.at(iBody) << endl;    
             
-      for (int iMarker=0 ; iMarker<pBody->nMarkers; iMarker++)
-      {
-        cout << iMarker+1 << " " << pBody->szMarkerNames[iMarker] << endl;
-      }
+    //   for (int iMarker=0 ; iMarker<pBody->nMarkers; iMarker++)
+    //   {
+    //     cout << iMarker+1 << " " << pBody->szMarkerNames[iMarker] << endl;
+    //   }
 
-    }
+    // }
   }
- 
+
 
   
   // live plot //
-  plot p;
-  vector<double> xm, xm1, xm2;
-
-
-
-  // Eigen::VectorXd & t;
-
+  // plot p;
+  // vector<double> xm, xm1, xm2;
 
 
   printf("\n*** Starting live mode ***\n");
   retval = Cortex_Request("LiveMode", &pResponse, &nBytes);
-  double del = 0;  
+  // double del = 0;  
 
   while(1)
   {
-    FrameofData =  Cortex_GetCurrentFrame();  // Can POLL for the current frame. 
+    pFrameOfData =  Cortex_GetCurrentFrame();  // Can POLL for the current frame. 
 
-    // cout << "time delay from camera " << FrameofData->fDelay <<  "; cortex frame " << FrameofData->iFrame << endl;    
+    // cout << "time delay from camera " << pFrameOfData->fDelay <<  "; cortex frame " << pFrameOfData->iFrame << endl;    
     
-    del+=FrameofData->fDelay;
+    // del+=pFrameOfData->fDelay;
 
-    // recordingStat = FrameofData->RecordingStatus.bRecording;
+    // recordingStat = pFrameOfData->RecordingStatus.bRecording;
     // if(recordingStat==0)
     // {  
     //     retval = Cortex_Request("StartRecording", &pResponse, &nBytes);
@@ -126,21 +121,21 @@ int main()
     //     printf("ERROR, not recording \n");
     // }
 
-    for(int b = 0; b<FrameofData->nBodies; b++)
+    for(int b = 0; b<pFrameOfData->nBodies; b++)
     {
       for(int m = 0; m<bodyMarkers.at(b); m++)
       {
-        cout << "body1 markers == " << (m+1) << endl <<
-                      " X: " << FrameofData->BodyData[b].Markers[m][0] << endl <<
-                      " Y: " << FrameofData->BodyData[b].Markers[m][1] << endl <<
-                      " Z: " << FrameofData->BodyData[b].Markers[m][2] << endl;
+        // cout << "body1 markers == " << (m+1) << endl <<
+        //               " X: " << pFrameOfData->BodyData[b].Markers[m][0] << endl <<
+        //               " Y: " << pFrameOfData->BodyData[b].Markers[m][1] << endl <<
+        //               " Z: " << pFrameOfData->BodyData[b].Markers[m][2] << endl;
 
-    // cout << FrameofData->BodyData[b].Markers[1][0] - FrameofData->BodyData[b].Markers[2][0] << endl;
+    // cout << pFrameOfData->BodyData[b].Markers[1][0] - pFrameOfData->BodyData[b].Markers[2][0] << endl;
     
-    xm.push_back(FrameofData->BodyData[b].Markers[1][0] - FrameofData->BodyData[b].Markers[2][0]);
+    // xm.push_back(pFrameOfData->BodyData[b].Markers[1][0] - pFrameOfData->BodyData[b].Markers[2][0]);
 
-    xm1.push_back(FrameofData->BodyData[b].Markers[1][0]);
-    xm2.push_back(FrameofData->BodyData[b].Markers[3][0]);
+    // xm1.push_back(pFrameOfData->BodyData[b].Markers[1][0]);
+    // xm2.push_back(pFrameOfData->BodyData[b].Markers[3][0]);
 
 
       }
@@ -151,9 +146,9 @@ int main()
     // p.plot_data(xm);
 
     // usleep(1000000);
-    if(FrameofData->iFrame == 1000)
+    if(pFrameOfData->iFrame == 1000)
     {
-      cout << "\ntotal delay from camera " << del << endl;
+      // cout << "\ntotal delay from camera " << del << endl;
       // if(recordingStat!=0)
       // {        
       //   printf("\n****** stopped recording ******\n");
@@ -161,7 +156,7 @@ int main()
       // }
       
       printf("\n****** Paused live mode ... exiting Cortex ******\n");
-      Cortex_FreeFrame(FrameofData);
+      Cortex_FreeFrame(pFrameOfData);
       Cortex_Request("Pause", &pResponse, &nBytes);
       Cortex_Exit();
     }

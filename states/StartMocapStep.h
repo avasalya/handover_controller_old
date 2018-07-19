@@ -5,8 +5,8 @@
 
 #include "handover_controller.h"
 
-// #include "../cortex/cortex.h"
-// #include "../cortex/graph.h"
+#include "../cortex/cortex.h"
+#include "../cortex/graph.h"
 
 
 namespace mc_handover
@@ -27,17 +27,19 @@ namespace mc_handover
 
 			private:
 
-				// sBodyDefs* pBodyDefs = NULL;
-				// sFrameOfData* FrameofData = NULL;
+			sBodyDefs* pBodyDefs = NULL;
+			sFrameOfData* FrameofData = NULL;
 
-				// std::vector<int> bodyMarkers;
+			std::vector<int> bodyMarkers;
 
-				// int retval = RC_Okay;
-				// double del = 0;  
-				
-				// // live plot //
-				// plot p;
-				// vector<double> xm, xm1, xm2;
+			void *pResponse;
+			int nBytes;
+			int retval = RC_Okay;
+			double del = 0;  
+
+			// live plot //
+			plot p;
+			vector<double> xm, xm1, xm2;
 				
 
 

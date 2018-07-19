@@ -52,45 +52,24 @@ LOCAL sPacket PacketIn;
 LOCAL sFrameOfData LatestFrameOfData;
 LOCAL sFrameOfData Polled_FrameOfData;
 
-//LOCAL  unsigned short wMyPort = 1600;         // My outgoing port (Cortex auto-replies to me here)
-LOCAL unsigned short wMyPort = 0; // Let the socket library find an available port
-LOCAL unsigned short wCortexPort = 1510; // 1002; // Cortex is listening at this port
+
+LOCAL unsigned short wMyPort = 0; //1600; // Let the socket library find an available port
+LOCAL unsigned short wCortexPort = 1002; // Cortex is listening at this port
 LOCAL unsigned short wMultiCastPort = 1001; // Cortex sends frames to this port and associated address
-//LOCAL  unsigned short wMultiCastPort = 1511;  // Cortex sends frames to this port and associated address
-
-//LOCAL  in_addr MyNicCardAddress={ 10,  1,  2,199};   // My local IP address
-//LOCAL  in_addr MultiCastAddress={225,  1,  1,  1};   // Cortex sends frames to this address and associated port
-
-// LOCAL in_addr MyNicCardAddress = { (10 << 24) + (1 << 16) + (2 << 8) + 199 }; // My local IP address
-// LOCAL in_addr MultiCastAddress = { (225 << 24) + (1 << 16) + (1 << 8) + 1 }; // Cortex sends frames to this address and associated port
-
-//LOCAL  in_addr CortexNicCardAddress={0,0,0,0};
-//LOCAL  in_addr CortexNicCardAddress={255,255,255,255};
-
-//LOCAL in_addr CortexNicCardAddress = { (255 << 24) + (255 << 16) + (255 << 8) + 255 };
-
 
 /* /////////////////////////////  my addresses ///////////////////////// */
-
-
 LOCAL in_addr MyNicCardAddress = { (10 << 24)  + (1 << 16)   + (1 << 8)   + 180 }; // My local IP address
-
 LOCAL in_addr MultiCastAddress = {  3774939393 };//{ (225 << 24) + (1<< 16) + (1 << 8) + 1 }; // Cortex sends frames to this address and associated port
 
-// // convert IP address to integer;
+/* convert IP address to integer */
 //http://www.aboutmyip.com/AboutMyXApp/IP2Integer.jsp?ipAddress=255.255.255.1
-
-// LOCAL in_addr CortexNicCardAddress = { (10 << 24) + (1 << 16) + (1 << 8) + 190 };
-LOCAL in_addr CortexNicCardAddress = { (10 << 24) + (1 << 16) + (1 << 8) + 100 };
-
-/* /////////////////////////////  my addresses ///////////////////////// */
+LOCAL in_addr CortexNicCardAddress = { (10 << 24) + (1 << 16) + (1 << 8) + 190 };
 
 
 LOCAL sockaddr_in CortexAddr; // This gets filled out when Cortex replies.
-
-
 LOCAL SOCKET CommandSocket = -1;
 LOCAL SOCKET MultiCastReaderSocket = -1;
+
 // For use with waiting for replies from Cortex.
 LOCAL sem_t EH_CommandConfirmed;
 LOCAL pthread_t CortexListenThread_ID;
@@ -99,8 +78,7 @@ LOCAL pthread_t ReadDataThread_ID;
 LOCAL void* ReadDataThread_Func(void *);
 LOCAL pthread_t GetHostNameThread_ID;
 
-// === Logging ===
-
+/* === Logging === */
 void Dummy_CB_ErrorMsgHandler(int iLevel, const char *szMessage)
 {
 }
