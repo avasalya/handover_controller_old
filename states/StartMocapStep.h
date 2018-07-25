@@ -4,6 +4,8 @@
 #include <mc_control/fsm/State.h>
 
 #include "handover_controller.h"
+#include "handover_minJerk.h"
+
 
 #include "../cortex/cortex.h"
 #include "../cortex/graph.h"
@@ -23,25 +25,32 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) override;
+				void teardown(mc_control::fsm::Controller&) override {}
+				
 
 			private:
 
-			sBodyDefs* pBodyDefs = NULL;
-			sFrameOfData* FrameofData = NULL;
+				/*cortex*/
+				sBodyDefs* pBodyDefs = NULL;
+				sFrameOfData* FrameofData = NULL;
 
-			std::vector<int> bodyMarkers;
+				void *pResponse;
+				int nBytes;
+				int retval = RC_Okay;
+				double del = 0;  
 
-			void *pResponse;
-			int nBytes;
-			int retval = RC_Okay;
-			double del = 0;  
+				int totalBodies;
+				std::vector<int> bodyMarkers;				
+				int i=0;
 
-			// live plot //
-			plot p;
-			vector<double> xm, xm1, xm2;
-				
+				/*robot*/
+				Eigen::Vector3d posRobotMarker, posObjMarker;
+				Eigen::Matrix3d rotRobotMarker, rotObjMarker;
 
+				sva::PTransformd leftHandPosW;
+				sva::MotionVecd leftHandVelW;
+				sva::PTransformd rightHandPosW;
+				sva::MotionVecd rightHandVelW;
 
 
 		};

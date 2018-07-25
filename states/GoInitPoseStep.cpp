@@ -50,7 +50,7 @@ namespace mc_handover
 			cout << "run" << endl;
 			cout << "moving to initial pose" <<endl;
 
-			controller.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down	      
+			ctl.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down	      
 
 			BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
@@ -74,7 +74,7 @@ namespace mc_handover
 
 	} // namespace states
 
-} // namespace mc_torquing_controller
+} // namespace mc_handover
 
 
 

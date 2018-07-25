@@ -34,7 +34,9 @@
 #include <typeinfo>
 
 #include "handover_complianceTask.h"
+#include "handover_minJerk.h"
 
+ 
 
 using namespace std;
 using namespace mc_control;
@@ -80,12 +82,6 @@ namespace mc_handover
 
         double openG{0.5};
         double closeG{0.2};
-        
-        sva::PTransformd leftHandPosW;
-        sva::MotionVecd leftHandVelW;
-        sva::PTransformd rightHandPosW;
-        sva::MotionVecd rightHandVelW;
-
-
+    
     };
 } // namespace mc_control

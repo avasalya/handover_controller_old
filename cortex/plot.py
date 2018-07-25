@@ -6,7 +6,7 @@ def plot_data(data):
   py.clf()
   py.plot(data)
   py.show()
-  py.savefig("data-%.8d.png"%counter)
+  # py.savefig("data-%.8d.png"%counter)
  
 if __name__ == "__main__":
   counter = 0
