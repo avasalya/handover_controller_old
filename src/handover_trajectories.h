@@ -32,18 +32,21 @@ using namespace Eigen;
 namespace mc_handover 
 {
 
-struct MinJerk
+struct HandoverTrajectory
 {
 
 	public:
 
-	MinJerk();
+	HandoverTrajectory();
 
-	~MinJerk();
+	~HandoverTrajectory();
 
 	MatrixXd getPosA();
 	MatrixXd getPosB();
 
+
+	void constVelocity();
+	
 	void minJerkZeroBoundary(const MatrixXd & xi, const MatrixXd & xf, double tf);
 
 	void minJerkPredictPos(const MatrixXd & xi, const MatrixXd & xc, double tc, double tf);

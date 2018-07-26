@@ -1,18 +1,15 @@
-//
-/// ... min_jerk_traj ...
-///
 
 #include "handover_trajectories.h"
 
 
 namespace mc_handover
 {
-	MinJerk::MinJerk(){
+	HandoverTrajectory::HandoverTrajectory(){
     	std::cout << "minJerk constructor created " <<std::endl;}
 
 
 	//  mjObj.minJerkZeroBoundry(MatrixXd::Random(sample,3), MatrixXd::Random(sample,3), i, sample);
-	void MinJerk::minJerkZeroBoundary(const MatrixXd & xi, const MatrixXd & xf, double tf)
+	void HandoverTrajectory::minJerkZeroBoundary(const MatrixXd & xi, const MatrixXd & xf, double tf)
 	{ 
 
 
@@ -49,7 +46,7 @@ output = repmat(xi, N, 1) + a .* b;*/
 
 
 
-void MinJerk::minJerkPredictPos(const MatrixXd & xi, const MatrixXd & xc, double tc, double tf)
+void HandoverTrajectory::minJerkPredictPos(const MatrixXd & xi, const MatrixXd & xc, double tc, double tf)
 {
 /*function [xf, xdot] = min_jerk_final(xi, xc, t0, tc, tf)
 t = tc-t0;
@@ -62,7 +59,7 @@ end
 
 }
 
-void MinJerk::minJerkNonZeroBoundary(const MatrixXd & xi, const MatrixXd & vi, const MatrixXd & ai,
+void HandoverTrajectory::minJerkNonZeroBoundary(const MatrixXd & xi, const MatrixXd & vi, const MatrixXd & ai,
 															 const MatrixXd & xc, double tf)
 {
 /*function output = min_jerk_vel(xi, vi, ai, xc, t)

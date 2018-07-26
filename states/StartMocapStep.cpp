@@ -32,65 +32,62 @@ namespace mc_handover
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
 			cout << "start -- StartMocapStep " << endl;
-    		// auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+  		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-         Cortex_SetVerbosityLevel(VL_Info);
-         Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
+       Cortex_SetVerbosityLevel(VL_Info);
+       Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
-         retval = Cortex_Initialize("10.1.1.180", "10.1.1.190");
-         if (retval != RC_Okay)
-         {
-            printf("Error: Unable to initialize ethernet communication\n");
-            retval = Cortex_Exit();            
-         }
+       retval = Cortex_Initialize("10.1.1.180", "10.1.1.190");
+       if (retval != RC_Okay)
+       {
+          printf("Error: Unable to initialize ethernet communication\n");
+          retval = Cortex_Exit();            
+       }
 
-         // cortex frame rate //
-         printf("\n****** Cortex_FrameRate ******\n");
-         retval = Cortex_Request("GetContextFrameRate", &pResponse, &nBytes);
-         if (retval != RC_Okay)
-         printf("ERROR, GetContextFrameRate\n");
-         float *contextFrameRate = (float*) pResponse;
-         printf("ContextFrameRate = %3.1f Hz\n", *contextFrameRate);
+       // cortex frame rate //
+       printf("\n****** Cortex_FrameRate ******\n");
+       retval = Cortex_Request("GetContextFrameRate", &pResponse, &nBytes);
+       if (retval != RC_Okay)
+       printf("ERROR, GetContextFrameRate\n");
+       float *contextFrameRate = (float*) pResponse;
+       printf("ContextFrameRate = %3.1f Hz\n", *contextFrameRate);
 
 
-         // get name of bodies being tracked and its set of markers //
-         printf("\n****** Cortex_GetBodyDefs ******\n");
-         pBodyDefs = Cortex_GetBodyDefs();
-         if (pBodyDefs == NULL) 
-         {
-            printf("Failed to get body defs\n");
-         } 
-         else 
-         {  
-            totalBodies = pBodyDefs->nBodyDefs;
-            cout << "total no of bodies tracked " << totalBodies << endl;
-            for(int iBody=0; iBody<totalBodies; iBody++)
+       // get name of bodies being tracked and its set of markers //
+       printf("\n****** Cortex_GetBodyDefs ******\n");
+       pBodyDefs = Cortex_GetBodyDefs();
+       if (pBodyDefs == NULL) 
+       {
+          printf("Failed to get body defs\n");
+       } 
+       else 
+       {  
+          totalBodies = pBodyDefs->nBodyDefs;
+          cout << "total no of bodies tracked " << totalBodies << endl;
+          for(int iBody=0; iBody<totalBodies; iBody++)
+          {
+            bodyMarkers.push_back(pBodyDefs->BodyDefs[iBody].nMarkers);
+            sBodyDef* pBody = &pBodyDefs->BodyDefs[iBody];
+            cout << "number of markers defined in body " << iBody+1 << " (\"" << pBody->szName << "\") : " << bodyMarkers.at(iBody) << endl;    
+
+            for (int iMarker=0 ; iMarker<pBody->nMarkers; iMarker++)
             {
-               bodyMarkers.push_back(pBodyDefs->BodyDefs[iBody].nMarkers);
-               sBodyDef* pBody = &pBodyDefs->BodyDefs[iBody];
-               cout << "number of markers defined in body " << iBody+1 << " (\"" << pBody->szName << "\") : " << bodyMarkers.at(iBody) << endl;    
-
-               for (int iMarker=0 ; iMarker<pBody->nMarkers; iMarker++)
-               {
-                  cout << iMarker+1 << " " << pBody->szMarkerNames[iMarker] << endl;
-               }
+              cout << iMarker+1 << " " << pBody->szMarkerNames[iMarker] << endl;
             }
-         }
-         printf("\n*** Starting live mode ***\n");
-         retval = Cortex_Request("LiveMode", &pResponse, &nBytes);
-        
+          }
+       }
+       printf("\n*** Starting live mode ***\n");
+       retval = Cortex_Request("LiveMode", &pResponse, &nBytes);
+      
+      // posLeftEfMarker.resize(3,60000);
+      // posObjMarkerA.resize(3,60000);
 
-        posRobotMarker.resize(3,60000);
-        posObjMarker.resize(3,60000);
-
- // used to run ./clienttest from here //
- // system("/home/avasalya/mc_handover_controller/build/cortex/clienttest");
 		}
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
-          // auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+          auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
           getCurFrame =  Cortex_GetCurrentFrame();
           Cortex_CopyFrame(getCurFrame, &FrameofData);
@@ -108,8 +105,6 @@ namespace mc_handover
           { 
             int nthFrame = ithFrame;
             cout << "nthFrame "<< nthFrame << endl;
-            // Cortex_FreeFrame(getCurFrame);
-            // Cortex_FreeFrame(&FrameofData);
             Cortex_Request("Pause", &pResponse, &nBytes);
             Cortex_Exit();
             output("OK");
@@ -119,52 +114,69 @@ namespace mc_handover
           /* start only when ithFrame == 1 */  
           if(startCapture)
           {
-            RMarker << FrameofData.BodyData[0].Markers[0][0], // X
-                       FrameofData.BodyData[0].Markers[0][1], // Y
-                       FrameofData.BodyData[0].Markers[0][2]; // Z
-            // for(int i=0; i<3; i++)
-            // { cout << RMarker(i) <<" ";} cout << endl;
-            OMarker << FrameofData.BodyData[1].Markers[0][0], // X
-                       FrameofData.BodyData[1].Markers[0][1], // Y
-                       FrameofData.BodyData[1].Markers[0][2]; // Z
-            // for(int i=0; i<3; i++)
-            // { cout << OMarker(i) <<" ";} cout << endl;
+            robotBodyMarker <<  FrameofData.BodyData[0].Markers[0][0], // X
+                                FrameofData.BodyData[0].Markers[0][1], // Y
+                                FrameofData.BodyData[0].Markers[0][2]; // Z
 
-            /* check for non zero frame only */ 
-            if(RMarker(0) != 0 || OMarker(0) != 0)
+            objectBodyMarker << FrameofData.BodyData[1].Markers[0][0], // X
+                                FrameofData.BodyData[1].Markers[0][1], // Y
+                                FrameofData.BodyData[1].Markers[0][2]; // Z
+
+            /* check for non zero frame only and store them */ 
+            if(robotBodyMarker(0) != 0 || objectBodyMarker(0) != 0)
             {
-              posRobotMarker(0, i) = RMarker(0); // X
-              posRobotMarker(1, i) = RMarker(1); // X
-              posRobotMarker(2, i) = RMarker(2); // X
-              cout << " posRobotMarker X " << posRobotMarker(0, i) << " ithFrame " << ithFrame <<endl;
+              posLeftEfMarker(0, i) = robotBodyMarker(0); // X
+              posLeftEfMarker(1, i) = robotBodyMarker(1); // X
+              posLeftEfMarker(2, i) = robotBodyMarker(2); // X
+              // cout << " posLeftEfMarker X " << posLeftEfMarker(0, i) << " ithFrame " << ithFrame <<endl;
 
-              posObjMarker(0, i) = OMarker(0); // X
-              posObjMarker(1, i) = OMarker(1); // X
-              posObjMarker(2, i) = OMarker(2); // X
-              cout << " posObjMarker X " << posObjMarker(0, i) << " ithFrame " << ithFrame <<endl;
-              i = i + 1;              
-            }
+              posObjMarkerA(0, i) = objectBodyMarker(0); // X
+              posObjMarkerA(1, i) = objectBodyMarker(1); // X
+              posObjMarkerA(2, i) = objectBodyMarker(2); // X
+              // cout << " posObjMarkerA X " << posObjMarkerA(0, i) << " ithFrame " << ithFrame <<endl;
+
+              /* get robot ef current pose */
+              curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
+              curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
+              sva::PTransformd X_robotLeftEf(curRotLeftEf, curPosLeftEf);
+
+              /* get robot ef marker current pose */
+              curRotLeftEfMarker = Eigen::Matrix3d::Identity();
+              curPosLeftEfMarker << posLeftEfMarker.col(1);
+              sva::PTransformd X_robotLeftEfMarker(curRotLeftEfMarker, curPosLeftEfMarker);
+
+              /*get transformation martix from mocap frame to robot EF frame*/
+              sva::PTransformd X_mocap_robotLeftEf = X_robotLeftEf.inv()*X_robotLeftEfMarker;
+              // cout << "pos\n" << X_mocap_robotLeftEf.translation() << endl;
+              // cout << "rot\n" << X_mocap_robotLeftEf.rotation() << endl;
+
+              /* object marker pose w.r.t to robot ef frame */
+              rotObjMarkerA = Eigen::Matrix3d::Identity();
+              sva::PTransformd X_poseObjMarkerA(rotObjMarkerA, posObjMarkerA.col(i));
+              sva::PTransformd poseObjMarkerA_wrt_robotLeftEf = X_mocap_robotLeftEf.inv()*X_poseObjMarkerA;
+              // cout << "rot\n" << poseObjMarkerA_wrt_robotLeftEf.rotation() << endl;
+              
+
+              cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
+
+              cout << "curPosLeftEfMarker\n" << curPosLeftEfMarker.transpose() << endl;
+
+              cout << "posObjMarkerA\n" << posObjMarkerA.col(i).transpose() << endl;
+
+              cout << "posObjMarkerA_wrt_robotLeftEf\n" << poseObjMarkerA_wrt_robotLeftEf.translation().transpose() << endl;
 
 
-            // if(RMarker(0) != 0 || RMarker(1) != 0 || RMarker(2) != 0)
-            // {
-            //   posRobotMarker(0, ir) = RMarker(0); // X
-            //   posRobotMarker(1, ir) = RMarker(1); // X
-            //   posRobotMarker(2, ir) = RMarker(2); // X
-            //   cout << " posRobotMarker X " << posRobotMarker(0, ir) << " ithFrame " << ithFrame <<endl;
-            //   ir = ir + 1;
-            // }
+             
+              /* set ef pose based on prediction */
+              if(onceTrue)
+              {
+                ctl.relEfTaskL->set_ef_pose(poseObjMarkerA_wrt_robotLeftEf);
+                onceTrue = false;
+              }
+              
+              i = i + 1;
 
-            // if(OMarker(0) != 0 || OMarker(1) != 0 || OMarker(2) != 0)
-            // {            
-            //   posObjMarker(0, io) = OMarker(0); // X
-            //   posObjMarker(1, io) = OMarker(1); // X
-            //   posObjMarker(2, io) = OMarker(2); // X
-            //   cout << " posObjMarker X " << posObjMarker(0, io) << " ithFrame " << ithFrame <<endl;
-            //   io = io + 1;
-            // }
-
-
+            }          
           }
 
                       
@@ -172,11 +184,6 @@ namespace mc_handover
           // MinJerk::minJerkZeroBoundary(const MatrixXd & xi, const MatrixXd & xf, double tf);
           // mjObj.produceWp(posRobotMarker(1), posRobotMarker(100),  i, 100);
 
-          // rotRobotMarker = relEfTaskL->get_ef_pose().rotation();          
-          // rotObjMarker = Eigen::Matrix3d::Identity();
-
-          // sva::PTransformd robotMarker(rotRobotMarker, posRobotMarker);
-          // sva::PTransformd objMarker(rotObjMarker, posObjMarker);
 
           // leftHandPosW  = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
           // rightHandPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
@@ -188,11 +195,11 @@ namespace mc_handover
 
     void StartMocapStep::teardown(mc_control::fsm::Controller & controller)
     { 
-        for(int i=0; i<100; i++)
-        {
-          cout << " posRobotMarker X " << posRobotMarker(0, i) << " i "<< i << endl;
-          cout << " posObjMarker X " << posObjMarker(0, i) << " i "<< i << endl;
-        }
+        // for(int i=0; i<100; i++)
+        // {
+        //   cout << " posRobotMarker X " << posLeftEfMarker(0, i) << " i "<< i << endl;
+        //   cout << " posObjMarker X " << posObjMarkerA(0, i) << " i "<< i << endl;
+        // }
 
       // auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
        // Cortex_FreeFrame(getCurFrame);

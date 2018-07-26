@@ -58,16 +58,16 @@ namespace mc_handover
 		}
 
 
-		void CloseGrippersStep::teardown(mc_control::fsm::Controller & Controller)
-		{
-			auto & ctl = static_cast<mc_handover::HandoverController&> (Controller);
+		// void CloseGrippersStep::teardown(mc_control::fsm::Controller & Controller)
+		// {
+		// 	auto & ctl = static_cast<mc_handover::HandoverController&> (Controller);
 
-			/* remove  Relative EF Tasks */
-			ctl.solver().removeTask(ctl.relEfTaskL);
-			ctl.solver().removeTask(ctl.relEfTaskR);
-			ctl.solver().removeTask(ctl.oriTaskL);
-			ctl.solver().removeTask(ctl.oriTaskR);
-		}
+		// 	 remove  Relative EF Tasks 
+		// 	ctl.solver().removeTask(ctl.relEfTaskL);
+		// 	ctl.solver().removeTask(ctl.relEfTaskR);
+		// 	ctl.solver().removeTask(ctl.oriTaskL);
+		// 	ctl.solver().removeTask(ctl.oriTaskR);
+		// }
 
 
 

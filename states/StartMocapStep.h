@@ -3,10 +3,12 @@
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/fsm/State.h>
 
+#include <mc_rbdyn/Robot.h>
+
 #include "handover_controller.h"
 
 #include "../cortex/cortex.h"
-#include "../cortex/graph.h"
+// #include "../cortex/graph.h"
 
 
 namespace mc_handover
@@ -26,11 +28,18 @@ namespace mc_handover
 				void teardown(mc_control::fsm::Controller&) override;
 				
 				/*robot*/
+				Eigen::Vector3d robotBodyMarker, objectBodyMarker;
 
-				Eigen::Vector3d RMarker, OMarker;
+				Eigen::MatrixXd posLeftEfMarker = Eigen::MatrixXd::Zero(3,60000);
+				Eigen::MatrixXd posObjMarkerA   = Eigen::MatrixXd::Zero(3,60000);
 
-				Eigen::MatrixXd posRobotMarker, posObjMarker;
-				Eigen::Matrix3d rotRobotMarker, rotObjMarker;
+				Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
+				Eigen::Matrix3d curRotLeftEf, curRotLeftEfMarker;
+
+				Eigen::Matrix3d rotObjMarkerA;
+
+
+				bool onceTrue = true;
 
 				sva::PTransformd leftHandPosW;
 				sva::MotionVecd leftHandVelW;
@@ -53,9 +62,7 @@ namespace mc_handover
 
 				bool startCapture = false;
 				double del = 0;
-				int ir=0, io=0, i=0;
-
-
+				int i=0;				
 
 		};
 	} // namespace states
