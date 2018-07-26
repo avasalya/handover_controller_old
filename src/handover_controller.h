@@ -34,7 +34,7 @@
 #include <typeinfo>
 
 #include "handover_complianceTask.h"
-#include "handover_minJerk.h"
+#include "handover_trajectories.h"
 
  
 

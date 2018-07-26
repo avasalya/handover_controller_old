@@ -1,14 +1,14 @@
 set(controller_SRC
   handover_controller.cpp
+  handover_trajectories.cpp
   handover_complianceTask.cpp
-  handover_minJerk.cpp
  
 )
 
 set(controller_HDR
   handover_controller.h
+  handover_trajectories.h
   handover_complianceTask.h
-  handover_minJerk.h
  
 )
 
