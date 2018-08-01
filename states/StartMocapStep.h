@@ -28,6 +28,22 @@ namespace mc_handover
 
 				void teardown(mc_control::fsm::Controller&) override;
 				
+				/*helper function*/
+				Eigen::MatrixXd diff(Eigen::MatrixXd data);
+				Eigen::Vector3d takeAverage(Eigen::MatrixXd m);
+
+
+				bool onceTrue = true;
+				
+				std::vector<double> x, y, z, tp;
+				
+				int robotBody=0;
+				int objBody=1;
+				int fps = 200;
+				int tunParam1 = 500;
+				int tunParam2 = 20;
+
+				
 				/*mocap*/
 				Eigen::Vector3d robotBodyMarker, objectBodyMarker;
 
@@ -36,19 +52,16 @@ namespace mc_handover
 				Eigen::MatrixXd posObjMarkerA   = Eigen::MatrixXd::Zero(3,60000);
 
 				Eigen::Vector3d initPosObjMarkerA, ithPosObjMarkerA, avgVelObjMarkerA;
-				// Eigen::MatrixXd curPosObjMarkerA;
-				Eigen::MatrixXd curVelObjMarkerA; 
 
-				Eigen::MatrixXd diff(Eigen::MatrixXd data);
-				Eigen::Vector3d takeAverage(Eigen::MatrixXd m);
+				Eigen::MatrixXd poseObjMarkerA_wrt_robotLeftEf = Eigen::MatrixXd::Zero(3,tunParam1);
+
+				Eigen::MatrixXd curVelObjMarkerA; //, curPosObjMarkerA;
 
 				Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 				Eigen::Matrix3d curRotLeftEf;
 				Eigen::Matrix3d curRotLeftEfMarker  = Eigen::Matrix3d::Identity();
 				Eigen::Matrix3d rotObjMarkerA = Eigen::Matrix3d::Identity();
 
-				bool onceTrue = true;
-				std::vector<double> x, y, z, tp;
 
 				sva::PTransformd leftHandPosW;
 				sva::PTransformd rightHandPosW;
@@ -56,9 +69,6 @@ namespace mc_handover
 				sva::MotionVecd leftHandVelW;
 				sva::MotionVecd rightHandVelW;
 
-				int fps = 200;
-				int tunParam1 = 200;
-				int tunParam2 = 400;
 
 			private:
 
@@ -73,7 +83,7 @@ namespace mc_handover
 				int nBytes;
 				int retval = RC_Okay;
 				int totalBodies;
-				int i=1,j=0;
+				int i=1;
 
 
 				bool startCapture = false;

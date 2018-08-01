@@ -77,48 +77,8 @@ namespace mc_handover
           }
        }
        printf("\n*** Starting live mode ***\n");
-       retval = Cortex_Request("LiveMode", &pResponse, &nBytes);
-      
-      // posLeftEfMarker.resize(3,60000);
-      // posObjMarkerA.resize(3,60000);
-
+       retval = Cortex_Request("LiveMode", &pResponse, &nBytes);      
 		}
-
-
-    
-    Eigen::MatrixXd StartMocapStep::diff(Eigen::MatrixXd data)
-    { 
-      Eigen::MatrixXd matrix_diff;
-      matrix_diff.resize(data.rows(),data.cols());
-
-      for(int j=0; j< data.rows(); j++)
-      {
-        for (unsigned int i=1; i<data.cols(); i++)
-        {
-          matrix_diff(j,i) = (data(j,i)-data(j,i-1));
-        } 
-      }
-      return matrix_diff;
-    }
-
-    Eigen::Vector3d StartMocapStep::takeAverage(Eigen::MatrixXd m)
-    {
-      std::vector<double> v[m.rows()];
-      double avg[m.rows()];
-
-      Eigen::Vector3d mean;
-
-      for(int j=0; j<m.rows(); j++)
-      {
-        for(int i=0;i<m.cols();i++)
-        {
-          v[j].push_back(m(j,i));
-          avg[j]+=v[j].at(i);
-        }
-        mean(j)= avg[j]/v[j].size();
-      }
-      return mean;
-    }
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
@@ -151,16 +111,17 @@ namespace mc_handover
           if(startCapture)
           {
             /* get object marker pose */
-            robotBodyMarker <<  FrameofData.BodyData[0].Markers[0][0], // X
-                                FrameofData.BodyData[0].Markers[0][1], // Y
-                                FrameofData.BodyData[0].Markers[0][2]; // Z
+            robotBodyMarker <<  FrameofData.BodyData[robotBody].Markers[2][0], // X left marker
+                                FrameofData.BodyData[robotBody].Markers[2][1], // Y
+                                FrameofData.BodyData[robotBody].Markers[2][2]; // Z
 
-            objectBodyMarker << FrameofData.BodyData[1].Markers[0][0], // X
-                                FrameofData.BodyData[1].Markers[0][1], // Y
-                                FrameofData.BodyData[1].Markers[0][2]; // Z
+            objectBodyMarker << FrameofData.BodyData[objBody].Markers[0][0], // X farmost
+                                FrameofData.BodyData[objBody].Markers[0][1], // Y
+                                FrameofData.BodyData[objBody].Markers[0][2]; // Z
 
             /* check for non zero frame only and store them */ 
-            if(robotBodyMarker(0) != 0 || objectBodyMarker(0) != 0)
+            if(robotBodyMarker(0) != 0 || robotBodyMarker(0) < 100 ||
+             objectBodyMarker(0) != 0 || objectBodyMarker(0) < 100)
             {
               posLeftEfMarker(0, i) = robotBodyMarker(0); // X
               posLeftEfMarker(1, i) = robotBodyMarker(1); // Y
@@ -170,77 +131,118 @@ namespace mc_handover
               posObjMarkerA(0, i) = objectBodyMarker(0); // X
               posObjMarkerA(1, i) = objectBodyMarker(1); // Y
               posObjMarkerA(2, i) = objectBodyMarker(2); // Z
-              // cout << " posObjMarkerA X " << posObjMarkerA(0, i) << " ith  Frame " << ithFrame <<endl;
+              // if(i%100==0)
+              // {cout << " posObjMarkerA X " << posObjMarkerA(0, i) << " ith  Frame " << ithFrame << "objectBodyMarker "<< objectBodyMarker(0)<< endl;}
+
 
               if(i%tunParam1 == 0) // 1sec at 200fps
               {
-                initPosObjMarkerA = posObjMarkerA.col(i-tunParam1+1);
-                ithPosObjMarkerA  = posObjMarkerA.col(i); 
-                curVelObjMarkerA  = diff(posObjMarkerA.middleCols(i-tunParam1+1,i))*fps;
+
+                /*get robot ef current pose*/
+                curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
+                curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
+                sva::PTransformd X_robotLeftEf(curRotLeftEf, curPosLeftEf);
+
+
+                /*get robot ef marker current pose*/
+                curPosLeftEfMarker << posLeftEfMarker.col(i-tunParam1+1);
+                sva::PTransformd X_robotLeftEfMarker(curRotLeftEfMarker, curPosLeftEfMarker);
+
+
+                /*get transformation martix from mocap frame to robot EF frame*/
+                sva::PTransformd X_mocap_robotLeftEf = X_robotLeftEf.inv()*X_robotLeftEfMarker;
+
+
+                /***************************************************/
+                
+                /*object marker pose w.r.t to robot ef frame */
+                for(int j=1;j<=tunParam1; j++)
+                {
+                  sva::PTransformd X_poseObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols(i-tunParam1+j,i));
+                  // cout << "X_poseObjMarkerA.trans() \n" << X_poseObjMarkerA.translation() << endl;
+
+                  sva::PTransformd newPoseObjMarkerA = X_mocap_robotLeftEf.inv()*X_poseObjMarkerA;
+                  poseObjMarkerA_wrt_robotLeftEf(0,j-1) = newPoseObjMarkerA.translation()(0);
+                  poseObjMarkerA_wrt_robotLeftEf(1,j-1) = newPoseObjMarkerA.translation()(1);
+                  poseObjMarkerA_wrt_robotLeftEf(2,j-1) = newPoseObjMarkerA.translation()(2);
+                  
+                  // if(j%(tunParam1/5)==0)
+                  // {cout << "poseObjMarkerA_wrt_robotLeftEf\n"<< 
+                  // poseObjMarkerA_wrt_robotLeftEf.transpose() << endl;}
+                  
+                }cout << "/***************************************************/" << endl;
+
+                // /* using matplotlib */
+                // for(int j=0;j<tunParam1; j++)
+                // { 
+                //     x.push_back(poseObjMarkerA_wrt_robotLeftEf(0,j));
+                //     y.push_back(poseObjMarkerA_wrt_robotLeftEf(1,j));
+                //     z.push_back(poseObjMarkerA_wrt_robotLeftEf(2,j));
+                //     tp.push_back(j);
+                //   if(j%(tunParam1/5)==0)
+                //   {
+                //     cout <<"x y z   " << x.at(j) << "  " << y.at(j) << "  " << z.at(j) << endl;
+                //     plt::clf();
+                //     plt::plot(tp,x);
+                //     plt::plot(tp,y);
+                //     plt::plot(tp,z);
+                //     plt::ylim(-1.5,1.5);
+                //     plt::xlim(0, tunParam1);
+                //     plt::pause(1e-10);//(0.0000000001);
+                //   }
+                // }
+
+                /***************************************************/
+
+                /*get obj marker initials*/
+                initPosObjMarkerA = poseObjMarkerA_wrt_robotLeftEf.col(i-tunParam1+1);
+                ithPosObjMarkerA  = poseObjMarkerA_wrt_robotLeftEf.col(i);
+                
+                /*get average velocity of previous 1sec obj motion*/
+                curVelObjMarkerA  = diff(poseObjMarkerA_wrt_robotLeftEf)*fps;
                 avgVelObjMarkerA  = takeAverage(curVelObjMarkerA);
 
-                            
-                /* predict position in straight line after tunParam2 time */
-                auto pf = ctl.handoverTraj->constVelocityPredictPos(ithPosObjMarkerA, avgVelObjMarkerA, tunParam2);
-                /* get way points between obj and left ef */
-                auto out = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, pf, tunParam2);
+                cout << "initPosObjMarkerA\n " << initPosObjMarkerA.transpose() << endl;
+                cout << "ithPosObjMarkerA\n " << ithPosObjMarkerA.transpose() << endl;
+                cout << "avgVelObjMarkerA\n " << avgVelObjMarkerA.transpose() << endl;
+                // cout << "curVelObjMarkerA\n " << curVelObjMarkerA << endl;
 
-                
-                /* using matplotlib */
-                for(int it = 0; it<get<0>(out).rows(); it++)
+                /*predict position in straight line after tunParam2 time*/
+                auto predictPos = ctl.handoverTraj->constVelocityPredictPos(ithPosObjMarkerA, avgVelObjMarkerA, tunParam2);
+
+                /*get way points between obj and left ef*/
+                auto wp_objMarkerA_robotLeftEf = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tunParam2);
+
+
+                /***************************************************/
+                // robotPredictPos on points between ithPosObjMarkerA to predictPos from curPosLeftEf
+                // (curPosLeftEf-predictPos).norm()> xxx -- pick another closet point on line
+
+                  cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
+                  cout << "predictPos\n " << predictPos.transpose() << endl;
+                /* set ef pose based on prediction */
+                if(onceTrue)
                 { 
-                  if(it%10==0)
-                  {
-                    x.push_back(get<0>(out)(it,0));
-                    y.push_back(get<0>(out)(it,1));
-                    z.push_back(get<0>(out)(it,2));
-                    tp.push_back(it);
-                    plt::clf();
-                    plt::plot(tp,x);
-                    plt::plot(tp,y);
-                    plt::plot(tp,z);
-                    plt::xlim(0, tunParam2);
-                    plt::pause(0.0000000001);                    
-                  }
+                  sva::PTransformd dtrL(curRotLeftEf, predictPos);
+                  // ctl.relEfTaskL->set_ef_pose(dtrL);
+                  // onceTrue = false;
                 }
 
-
-
-
-                // /* get robot ef current pose */
-                //   // leftHandPosW  = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
-                //   // rightHandPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
-                // curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
-                // curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
-                // sva::PTransformd X_robotLeftEf(curRotLeftEf, curPosLeftEf);
-
-
-                // /* get robot ef marker current pose */
-                // curPosLeftEfMarker << posLeftEfMarker.col(1);
-                // sva::PTransformd X_robotLeftEfMarker(curRotLeftEfMarker, curPosLeftEfMarker);
-
-
-                // /*get transformation martix from mocap frame to robot EF frame*/
-                // sva::PTransformd X_mocap_robotLeftEf = X_robotLeftEf.inv()*X_robotLeftEfMarker;
-
-
-                // /* object marker pose w.r.t to robot ef frame */
-                // sva::PTransformd X_poseObjMarkerA(rotObjMarkerA, posObjMarkerA.col(i));
-                // sva::PTransformd poseObjMarkerA_wrt_robotLeftEf = X_mocap_robotLeftEf.inv()*X_poseObjMarkerA;
-                
-
-              /* set ef pose based on prediction */
-              // if(onceTrue)
-              // {
-              //   ctl.relEfTaskL->set_ef_pose(poseObjMarkerA_wrt_robotLeftEf);
-              //   onceTrue = false;
-              // }
+                /**/
+                // if(ctl.relEfTaskL->eval().norm()<0.02) // ctl.relEfTaskL->eval().speed()<0.02
+                // { 
+                //   onceTrue = true;
+                //   cout << "True " << onceTrue << endl;
+                // }
+              
 
               } //tunParam1
+
+              // poseObjMarkerA_wrt_robotLeftEf = Eigen::MatrixXd::Zero(3,tunParam1); //clear out
               i = i + 1;
 
             }// check for non zero frame
-          } // start when ithFrame == 1
+          } // startCapture
            
           // output("OK");
           return false;
@@ -258,6 +260,44 @@ namespace mc_handover
         // Cortex_FreeFrame(getCurFrame);
         // Cortex_FreeFrame(&FrameofData);
     }
+
+
+    
+    Eigen::MatrixXd StartMocapStep::diff(Eigen::MatrixXd data)
+    { 
+      Eigen::MatrixXd matrix_diff;
+      matrix_diff.resize(data.rows(),data.cols());
+
+      for(int j=0; j< data.rows(); j++)
+      {
+        for (unsigned int i=1; i<data.cols(); i++)
+        {
+          matrix_diff(j,i) = (data(j,i)-data(j,i-1));
+        } 
+      }
+      return matrix_diff;
+    }
+
+
+    Eigen::Vector3d StartMocapStep::takeAverage(Eigen::MatrixXd m)
+    {
+      std::vector<double> v[m.rows()];
+      double avg[m.rows()];
+
+      Eigen::Vector3d mean;
+
+      for(int j=0; j<m.rows(); j++)
+      {
+        for(int i=0;i<m.cols();i++)
+        {
+          v[j].push_back(m(j,i));
+          avg[j]+=v[j].at(i);
+        }
+        mean(j)= avg[j]/v[j].size();
+      }
+      return mean;
+    }
+
 
 
   } // namespace states
@@ -287,10 +327,15 @@ namespace mc_handover
 //   }
 // }
 
-
-
+/* get ef cur pose */
+// leftHandPosW  = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
+// rightHandPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
 
   /* debug */
+
+
+// cout << "xxx\n " << xxx.translation() << endl;
+// cout << "poseObjMarkerA_wrt_robotLeftEf\n"<< poseObjMarkerA_wrt_robotLeftEf << endl;
 
   // cout << "initPosObjMarkerA " << initPosObjMarkerA << endl;
   // cout << "ithPosObjMarkerA " << ithPosObjMarkerA << endl;
@@ -321,7 +366,7 @@ relEfTaskL->set_ef_pose(dtrL);
 
 sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 initPosR <<  0.30, -0.35, 0.3;
-relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+relEfTaskR->set_ef_pose(sva::PTransformd(i-tunParam1+1sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.i-tunParam1+1rotation(), initPosR));
 solver().addTask(relEfTaskR);*/
 
 
