@@ -21,7 +21,7 @@ namespace mc_handover
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
 			// try translate_ef(const Eigen::Vector3d & t)
-			posL << 0.36972, 0.700432, 0.784482; //0.45, 0.30, .3;
+			posL << 0.45, 0.30, .3;// 0.37, 0.7, 0.8; 
 			getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();
 
 			posR << 0.45, -0.30, .3;

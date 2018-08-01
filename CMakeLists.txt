@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
+# matplotlib #
+FIND_PACKAGE(PythonLibs 2.7 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+
+
+
 set(CXX_DISABLE_WERROR 1)
 include(cmake/base.cmake)
 include(cmake/boost.cmake)
@@ -19,9 +25,11 @@ endif()
 set(PKG_CONFIG_ADDITIONAL_VARIABLES "${PKG_CONFIG_ADDITIONAL_VARIABLES} libdir")
 add_required_dependency(mc_rtc)
 
+
 add_subdirectory(src)
 add_subdirectory(states)
 add_subdirectory(cortex)
+
 
 configure_file(etc/mc_rtc.conf ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf)
 

@@ -36,7 +36,8 @@
 #include "handover_complianceTask.h"
 #include "handover_trajectories.h"
 
- 
+#include "matplotlibcpp.h"
+namespace plt = matplotlibcpp;
 
 using namespace std;
 using namespace mc_control;
@@ -74,6 +75,8 @@ namespace mc_handover
         sva::ForceVecd wrenchLt, wrenchRt;
             
         std::map<std::string, mc_rbdyn::SurfacePtr> surf;
+
+        std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 
         bool publishWrench();
         bool runOnce = true;

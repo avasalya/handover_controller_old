@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <tuple>
 
 #include <Eigen/Core>
 #include <Eigen/SVD>
@@ -31,39 +32,20 @@ using namespace Eigen;
 
 namespace mc_handover 
 {
+	struct HandoverTrajectory
+	{
 
-struct HandoverTrajectory
-{
+		HandoverTrajectory();
+		~HandoverTrajectory();
 
-	public:
+		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> constVelocity(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf);
 
-	HandoverTrajectory();
-
-	~HandoverTrajectory();
-
-	MatrixXd getPosA();
-	MatrixXd getPosB();
-
-
-	void constVelocity();
+		Eigen::Vector3d constVelocityPredictPos(const Eigen::Vector3d & xi, const Eigen::Vector3d xdot, double tf);
 	
-	void minJerkZeroBoundary(const MatrixXd & xi, const MatrixXd & xf, double tf);
+		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> minJerkZeroBoundary(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf);
 
-	void minJerkPredictPos(const MatrixXd & xi, const MatrixXd & xc, double tc, double tf);
+		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>  minJerkNonZeroBoundary(const Eigen::Vector3d & xi, const Eigen::Vector3d & vi, const Eigen::Vector3d & ai, const Eigen::Vector3d & xc, double tf);
 
-	void minJerkNonZeroBoundary(const MatrixXd & xi, const MatrixXd & vi, const MatrixXd & ai,
-															 const MatrixXd & xc, double tf);
-
-	MatrixXd wpPos;
-	MatrixXd wpVel;
-	MatrixXd wpAce;
-
-	MatrixXd Pos;
-	MatrixXd Vel;
-	MatrixXd Ace;
-
-};
-
-
-
+		std::tuple<Eigen::Vector3d, Eigen::Vector3d, Eigen::Vector3d> minJerkPredictPos(const Eigen::Vector3d & xi, const Eigen::Vector3d & xc, double t0, double tc, double tf);
+	};
 } // namespace mc_handover

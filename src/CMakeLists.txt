@@ -9,8 +9,10 @@ set(controller_HDR
   handover_controller.h
   handover_trajectories.h
   handover_complianceTask.h
+  matplotlibcpp.h
  
 )
+
 
 add_library(${PROJECT_NAME} SHARED ${controller_SRC} ${controller_HDR})
 
