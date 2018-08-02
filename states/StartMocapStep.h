@@ -90,7 +90,7 @@ namespace mc_handover
 				
 				double del = 0;
 				
-
+        std::shared_ptr<mc_tasks::CoMTask> comt_;
 		};
 	} // namespace states
 } // namespace mc_handover

@@ -33,6 +33,8 @@ namespace mc_handover
 		{
 			cout << "start -- StartMocapStep " << endl;
   		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+      comt_ = std::make_shared<mc_tasks::CoMTask>(ctl.robots(), 0);
+      ctl.solver().addTask(comt_);
 
        Cortex_SetVerbosityLevel(VL_Info);
        Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
@@ -250,6 +252,7 @@ namespace mc_handover
 
     void StartMocapStep::teardown(mc_control::fsm::Controller & controller)
     { 
+      controller.solver().removeTask(comt_);
         // for(int i=0; i<100; i++)
         // {
         //   cout << " posRobotMarker X " << posLeftEfMarker(0, i) << " i "<< i << endl;

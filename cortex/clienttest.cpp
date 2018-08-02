@@ -48,7 +48,7 @@ int main()
   Cortex_SetVerbosityLevel(VL_Info);
   Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
   
-  retval = Cortex_Initialize("10.1.1.180", "10.1.1.100");
+  retval = Cortex_Initialize("", "10.1.1.190");
   if (retval != RC_Okay)
   {
     printf("Error: Unable to initialize ethernet communication\n");
