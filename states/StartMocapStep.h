@@ -40,8 +40,8 @@ namespace mc_handover
 				int robotBody=0;
 				int objBody=1;
 				int fps = 200;
-				int tunParam1 = 500;
-				int tunParam2 = 20;
+				int tunParam1 = 20;
+				int tunParam2 = 10;
 
 				
 				/*mocap*/
@@ -58,6 +58,7 @@ namespace mc_handover
 				Eigen::MatrixXd curVelObjMarkerA; //, curPosObjMarkerA;
 
 				Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
+				
 				Eigen::Matrix3d curRotLeftEf;
 				Eigen::Matrix3d curRotLeftEfMarker  = Eigen::Matrix3d::Identity();
 				Eigen::Matrix3d rotObjMarkerA = Eigen::Matrix3d::Identity();
@@ -90,7 +91,7 @@ namespace mc_handover
 				
 				double del = 0;
 				
-        std::shared_ptr<mc_tasks::CoMTask> comt_;
+		        std::shared_ptr<mc_tasks::CoMTask> comt_;
 		};
 	} // namespace states
 } // namespace mc_handover

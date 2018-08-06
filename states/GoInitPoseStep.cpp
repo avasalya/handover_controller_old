@@ -54,10 +54,10 @@ namespace mc_handover
 
 			BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
-			initPosL <<  0.30, 0.35, 0.3;      
+			initPosL <<  0.45, 0.3, 0.3;      //0.30, 0.35, 0.3;      
 			ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
 
-			initPosR <<  0.30, -0.35, 0.3;
+			initPosR <<  0.40, -0.3, 0.3; //0.30, -0.35, 0.3;
 			ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
 
 
