@@ -34,7 +34,7 @@ namespace mc_handover
 
 			Eigen::Matrix3d ori; 
 			ori = chestOriTask->orientation();
-			cout <<"CHEST_LINK1 orientation\n"<< ori << endl;
+			// cout <<"CHEST_LINK1 orientation\n"<< ori << endl;
 
 			// Eigen::VectorXd dimW(3);
 			// dimW << 1., 1., 1.;

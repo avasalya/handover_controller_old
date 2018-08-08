@@ -115,35 +115,115 @@ namespace mc_handover
 
 
 	/* position based on const velocity */
-	std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>HandoverTrajectory::constVelocity(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf)
+	std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d>HandoverTrajectory::constVelocity(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf)
 	{	
-		MatrixXd pos, vel;
+		MatrixXd pos;
 
-		pos.resize(tf,3); vel.resize(tf,3);
+		pos.resize(tf,3);
 
-		Eigen::Vector3d slope 	 = -(xi-xf)/tf;
-		Eigen::Vector3d constant  =  xi; //-((xi-xf)*t0)/(t0-tf);
+		Eigen::Vector3d slope		= -(xi-xf)/(tf*0.005);
+		Eigen::Vector3d constant	=  xf-slope*tf;
 
 		for(int i=0; i<tf; i++)
 		{
-			pos.row(i) = slope*i + constant;
-			vel.row(i) = slope;
+			pos.row(i) = slope*i*0.005 + constant;
 		}
 
 		// cout << pos << endl<< endl;
 		// cout << vel << endl<< endl;
-		return std::make_tuple(pos, vel);
+		return std::make_tuple(pos, slope, constant);
 	}
 
 
 	/* position at tf time based on const velocity */
-	Eigen::Vector3d HandoverTrajectory::constVelocityPredictPos(const Eigen::Vector3d & xi, const Eigen::Vector3d xdot, double tf)
+	Eigen::Vector3d HandoverTrajectory::constVelocityPredictPos(const Eigen::Vector3d & xdot, const Eigen::Vector3d & C, double tf)
 	{	
 		Eigen::Vector3d pos;
-		pos << xdot*tf + xi;
+		pos << xdot*tf*0.005 + C;
 		// cout << pos << endl<< endl;
 		return pos;
 	}
+
+
+
+    Eigen::MatrixXd HandoverTrajectory::diff(Eigen::MatrixXd data)
+    {
+      Eigen::MatrixXd matrix_diff, check;
+      matrix_diff.resize(data.rows(),data.cols());
+      check.resize(data.rows(),data.cols());
+
+		for (unsigned int i=1; i<data.cols(); i++)
+		{
+			// ignore diff > XXXX   replace with previous value
+			check(0,i) = (data(0,i)-data(0,i-1));
+			check(1,i) = (data(1,i)-data(1,i-1));
+			check(2,i) = (data(2,i)-data(2,i-1));
+	
+			if( (check(0,i)>0.05) || (check(0,i)<-0.05) ||
+				(check(1,i)>0.05) || (check(1,i)<-0.05) ||
+				(check(2,i)>0.05) || (check(2,i)<-0.05) ) //meters
+			{
+				matrix_diff(0,i) = check(0,i-1);
+				matrix_diff(1,i) = check(1,i-1);
+				matrix_diff(2,i) = check(2,i-1);
+			}
+			else
+			{
+				matrix_diff(0,i) = check(0,i);
+				matrix_diff(1,i) = check(1,i);
+				matrix_diff(2,i) = check(2,i);
+			}
+	    }
+		// cout << matrix_diff.transpose()*200<< endl<<endl;
+		return matrix_diff;
+    }
+
+
+    Eigen::Vector3d HandoverTrajectory::takeAverage(Eigen::MatrixXd m)
+    {
+		std::vector<double> vx, vy, vz;
+		double avgx=0, avgy=0, avgz=0;
+
+		Eigen::Vector3d mean;
+
+		for(int i=1;i<=m.cols();i++)
+		{
+			//ignore 1st value
+			if( (m(0,i)>-2) && (m(0,i)<2) )
+			{
+				vx.push_back(m(0,i));
+			}
+			else
+			{
+				vx.push_back(0.3);	
+			}
+
+			if( (m(1,i)>-2) && (m(1,i)<2) )
+			{
+				vy.push_back(m(1,i));
+			}
+			else
+			{
+				vy.push_back(0.3);	
+			}
+			
+			if( (m(2,i)>-2) && (m(2,i)<2) )
+			{
+				vz.push_back(m(2,i));
+			}
+			else
+			{
+				vz.push_back(0.3);	
+			}		
+		}
+
+		avgx = accumulate( vx.begin(), vx.end(), 0.0)/vx.size(); 
+		avgy = accumulate( vy.begin(), vy.end(), 0.0)/vy.size(); 
+		avgz = accumulate( vz.begin(), vz.end(), 0.0)/vz.size(); 
+
+		mean << avgx, avgy, avgz;
+		return mean;
+    }
 
 } // namespace mc_handover
 

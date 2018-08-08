@@ -38,14 +38,17 @@ namespace mc_handover
 		HandoverTrajectory();
 		~HandoverTrajectory();
 
-		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd> constVelocity(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf);
+		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> constVelocity(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf);
 
-		Eigen::Vector3d constVelocityPredictPos(const Eigen::Vector3d & xi, const Eigen::Vector3d xdot, double tf);
+		Eigen::Vector3d constVelocityPredictPos(const Eigen::Vector3d & xdot, const Eigen::Vector3d & C, double tf);
 	
 		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd> minJerkZeroBoundary(const Eigen::Vector3d & xi, const Eigen::Vector3d & xf, double tf);
 
 		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>  minJerkNonZeroBoundary(const Eigen::Vector3d & xi, const Eigen::Vector3d & vi, const Eigen::Vector3d & ai, const Eigen::Vector3d & xc, double tf);
 
 		std::tuple<Eigen::Vector3d, Eigen::Vector3d, Eigen::Vector3d> minJerkPredictPos(const Eigen::Vector3d & xi, const Eigen::Vector3d & xc, double t0, double tc, double tf);
+
+		Eigen::MatrixXd diff(Eigen::MatrixXd data);
+		Eigen::Vector3d takeAverage(Eigen::MatrixXd m);
 	};
 } // namespace mc_handover

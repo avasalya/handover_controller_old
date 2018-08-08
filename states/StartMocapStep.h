@@ -11,6 +11,7 @@
 
 namespace plt = matplotlibcpp;
 
+
 namespace mc_handover
 {
 	namespace states
@@ -26,17 +27,15 @@ namespace mc_handover
 
 				bool run(mc_control::fsm::Controller&) override;
 
-				void teardown(mc_control::fsm::Controller&) override;
-				
-				/*helper function*/
-				Eigen::MatrixXd diff(Eigen::MatrixXd data);
-				Eigen::Vector3d takeAverage(Eigen::MatrixXd m);
+				void teardown(mc_control::fsm::Controller&) override {}
 
+				/*helper function*/
+				void plotPos(Eigen::MatrixXd m, int d);
+				void plotVel(Eigen::MatrixXd m, int d);
 
 				bool onceTrue = true;
-				
-				std::vector<double> x, y, z, tp;
-				
+				bool plotSize = true;
+
 				int robotBody=0;
 				int objBody=1;
 				int fps = 200;
@@ -46,24 +45,18 @@ namespace mc_handover
 				
 				/*mocap*/
 				Eigen::Vector3d robotBodyMarker, objectBodyMarker;
-
-
-				Eigen::MatrixXd posLeftEfMarker = Eigen::MatrixXd::Zero(3,60000);
-				Eigen::MatrixXd posObjMarkerA   = Eigen::MatrixXd::Zero(3,60000);
-
+				Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 				Eigen::Vector3d initPosObjMarkerA, ithPosObjMarkerA, avgVelObjMarkerA;
 
-				Eigen::MatrixXd poseObjMarkerA_wrt_robotLeftEf = Eigen::MatrixXd::Zero(3,tunParam1);
-
+				Eigen::MatrixXd posLeftEfMarker  = Eigen::MatrixXd::Zero(3,60000);
+				Eigen::MatrixXd posObjMarkerA    = Eigen::MatrixXd::Zero(3,60000);
+				Eigen::MatrixXd newPosObjMarkerA = Eigen::MatrixXd::Zero(3,tunParam1);
 				Eigen::MatrixXd curVelObjMarkerA; //, curPosObjMarkerA;
 
-				Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
-				
 				Eigen::Matrix3d curRotLeftEf;
 				Eigen::Matrix3d curRotLeftEfMarker  = Eigen::Matrix3d::Identity();
 				Eigen::Matrix3d rotObjMarkerA = Eigen::Matrix3d::Identity();
-
-
+				
 				sva::PTransformd leftHandPosW;
 				sva::PTransformd rightHandPosW;
 
@@ -71,9 +64,13 @@ namespace mc_handover
 				sva::MotionVecd rightHandVelW;
 
 
+
 			private:
 
 				/*cortex*/
+				bool Flag_CORTEX = true;
+				Eigen::MatrixXd bot, obj, eflrot, eflpos;
+
 				sBodyDefs* pBodyDefs = NULL;
 				sFrameOfData* getCurFrame = NULL;
 				sFrameOfData FrameofData;
@@ -90,8 +87,9 @@ namespace mc_handover
 				bool startCapture = false;
 				
 				double del = 0;
-				
+
 		        std::shared_ptr<mc_tasks::CoMTask> comt_;
+		        shared_ptr<mc_control::fsm::Executor> execut;
 		};
 	} // namespace states
 } // namespace mc_handover
