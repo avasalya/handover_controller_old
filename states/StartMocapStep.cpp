@@ -174,7 +174,7 @@ namespace mc_handover
             sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
             // cout << "curPosLeftEfMarker " << curPosLeftEfMarker.transpose() << endl;
 
-           
+
             /*get robot ef current pose*/
             if(Flag_CORTEX)
             {
@@ -191,8 +191,8 @@ namespace mc_handover
             /*get transformation martix from mocap frame to robot frame*/
             sva::PTransformd M_X_R = R_X_efL.inv()*M_X_efLMarker;
             // cout << "M_X_R " << M_X_R.translation().transpose() << endl;
-      
-            
+
+
             /*object marker pose w.r.t to robot frame */
             for(int j=1;j<=tunParam1; j++)
             {
@@ -223,36 +223,32 @@ namespace mc_handover
             curVelObjMarkerA  = ctl.handoverTraj->diff(newPosObjMarkerA)*fps;//ignore diff > XXXX
             // plotVel(curVelObjMarkerA, tunParam1);        
             // cout << "curVelObjMarkerA " << curVelObjMarkerA.transpose() <<endl<<endl;
-            
 
             avgVelObjMarkerA  << ctl.handoverTraj->takeAverage(curVelObjMarkerA);
             // cout << "avgVelObjMarkerA " << avgVelObjMarkerA.transpose() << endl<<endl;
 
-            
 
-            /***************************************************/
             /*get way points between obj inital motion*/
             auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, tunParam1);
             // cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
             // cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
             /*predict position in straight line after tunParam2 time*/  
-                                                        //avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
-            auto predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA,get<2>(actualPosObjMarkerA), tunParam2);
+            //avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
+            auto predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tunParam2);
             // cout << "predictPos from " << ithPosObjMarkerA.transpose() << " to "<< predictPos.transpose() << endl<< endl;
 
 
-            /*get way points between left ef and obj*/
+            /*get predicted way points between left ef and obj*/
             auto wp_efL_objMarkerA = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tunParam2);
-            // cout << "wp_efL_objMarkerA " << get<0>(wp_efL_objMarkerA).transpose() << endl;
-            // plotVel(get<0>(wp_efL_objMarkerA), tunParam2);
+            // cout << "wp_efL_objMarkerA " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
+            // plotPos(get<0>(wp_efL_objMarkerA), tunParam2);
+
+
+            /*trajectory task here and don't wait for it to finish -- overwrite in every loop*/
+            /*********************************************************************************/
             
-            /*trajectory task here*/
-
-
-            /***************************************************/
-            // // robotPredictPos on points between ithPosObjMarkerA to predictPos from curPosLeftEf
-            // (curPosLeftEf-predictPos).norm()> xxx -- pick another closet point on line
+            // (wp_efL_objMarkerA-predictPos).norm()> xxx -- pick another closet point on line
 
               // cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
               // cout << "predictPos\n " << predictPos.transpose() << endl;
@@ -270,7 +266,6 @@ namespace mc_handover
             //   onceTrue = true;
             //   cout << "True " << onceTrue << endl;
             // }
-          
 
           } //tunParam1
           i = i + 1;
@@ -293,7 +288,7 @@ namespace mc_handover
       }
       
       std::vector<double> x, y, z, tp;        
-      for(int j=0;j<d; j++)
+      for(int j=1;j<d; j++)
       { 
         x.push_back(m(0,j));
         y.push_back(m(1,j));
@@ -309,18 +304,18 @@ namespace mc_handover
           plt::plot(x,y,"r--");
           plt::plot(x,z,"g--");
           plt::plot(y,z,"b--");
-          
+          plt::ylim(-2,2);
+          plt::xlim(-2,2);
 
           plt::subplot(2,1,2);
           plt::plot(tp,x,"r--");
           plt::plot(tp,y,"g--");
           plt::plot(tp,z,"b--");
-          
+          plt::ylim(-2,2);
           
           // plt::legend();
           // plt::ylim(-1.5,1.5);
           // plt::xlim(0, d);
-          
 
           plt::pause(1e-10);
         }

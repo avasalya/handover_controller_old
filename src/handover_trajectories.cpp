@@ -122,7 +122,7 @@ namespace mc_handover
 		pos.resize(tf,3);
 
 		Eigen::Vector3d slope		= -(xi-xf)/(tf*0.005);
-		Eigen::Vector3d constant	=  xf-slope*tf;
+		Eigen::Vector3d constant	=  xf-slope*tf*0.005;
 
 		for(int i=0; i<tf; i++)
 		{

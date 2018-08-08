@@ -39,8 +39,8 @@ namespace mc_handover
 				int robotBody=0;
 				int objBody=1;
 				int fps = 200;
-				int tunParam1 = 20;
-				int tunParam2 = 10;
+				int tunParam1 = 200;
+				int tunParam2 = 100;
 
 				
 				/*mocap*/
@@ -68,7 +68,7 @@ namespace mc_handover
 			private:
 
 				/*cortex*/
-				bool Flag_CORTEX = true;
+				bool Flag_CORTEX = false;
 				Eigen::MatrixXd bot, obj, eflrot, eflpos;
 
 				sBodyDefs* pBodyDefs = NULL;
