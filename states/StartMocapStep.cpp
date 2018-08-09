@@ -172,7 +172,7 @@ namespace mc_handover
             /*get robot ef marker current pose*/
             curPosLeftEfMarker << posLeftEfMarker.col((i-tunParam1)+1);
             sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
-            // cout << "curPosLeftEfMarker " << curPosLeftEfMarker.transpose() << endl;
+            cout << "curPosLeftEfMarker " << curPosLeftEfMarker.transpose() << endl;
 
 
             /*get robot ef current pose*/
@@ -190,7 +190,7 @@ namespace mc_handover
 
             /*get transformation martix from mocap frame to robot frame*/
             sva::PTransformd M_X_R = R_X_efL.inv()*M_X_efLMarker;
-            // cout << "M_X_R " << M_X_R.translation().transpose() << endl;
+            cout << "M_X_R " << M_X_R.translation().transpose() << endl;
 
 
             /*object marker pose w.r.t to robot frame */
@@ -236,36 +236,28 @@ namespace mc_handover
             /*predict position in straight line after tunParam2 time*/  
             //avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
             auto predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tunParam2);
-            // cout << "predictPos from " << ithPosObjMarkerA.transpose() << " to "<< predictPos.transpose() << endl<< endl;
+            // cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl<< endl;
 
 
             /*get predicted way points between left ef and obj*/
             auto wp_efL_objMarkerA = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tunParam2);
-            // cout << "wp_efL_objMarkerA " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
-            // plotPos(get<0>(wp_efL_objMarkerA), tunParam2);
+            // cout << "wp_efL_objMarkerA " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;            
 
 
-            /*trajectory task here and don't wait for it to finish -- overwrite in every loop*/
-            /*********************************************************************************/
+            /********************************TO DOs********************************************/
+            /*1) trajectory task here and don't wait for it to finish -- overwrite in every loop*/
+            /*2) if(wp_efL_objMarkerA-predictPos).norm()> xxx -- pick another closet point on line*/
+            /*3) replace predictPos with wp using trajTask*/            
+            /*4) if(ctl.relEfTaskL->eval().norm()<0.02) // ctl.relEfTaskL->eval().speed()<0.02*/
             
-            // (wp_efL_objMarkerA-predictPos).norm()> xxx -- pick another closet point on line
-
-              // cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
-              // cout << "predictPos\n " << predictPos.transpose() << endl;
             // /* set ef pose based on prediction */
             // if(onceTrue)
-            // { 
-            //   sva::PTransformd dtrL(curRotLeftEf, predictPos);
-            //   // ctl.relEfTaskL->set_ef_pose(dtrL);
-            //   // onceTrue = false;
+            // {
+            //     sva::PTransformd dtrL(curRotLeftEf, predictPos);
+            //     ctl.relEfTaskL->set_ef_pose(dtrL);
+            //     onceTrue = false;
             // }
 
-            /**/
-            // if(ctl.relEfTaskL->eval().norm()<0.02) // ctl.relEfTaskL->eval().speed()<0.02
-            // { 
-            //   onceTrue = true;
-            //   cout << "True " << onceTrue << endl;
-            // }
 
           } //tunParam1
           i = i + 1;
@@ -294,11 +286,11 @@ namespace mc_handover
         y.push_back(m(1,j));
         z.push_back(m(2,j));
         tp.push_back(j);
-        if(j%(d/5)==0)
+        if(j%(d/50)==0)
         {
-          // cout <<"x y z   " << x.at(j) << "  " << y.at(j) << "  " << z.at(j) << endl;
+          // cout <<"x y z   " << x.at(j-1) << "  " << y.at(j-1) << "  " << z.at(j-1) << endl;
 
-          // plt::clf();
+          plt::clf();
 
           plt::subplot(2,1,1);
           plt::plot(x,y,"r--");
@@ -312,10 +304,9 @@ namespace mc_handover
           plt::plot(tp,y,"g--");
           plt::plot(tp,z,"b--");
           plt::ylim(-2,2);
+          plt::xlim(0,1000);
           
           // plt::legend();
-          // plt::ylim(-1.5,1.5);
-          // plt::xlim(0, d);
 
           plt::pause(1e-10);
         }
