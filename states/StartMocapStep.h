@@ -37,9 +37,11 @@ namespace mc_handover
 				bool plotSize = true;
 
 				int robotBody=0;
+				int robotMarkerNo= 1;
+				int objMarkerNo = 0;
 				int objBody=1;
 				int fps = 200;
-				int tunParam1 = 200;
+				int tunParam1 = 500;
 				int tunParam2 = 1000;
 
 				
