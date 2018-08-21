@@ -77,6 +77,8 @@ namespace mc_handover
         std::map<std::string, mc_rbdyn::SurfacePtr> surf;
 
         std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
+        std::shared_ptr<mc_tasks::PositionTask> posTask;
+
 
         bool publishWrench();
         bool runOnce = true;
