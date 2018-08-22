@@ -68,8 +68,6 @@ namespace mc_handover
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_objMarkerA;
 
-			// std::shared_ptr<tasks::qp::SetPointTask> spTask;
-			
 
 		private:
 
