@@ -67,6 +67,8 @@ namespace mc_handover
 			Eigen::Matrix3d rotObjMarkerA = Eigen::Matrix3d::Identity();
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_objMarkerA;
+
+			// std::shared_ptr<tasks::qp::SetPointTask> spTask;
 			
 
 		private:

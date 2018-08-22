@@ -34,12 +34,14 @@ namespace mc_handover
 		{			
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);	
 
+
 			/*com Task*/
 			auto initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
 			auto comTask = std::make_shared<mc_tasks::CoMTask>
 			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);
 			comTask->com(initialCom);
 			ctl.solver().addTask(comTask);
+
 
 
 			if(Flag_CirTraj)
@@ -273,6 +275,7 @@ namespace mc_handover
 						/* set ef pose based on prediction */
 						if(onceTrue)
 						{
+
 							cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
 							sva::PTransformd dtrL(curRotLeftEf, predictPos);
 							ctl.relEfTaskL->set_ef_pose(dtrL);
