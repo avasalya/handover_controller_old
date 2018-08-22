@@ -33,23 +33,23 @@ namespace mc_handover
 
 			void teardown(mc_control::fsm::Controller&) override {}
 
-				/*helper function*/
+			/*helper function*/
 			void plotPos(Eigen::MatrixXd m, int d);
 			void plotVel(Eigen::MatrixXd m, int d);
 
-			bool onceTrue = true;
-			bool plotSize = true;
+			bool onceTrue{true};
+			bool plotSize{true};
 
-			int robotBody=0;
-			int robotMarkerNo= 1;
+			int robotBody{0};
+			int robotMarkerNo{1};
 
-			int objMarkerNo = 0;
-			int objBody=1;
+			int objMarkerNo{0};
+			int objBody{1};
 
-			int fps = 200;
+			int fps{200};
 
-			int tunParam1 = 500;
-			int tunParam2 = 1000;
+			int tunParam1{200};
+			int tunParam2{1000};
 
 
 			/*mocap*/
@@ -67,16 +67,20 @@ namespace mc_handover
 			Eigen::Matrix3d rotObjMarkerA = Eigen::Matrix3d::Identity();
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_objMarkerA;
+
+			// std::shared_ptr<tasks::qp::SetPointTask> spTask;
 			
 
 		private:
 
+			bool Flag_CirTraj{false};
+
 			/*cortex*/
-			bool Flag_CORTEX = false;
+			bool Flag_CORTEX{true};
 			Eigen::MatrixXd bot, obj, eflrot, eflpos;
 
-			sBodyDefs* pBodyDefs = NULL;
-			sFrameOfData* getCurFrame = NULL;
+			sBodyDefs* pBodyDefs{NULL};
+			sFrameOfData* getCurFrame{NULL};
 			sFrameOfData FrameofData;
 
 			std::vector<int> bodyMarkers;
@@ -85,18 +89,18 @@ namespace mc_handover
 			int nBytes;
 			int retval = RC_Okay;
 			int totalBodies;
-			int i=1;
+			int i{1};
 
 
-			bool startCapture = false;
+			bool startCapture{false};
 			
-			double del = 0;
+			double del{0};
 
-			std::shared_ptr<mc_tasks::CoMTask> comt_;
-			shared_ptr<mc_control::fsm::Executor> execut;
-			// shared_ptr<CircularTrajectory> CirTraj;
+			// std::shared_ptr<mc_tasks::CoMTask> comt_;
+			// shared_ptr<mc_control::fsm::Executor> execut;
 
 		};
+
 
 
 		struct CircularTrajectory
