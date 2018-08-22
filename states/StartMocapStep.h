@@ -67,8 +67,6 @@ namespace mc_handover
 			Eigen::Matrix3d rotObjMarkerA = Eigen::Matrix3d::Identity();
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_objMarkerA;
-
-			// std::shared_ptr<tasks::qp::SetPointTask> spTask;
 			
 
 		private:
@@ -77,6 +75,7 @@ namespace mc_handover
 
 			/*cortex*/
 			bool Flag_CORTEX{true};
+
 			Eigen::MatrixXd bot, obj, eflrot, eflpos;
 
 			sBodyDefs* pBodyDefs{NULL};
@@ -95,9 +94,6 @@ namespace mc_handover
 			bool startCapture{false};
 			
 			double del{0};
-
-			// std::shared_ptr<mc_tasks::CoMTask> comt_;
-			// shared_ptr<mc_control::fsm::Executor> execut;
 
 		};
 

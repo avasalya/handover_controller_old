@@ -21,11 +21,11 @@ namespace mc_handover
 
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 2.0,1e3));
-			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
+			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
+			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
 
-			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 2.0,1e3));
-			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),3.0,1e2));
+			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
+			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
 
 			/* CHEST */
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
@@ -50,7 +50,7 @@ namespace mc_handover
 			cout << "run" << endl;
 			cout << "moving to initial pose" <<endl;
 
-			ctl.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down	      
+			ctl.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down
 
 			BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
@@ -87,9 +87,9 @@ namespace mc_handover
 			// 	ctl.solver().removeTask(ctl.relEfTaskL);
 			// 	ctl.solver().removeTask(ctl.relEfTaskR);
 			// 	ctl.solver().removeTask(ctl.oriTaskL);
-			// 	ctl.solver().removeTask(ctl.oriTaskR);				
+			// 	ctl.solver().removeTask(ctl.oriTaskR);
 			// }	
-			
+
 
 
 

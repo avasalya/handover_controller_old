@@ -42,48 +42,15 @@ namespace mc_handover
 			ctl.solver().addTask(comTask);
 
 
-			// if(Flag_CirTraj)
-			// {
-			// 	ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			// 	ctl.solver().addTask(ctl.posTask);
+			if(Flag_CirTraj)
+			{
+				ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+				ctl.solver().addTask(ctl.posTask);
 
-			// 	Eigen::Vector3d zeroPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
-			// 	ctl.posTask->position(zeroPos);
-			// 	cirTraj = CircularTrajectory(0.1, 2000, zeroPos+Eigen::Vector3d(0, -0.1, 0));
-			// }
-
-
-
-
-			// std::vector<std::string> activeJoints =
-			// {"LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2",
-			// "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5",
-			// "LARM_JOINT6", "LARM_JOINT7"};
-
-
-			// auto posT = std::make_shared<tasks::qp::PositionTask>(ctl.robots().mbs(), ctl.robots().robotIndex(), "LARM_LINK7", Eigen::Vector3d::Zero());
-
-			// std::shared_ptr<tasks::qp::JointsSelector> jointsSelector = std::make_shared<tasks::qp::JointsSelector>(
-			// 	tasks::qp::JointsSelector::ActiveJoints(ctl.robots().mbs(), ctl.robots().robotIndex(),
-			// 		posT.get(), activeJoints));
-
-			//  spTask = std::make_shared<tasks::qp::SetPointTask>(ctl.robots().mbs(), ctl.robots().robotIndex(), jointsSelector.get(), 5.0, 1000.);
-
-
-
-			// auto comTask = std::make_shared<tasks::qp::CoMTask>(ctl.robots().mbs(), ctl.robots().robotIndex(), Eigen::Vector3d::Zero());
-
-			// auto EfL = std::make_shared<mc_tasks::EndEffectorTask> ("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 2.0,1e3);
-			
-			// std::shared_ptr<tasks::qp::JointsSelector> jointsSelector = std::make_shared<tasks::qp::JointsSelector>(
-			// 	tasks::qp::JointsSelector::ActiveJoints(ctl.robots().mbs(), ctl.robots().robotIndex(),
-			// 		comTask.get(), activeJoints));
-
-			// ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			// ctl.solver().addTask(ctl.posTask);
-
-
-
+				Eigen::Vector3d zeroPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
+				ctl.posTask->position(zeroPos);
+				cirTraj = CircularTrajectory(0.1, 2000, zeroPos+Eigen::Vector3d(0, -0.1, 0));
+			}
 
 
 			if(Flag_CORTEX)
@@ -244,7 +211,7 @@ namespace mc_handover
 						/*get transformation martix from mocap frame to robot frame*/
 						Eigen::Vector3d pos(0.862, 0.032, 0.524);
 						Eigen::Matrix3d ori; ori <<  0, 0, 1,    0, 1, 0,    0, 0, 1;
-						sva::PTransformd M_X_R(ori,pos);// = R_X_efL.inv()*M_X_efLMarker;
+						sva::PTransformd M_X_R(ori,pos);// M_X_R = R_X_efL.inv()*M_X_efLMarker;
 						// cout << "M_X_R " << M_X_R.translation().transpose() << endl;
 
 
@@ -302,18 +269,15 @@ namespace mc_handover
 						// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
 						// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
 
-	
+
 						/* set ef pose based on prediction */
 						if(onceTrue)
 						{
-							// ctl.solver().addTask(spTask.get());
-
 							cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
 							sva::PTransformd dtrL(curRotLeftEf, predictPos);
 							ctl.relEfTaskL->set_ef_pose(dtrL);
 
 							onceTrue = false;
-							// ctl.solver().removeTask(spTask.get());
 						}
 
 
@@ -332,18 +296,18 @@ namespace mc_handover
 					// /* set ef pose based on prediction */
 					// if(onceTrue)
 					// {   
-					// 	if(Flag_CirTraj)
-					// 	{
-					// 		auto pair = cirTraj.pop();
-					// 		ctl.posTask->position(pair.first);
-					// 		ctl.posTask->refVel(pair.second);
+						if(Flag_CirTraj)
+						{
+							auto pair = cirTraj.pop();
+							ctl.posTask->position(pair.first);
+							ctl.posTask->refVel(pair.second);
 
-					// 		// Eigen::Vector3d v1; v1<< 0.1, 0.1, 0.1;
-					// 		// avgVelObjMarkerA;
+							// Eigen::Vector3d v1; v1<< 0.1, 0.1, 0.1;
+							// avgVelObjMarkerA;
 
-					// 		// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
-					// 		// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
-					// 	}
+							// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
+							// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
+						}
 
 					// 	onceTrue = false;
 					// }
