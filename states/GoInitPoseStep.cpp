@@ -21,11 +21,14 @@ namespace mc_handover
 
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
-			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
+			// ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
+			// ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
 
-			ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
-			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
+			ctl.efTaskR.reset(new mc_tasks::EndEffectorTask("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 1.0, 1e3));
+			ctl.efTaskL.reset(new mc_tasks::EndEffectorTask("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 1.0, 1e3));
+			
+			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
+			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
 
 			/* CHEST */
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
@@ -52,17 +55,22 @@ namespace mc_handover
 
 			ctl.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down
 
-			BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
+			// BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
-			initPosL <<  0.45, 0.3, 0.3;      //0.30, 0.35, 0.3;      
-			ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
+			initPosL <<  0.3, 0.3, 1.1;      //0.30, 0.35, 0.3;      
+			ctl.efTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX((M_PI/180)*90), initPosL));
+			// ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
 
-			initPosR <<  0.40, -0.3, 0.3; //0.30, -0.35, 0.3;
-			ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
+			initPosR <<  0.3, -0.3,1.1; //0.30, -0.35, 0.3;
+			ctl.efTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90), initPosR));
+			// ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
 
 
-			ctl.solver().addTask(ctl.relEfTaskL);
-			ctl.solver().addTask(ctl.relEfTaskR);
+			// ctl.solver().addTask(ctl.relEfTaskL);
+			// ctl.solver().addTask(ctl.relEfTaskR);
+
+			ctl.solver().addTask(ctl.efTaskL);
+			ctl.solver().addTask(ctl.efTaskR);
 
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
@@ -77,6 +85,9 @@ namespace mc_handover
 } // namespace mc_handover
 
 
+
+			// Eigen::Vector3d pos = robot().mbc().bodyPosW[robot().bodyIndexByName("RARM_LINK7")].translation();
+			// Eigen::Vector3d vel = robot().mbc().bodyVelW[robot().bodyIndexByName("RARM_LINK7")].linear();
 
 
 			// if(ctl.relEfTaskL->eval().norm() < threshold_eval_ &&

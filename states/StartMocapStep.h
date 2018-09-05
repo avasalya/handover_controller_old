@@ -48,8 +48,8 @@ namespace mc_handover
 
 			int fps{200};
 
-			int tunParam1{200};
-			int tunParam2{1000};
+			int tunParam1{20}; //100ms
+			int tunParam2{200}; //1sec
 
 
 			/*mocap*/
@@ -74,7 +74,7 @@ namespace mc_handover
 			bool Flag_CirTraj{false};
 
 			/*cortex*/
-			bool Flag_CORTEX{true};
+			bool Flag_CORTEX{false};
 
 			Eigen::MatrixXd bot, obj, eflrot, eflpos;
 

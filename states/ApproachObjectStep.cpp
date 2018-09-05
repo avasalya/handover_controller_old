@@ -21,11 +21,13 @@ namespace mc_handover
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
 			// try translate_ef(const Eigen::Vector3d & t)
-			posL << 0.45, 0.30, .3;// 0.37, 0.7, 0.8; 
-			getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();
+			posL << 0.45, 0.35, 1.0;// 0.37, 0.7, 0.8; 
+			// getCurRotL = ctl.relEfTaskL->get_ef_pose().rotation();
+			getCurRotL = ctl.efTaskL->get_ef_pose().rotation();
 
-			posR << 0.45, -0.30, .3;
-			getCurRotR = ctl.relEfTaskR->get_ef_pose().rotation();
+			posR << 0.45, -0.35, 1.0;
+			// getCurRotR = ctl.relEfTaskR->get_ef_pose().rotation();
+			getCurRotR = ctl.efTaskR->get_ef_pose().rotation();
 
 			// ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
 			// controller.set_joint_pos("HEAD_JOINT0",  0.4); //+ve to move head down
@@ -36,10 +38,12 @@ namespace mc_handover
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
 			sva::PTransformd dtrL(getCurRotL, posL);
-			ctl.relEfTaskL->set_ef_pose(dtrL);
+			// ctl.relEfTaskL->set_ef_pose(dtrL);
+			ctl.efTaskL->set_ef_pose(dtrL);
 
 			sva::PTransformd dtrR(getCurRotR, posR);
-			ctl.relEfTaskR->set_ef_pose(dtrR);
+			// ctl.relEfTaskR->set_ef_pose(dtrR);
+			ctl.efTaskR->set_ef_pose(dtrR);
  
 			output("OK");
 
