@@ -65,6 +65,9 @@ namespace mc_handover
 		std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
 		std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
 		
+		std::shared_ptr<mc_tasks::EndEffectorTask> efTaskL;
+		std::shared_ptr<mc_tasks::EndEffectorTask> efTaskR;
+
 		std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
 		std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 

@@ -51,4 +51,13 @@ namespace mc_handover
 		Eigen::MatrixXd diff(Eigen::MatrixXd data);
 		Eigen::Vector3d takeAverage(Eigen::MatrixXd m);
 	};
+
+	struct HandoverTrajectoryTask
+	{
+		HandoverTrajectoryTask();
+		~HandoverTrajectoryTask();
+
+	};
+
+
 } // namespace mc_handover

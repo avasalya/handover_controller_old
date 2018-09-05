@@ -213,7 +213,10 @@ namespace mc_handover
 						/*get transformation martix from mocap frame to robot frame*/
 						Eigen::Vector3d pos(0.862, 0.032, 0.524);
 						Eigen::Matrix3d ori; ori <<  0, 0, 1,    0, 1, 0,    0, 0, 1;
-						sva::PTransformd M_X_R(ori,pos);// M_X_R = R_X_efL.inv()*M_X_efLMarker;
+						sva::PTransformd M_X_R(ori,pos);
+						
+						/*may not need this with real-time robot demo*/
+						// sva::PTransformd M_X_R = R_X_efL.inv()*M_X_efLMarker;
 						// cout << "M_X_R " << M_X_R.translation().transpose() << endl;
 
 
@@ -275,7 +278,6 @@ namespace mc_handover
 						/* set ef pose based on prediction */
 						if(onceTrue)
 						{
-
 							cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
 							sva::PTransformd dtrL(curRotLeftEf, predictPos);
 							ctl.relEfTaskL->set_ef_pose(dtrL);
@@ -296,29 +298,30 @@ namespace mc_handover
 					
 
 
-					// /* set ef pose based on prediction */
-					// if(onceTrue)
-					// {   
-						if(Flag_CirTraj)
-						{
+					/*move ef in circle*/
+					if(Flag_CirTraj)
+					{
+						if(onceTrue)
+						{   
 							auto pair = cirTraj.pop();
 							ctl.posTask->position(pair.first);
 							ctl.posTask->refVel(pair.second);
-
-							// Eigen::Vector3d v1; v1<< 0.1, 0.1, 0.1;
-							// avgVelObjMarkerA;
-
-							// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
-							// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
 						}
+						onceTrue = false;
+					}
 
-					// 	onceTrue = false;
-					// }
 					onceTrue = true;
+
+					// Eigen::Vector3d v1; v1<< 0.1, 0.1, 0.1;
+					// avgVelObjMarkerA;
+
+					// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
+					// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
 
 
 
 				}// check for non zero frame
+
 			} // startCapture
 			// output("OK");
 			return false;
