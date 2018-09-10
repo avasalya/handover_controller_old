@@ -6,15 +6,10 @@
 #include <mc_rbdyn/Robot.h>
 
 #include "handover_controller.h"
+#include "helper_functions.h"
+
 
 #include "../cortex/cortex.h"
-
-namespace plt = matplotlibcpp;
-
-
-#include <queue>
-#include <utility>
-
 
 namespace mc_handover
 {
@@ -32,10 +27,6 @@ namespace mc_handover
 			bool run(mc_control::fsm::Controller&) override;
 
 			void teardown(mc_control::fsm::Controller&) override {}
-
-			/*helper function*/
-			void plotPos(Eigen::MatrixXd m, int d);
-			void plotVel(Eigen::MatrixXd m, int d);
 
 			bool onceTrue{true};
 			bool plotSize{true};
@@ -72,6 +63,7 @@ namespace mc_handover
 		private:
 
 			bool Flag_CirTraj{false};
+			bool Flag_PosTask{false};
 
 			/*cortex*/
 			bool Flag_CORTEX{false};
@@ -96,23 +88,6 @@ namespace mc_handover
 			double del{0};
 
 		};
-
-
-
-		struct CircularTrajectory
-		{
-		public:
-			CircularTrajectory() {}
-			CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial);
-			std::pair<Eigen::Vector3d, Eigen::Vector3d> pop();
-			void reset();
-		private:
-			double r;
-			std::size_t nr_points;
-			Eigen::Vector3d x0;
-			std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > queue;
-		}cirTraj;
-
 
 
 	} // namespace states

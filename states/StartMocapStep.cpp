@@ -44,6 +44,15 @@ namespace mc_handover
 
 
 
+
+			if(Flag_PosTask)
+			{
+				ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+				ctl.solver().addTask(ctl.posTask);
+			}
+
+
+
 			if(Flag_CirTraj)
 			{
 				ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
@@ -51,8 +60,9 @@ namespace mc_handover
 
 				Eigen::Vector3d zeroPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
 				ctl.posTask->position(zeroPos);
-				cirTraj = CircularTrajectory(0.1, 2000, zeroPos+Eigen::Vector3d(0, -0.1, 0));
+				ctl.cirTraj = std::make_shared<mc_handover::CircularTrajectory>(CircularTrajectory(0.1, 2000, zeroPos+Eigen::Vector3d(0, -0.1, 0)));
 			}
+
 
 
 			if(Flag_CORTEX)
@@ -107,6 +117,8 @@ namespace mc_handover
 				startCapture = true;
 			}
 		}
+
+
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
@@ -275,12 +287,12 @@ namespace mc_handover
 							}
 						}
 						// cout << " newPosObjMarkerA " << newPosObjMarkerA.transpose() <<endl<< endl;
-						// plotPos(newPosObjMarkerA, tunParam1);
+						// helpFun->plotPos(newPosObjMarkerA, tunParam1);
 
 
 						/*get average velocity of previous 1sec obj motion*/
 						curVelObjMarkerA  = ctl.handoverTraj->diff(newPosObjMarkerA)*fps;//ignore diff > XXXX
-						// plotVel(curVelObjMarkerA, tunParam1);        
+						// helpFun->plotVel(curVelObjMarkerA, tunParam1);
 						// cout << "curVelObjMarkerA " << curVelObjMarkerA.transpose() <<endl<<endl;
 
 
@@ -305,30 +317,39 @@ namespace mc_handover
 						// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
 						// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
 
+						// ctl.handoverTrajTask->config.pos = get<0>(wp_efL_objMarkerA);
 
-
-						auto gothere = Eigen::MatrixXd::Random(3,1);
 
 						/* set ef pose based on prediction */
-						if(onceTrue)
+						
+
+						if(Flag_PosTask)
 						{
-							// cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
-
-							if( gothere(0)<= 0.5 && gothere(1)<= 0.5 && gothere(2)<=1.5 &&
-								gothere(0)>= 0.0 && gothere(1)>= 0.0 && gothere(2)>=0.5)
+							auto gothere = Eigen::MatrixXd::Random(3,1);
+							if(onceTrue)
 							{
-								// sva::PTransformd dtrL(curRotLeftEf, {fabs(gothere(0)), gothere(1), fabs(gothere(2))+0.3 });
-								// cout << "gothere " << gothere << endl;
-								// // ctl.relEfTaskL->set_ef_pose(dtrL);
-								// ctl.efTaskL->set_ef_pose(dtrL);
+								// cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
 
-								sva::PTransformd dtrL(curRotLeftEf, {fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3 });
-								cout << "gothere " << dtrL.translation().transpose() << endl;
-								ctl.efTaskL->set_ef_pose(dtrL);
+								if( gothere(0)<= 0.5 && gothere(1)<= 0.5 && gothere(2)<=1.5 &&
+									gothere(0)>= 0.0 && gothere(1)>= 0.0 && gothere(2)>=0.5)
+								{
+									sva::PTransformd dtrL(curRotLeftEf, {fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3 });
+									cout << "gothere " << dtrL.translation().transpose() << endl;
+									// ctl.efTaskL->set_ef_pose(dtrL);
 
+									ctl.posTask->position({fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3});
+									ctl.posTask->refVel(Eigen::MatrixXd::Zero(3,1));
+									cout << "avg velocity " << avgVelObjMarkerA.transpose() << endl;
+
+									/*real-time*/
+									// ctl.posTask->position(predictPos);
+									// ctl.posTask->refVel(avgVelObjMarkerA);
+
+									// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
+									// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
+								}
+								onceTrue = false;
 							}
-
-							onceTrue = false;
 						}
 
 
@@ -343,29 +364,21 @@ namespace mc_handover
 					----------------------------------------------------------------------------------*/
 					
 
-
 					/*move ef in circle*/
 					if(Flag_CirTraj)
 					{
 						if(onceTrue)
 						{   
-							auto pair = cirTraj.pop();
+							auto pair = ctl.cirTraj->pop();
 							ctl.posTask->position(pair.first);
 							ctl.posTask->refVel(pair.second);
 						}
 						onceTrue = false;
 					}
 
+
+
 					onceTrue = true;
-
-					// Eigen::Vector3d v1; v1<< 0.1, 0.1, 0.1;
-					// avgVelObjMarkerA;
-
-					// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
-					// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
-
-
-
 				}// check for non zero frame
 
 			} // startCapture
@@ -375,123 +388,6 @@ namespace mc_handover
 
 
 
-
-
-		void StartMocapStep::plotPos(Eigen::MatrixXd m, int d)
-		{
-			if(plotSize)
-			{
-				plotSize = false;
-				plt::figure_size(1200, 780);
-			}
-
-			std::vector<double> x, y, z, tp;
-			for(int j=1;j<d; j++)
-			{ 
-				x.push_back(m(0,j));
-				y.push_back(m(1,j));
-				z.push_back(m(2,j));
-				tp.push_back(j);
-				if(j%(d/50)==0)
-				{
-					// cout <<"x y z   " << x.at(j-1) << "  " << y.at(j-1) << "  " << z.at(j-1) << endl;
-
-					plt::clf();
-
-					plt::subplot(2,1,1);
-					plt::plot(x,y,"r--");
-					plt::plot(x,z,"g--");
-					plt::plot(y,z,"b--");
-					plt::ylim(-2,2);
-					plt::xlim(-2,2);
-
-					plt::subplot(2,1,2);
-					plt::plot(tp,x,"r--");
-					plt::plot(tp,y,"g--");
-					plt::plot(tp,z,"b--");
-					plt::ylim(-2,2);
-					plt::xlim(0,1000);
-
-					// plt::legend();
-
-					plt::pause(1e-10);
-				}
-			}
-		}
-
-
-
-		void StartMocapStep::plotVel(Eigen::MatrixXd m, int d)
-		{
-			if(plotSize)
-			{
-				plotSize = false;
-				plt::figure_size(1200, 780);
-			}
-
-			std::vector<double> x, y, z, tp;
-			for(int j=0;j<d; j++)
-			{ 
-				x.push_back(m(0,j));
-				y.push_back(m(1,j));
-				z.push_back(m(2,j));
-				tp.push_back(j);
-				if(j%(d/5)==0)
-				{
-					// cout <<"x y z   " << x.at(j) << "  " << y.at(j) << "  " << z.at(j) << endl;
-
-					plt::clf();
-					plt::plot(tp,x,"r--");
-					plt::plot(tp,y,"g--");
-					plt::plot(tp,z,"b--");
-					// plt::ylim(-2,2);
-					// plt::xlim(0,d);
-
-
-					// plt::legend();
-					plt::pause(1e-10);
-				}
-			}cout <<"end loop "<<endl;
-		}
-
-
-
-
-		CircularTrajectory::CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial)
-		: r(radius), nr_points(nr_points), x0(initial)
-		{
-			reset();
-		}
-
-		std::pair<Eigen::Vector3d, Eigen::Vector3d> CircularTrajectory::pop()
-		{
-			std::pair<Eigen::Vector3d, Eigen::Vector3d> pair;
-			if(queue.empty())
-			{
-				Eigen::Vector3d zero = Eigen::Vector3d::Zero();
-				pair = {x0, zero};
-			}
-			else
-			{
-				pair = queue.front();
-				queue.pop();
-			}
-			return pair;
-		}
-
-		void CircularTrajectory::reset()
-		{
-			//Clear queue
-			std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > empty;
-			std::swap(empty, queue);
-			for(std::size_t i = 0; i < nr_points; ++i)
-			{
-				double theta = 2*M_PI*(double)i/(double)nr_points;
-				Eigen::Vector3d pos(0, cos(theta), sin(theta));
-				Eigen::Vector3d vel(0, -sin(theta), cos(theta));
-				queue.push({x0+r*pos, r*vel});
-			}
-		}
 
 
 

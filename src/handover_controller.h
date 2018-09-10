@@ -35,11 +35,14 @@
 
 #include "handover_complianceTask.h"
 #include "handover_trajectories.h"
+#include "helper_functions.h"
+
 
 #include "matplotlibcpp.h"
 namespace plt = matplotlibcpp;
 
 using namespace std;
+using namespace Eigen;
 using namespace mc_control;
 
 namespace mc_handover
@@ -62,6 +65,11 @@ namespace mc_handover
 		virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
 
+		std::map<std::string, sva::ForceVecd> wrenches;
+		sva::ForceVecd wrenchLt, wrenchRt;
+		
+		std::map<std::string, mc_rbdyn::SurfacePtr> surf;
+
 		std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
 		std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
 		
@@ -71,16 +79,18 @@ namespace mc_handover
 		std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
 		std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
+		std::shared_ptr<mc_tasks::PositionTask> posTask;
+
+		// std::shared_ptr<tasks::qp::TrajectoryTask> trajTask;
+
 		std::shared_ptr<mc_handover::HandoverComplianceTask> compliTaskL;
 		std::shared_ptr<mc_handover::HandoverComplianceTask> compliTaskR;
 
-		std::map<std::string, sva::ForceVecd> wrenches;
-		sva::ForceVecd wrenchLt, wrenchRt;
-		
-		std::map<std::string, mc_rbdyn::SurfacePtr> surf;
-
+		std::shared_ptr<mc_handover::CircularTrajectory> cirTraj;
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-		std::shared_ptr<mc_tasks::PositionTask> posTask;
+		std::shared_ptr<mc_handover::HandoverTrajectoryTask>handoverTrajTask;
+
+		std::shared_ptr<mc_handover::HelperFunctions> helpFun;
 
 
 		bool publishWrench();

@@ -6,8 +6,8 @@ namespace mc_handover
 {
 	HandoverTrajectory::HandoverTrajectory()
 	{
-    	std::cout << " handover trajectory constructor created " <<std::endl;
-    }
+		std::cout << " handover trajectory constructor created " <<std::endl;
+	}
 
 
     /* returns way points between xi and xf in tf time using nonZero boundary conditions */
@@ -37,7 +37,6 @@ namespace mc_handover
 		// cout << ace << endl<< endl;
 		return std::make_tuple(pos, vel, ace);
 	}
-
 
 
 
@@ -135,6 +134,7 @@ namespace mc_handover
 	}
 
 
+
 	/* position at tf time based on const velocity */
 	Eigen::Vector3d HandoverTrajectory::constVelocityPredictPos(const Eigen::Vector3d & xdot, const Eigen::Vector3d & C, double tf)
 	{	
@@ -146,11 +146,11 @@ namespace mc_handover
 
 
 
-    Eigen::MatrixXd HandoverTrajectory::diff(Eigen::MatrixXd data)
-    {
-      Eigen::MatrixXd matrix_diff, check;
-      matrix_diff.resize(data.rows(),data.cols());
-      check.resize(data.rows(),data.cols());
+	Eigen::MatrixXd HandoverTrajectory::diff(Eigen::MatrixXd data)
+	{
+		Eigen::MatrixXd matrix_diff, check;
+		matrix_diff.resize(data.rows(),data.cols());
+		check.resize(data.rows(),data.cols());
 
 		for (unsigned int i=1; i<data.cols(); i++)
 		{
@@ -158,7 +158,7 @@ namespace mc_handover
 			check(0,i) = (data(0,i)-data(0,i-1));
 			check(1,i) = (data(1,i)-data(1,i-1));
 			check(2,i) = (data(2,i)-data(2,i-1));
-	
+
 			if( (check(0,i)>0.05) || (check(0,i)<-0.05) ||
 				(check(1,i)>0.05) || (check(1,i)<-0.05) ||
 				(check(2,i)>0.05) || (check(2,i)<-0.05) ) //meters
@@ -173,14 +173,15 @@ namespace mc_handover
 				matrix_diff(1,i) = check(1,i);
 				matrix_diff(2,i) = check(2,i);
 			}
-	    }
+		}
 		// cout << matrix_diff.transpose()*200<< endl<<endl;
 		return matrix_diff;
-    }
+	}
 
 
-    Eigen::Vector3d HandoverTrajectory::takeAverage(Eigen::MatrixXd m)
-    {
+
+	Eigen::Vector3d HandoverTrajectory::takeAverage(Eigen::MatrixXd m)
+	{
 		std::vector<double> vx, vy, vz;
 		double avgx=0, avgy=0, avgz=0;
 
@@ -223,9 +224,74 @@ namespace mc_handover
 
 		mean << avgx, avgy, avgz;
 		return mean;
-    }
+	}
 
-} // namespace mc_handover
 
+
+
+	CircularTrajectory::CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial)
+	: r(radius), nr_points(nr_points), x0(initial)
+	{
+		reset();
+	}
+
+	std::pair<Eigen::Vector3d, Eigen::Vector3d> CircularTrajectory::pop()
+	{
+		std::pair<Eigen::Vector3d, Eigen::Vector3d> pair;
+		if(queue.empty())
+		{
+			Eigen::Vector3d zero = Eigen::Vector3d::Zero();
+			pair = {x0, zero};
+		}
+		else
+		{
+			pair = queue.front();
+			queue.pop();
+		}
+		return pair;
+	}
+
+	void CircularTrajectory::reset()
+	{
+			//Clear queue
+		std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > empty;
+		std::swap(empty, queue);
+		for(std::size_t i = 0; i < nr_points; ++i)
+		{
+			double theta = 2*M_PI*(double)i/(double)nr_points;
+			Eigen::Vector3d pos(0, cos(theta), sin(theta));
+			Eigen::Vector3d vel(0, -sin(theta), cos(theta));
+			queue.push({x0+r*pos, r*vel});
+		}
+	}
+
+
+	HandoverTrajectoryTask::HandoverTrajectoryTask(mc_solver::QPSolver & solver, HandoverTrajectoryConfig & config)
+	:solver(solver), config(config)
+	{
+		auto & robot = solver.robot();
+
+		positionTask = std::make_shared<tasks::qp::PositionTask>(solver.robots().mbs(), 0, "LARM_LINK6", robot.mbc().bodyPosW[robot.bodyIndexByName("LARM_LINK6")].translation());
+
+		Eigen::Vector3d dimW; dimW << 1, 1, 1;
+
+		trajTask = std::make_shared<tasks::qp::TrajectoryTask>(solver.robots().mbs(), 0, positionTask.get(), config.gainPos, config.gainVel, dimW, config.weight);
+		solver.addTask(trajTask.get());
+
+		/* Update position vector */
+		initPos = positionTask->position();		
+	}
+
+	HandoverTrajectoryTask::~HandoverTrajectoryTask()
+	{
+		solver.removeTask(trajTask.get());
+	}
+
+	bool HandoverTrajectoryTask::update()
+	{
+
+	}
+
+}// namespace mc_handover
 
 
