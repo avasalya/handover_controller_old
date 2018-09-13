@@ -31,9 +31,8 @@ namespace mc_handover
 
 
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
-		{			
+		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);	
-
 
 			/*com Task*/
 			auto initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
@@ -41,8 +40,6 @@ namespace mc_handover
 			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);
 			comTask->com(initialCom);
 			ctl.solver().addTask(comTask);
-
-
 
 
 			if(Flag_PosTask)
@@ -116,15 +113,15 @@ namespace mc_handover
 			{
 				startCapture = true;
 			}
-		}
+		}// start
 
 
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
-			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);					
+			
 			if(Flag_CORTEX)
 			{
 				getCurFrame =  Cortex_GetCurrentFrame();
@@ -153,6 +150,7 @@ namespace mc_handover
 			{
 				bot = Eigen::MatrixXd::Random(3,1);
 				obj = Eigen::MatrixXd::Random(3,1);
+
 				// cout << "bot " << bot.transpose() << endl;
 				// cout << "obj " << obj.transpose() << endl;
 
@@ -161,10 +159,33 @@ namespace mc_handover
 			}
 
 
+			/*HandoverTrajectoryTask*/
+
+			// ctl.solver().removeTask(ctl.efTaskL);
+			// ctl.solver().removeTask(ctl.efTaskR);
+			
+			if(startTraj)
+			{
+				startTraj = false;
+
+				wpReady = true;
+
+				// ctl.handoverTrajTask = std::make_shared<mc_handover::HandoverTrajectoryTask>(ctl.solver());
+				ctl.handoverTrajTask.reset(new mc_handover::HandoverTrajectoryTask(ctl.solver()));
+				tune1 = ctl.handoverTrajTask->tunParam1;
+				tune2 = ctl.handoverTrajTask->tunParam2;
+
+				// cout << tune1 << " tune " << tune2 << endl;
+				newPosObjMarkerA = Eigen::MatrixXd::Zero(3,tune1);
+			}
+
+
+
 			/* start only when ithFrame == 1 */
 			if(startCapture)
 			{
-			/* get object marker pose */
+
+				/* get object marker pose */
 				if(Flag_CORTEX)
 				{
 					robotBodyMarker <<	
@@ -200,10 +221,10 @@ namespace mc_handover
 					//   // cout << " posObjMarkerA X " << posObjMarkerA(0, i) << " ith  Frame " << ithFrame << endl;
 					// }
 
-					if(i%tunParam1 == 0)
+					if(i%tune1 == 0)
 					{
 						/*get robot ef marker current pose*/
-						curPosLeftEfMarker << posLeftEfMarker.col((i-tunParam1)+1);//1.162, -0.268, 1.074;
+						curPosLeftEfMarker << posLeftEfMarker.col((i-tune1)+1);//1.162, -0.268, 1.074;
 						sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
 						// cout << "curPosLeftEfMarker " << curPosLeftEfMarker.transpose() << endl;
 
@@ -238,16 +259,16 @@ namespace mc_handover
 
 
 						/*object marker pose w.r.t to robot frame */
-						for(int j=1;j<=tunParam1; j++)
+						for(int j=1;j<=tune1; j++)
 						{
-							sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols((i-tunParam1)+j,i));
+							sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols((i-tune1)+j,i));
 							// cout << "M_X_ObjMarkerA.trans() \n" << M_X_ObjMarkerA.translation().transpose() << endl;
 
 							sva::PTransformd efL_X_ObjMarkerA;
 
 							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
-							// cout << "efL_X_ObjMarkerA1 "<< efL_X_ObjMarkerA.translation().transpose() << endl;
+							// cout << "efL_X_ObjMarkerA "<< efL_X_ObjMarkerA.translation().transpose() << endl;
 							// cout <<"error " << M_X_ObjMarkerA.translation()- efL_X_ObjMarkerA.translation()<<endl;
 							// cout << endl << endl;
 
@@ -273,26 +294,26 @@ namespace mc_handover
 							newPosObjMarkerA(0,j-1) = efL_X_ObjMarkerA.translation()(0);
 							newPosObjMarkerA(1,j-1) = efL_X_ObjMarkerA.translation()(1);
 							newPosObjMarkerA(2,j-1) = efL_X_ObjMarkerA.translation()(2);
-
+							
 							/*get obj marker initials*/
 							if(j==1)
 							{
 								initPosObjMarkerA = newPosObjMarkerA.col(j-1);
 								// cout << " initPosObjMarkerA " << initPosObjMarkerA.transpose() << endl;
 							}
-							if(j==tunParam1)
+							if(j==tune1)
 							{
-								ithPosObjMarkerA  = newPosObjMarkerA.col(tunParam1-1);
+								ithPosObjMarkerA  = newPosObjMarkerA.col(tune1-1);
 								// cout << " ithPosObjMarkerA " << ithPosObjMarkerA.transpose() << endl; 
 							}
 						}
 						// cout << " newPosObjMarkerA " << newPosObjMarkerA.transpose() <<endl<< endl;
-						// helpFun->plotPos(newPosObjMarkerA, tunParam1);
+						// helpFun->plotPos(newPosObjMarkerA, tune1);
 
 
 						/*get average velocity of previous 1sec obj motion*/
 						curVelObjMarkerA  = ctl.handoverTraj->diff(newPosObjMarkerA)*fps;//ignore diff > XXXX
-						// helpFun->plotVel(curVelObjMarkerA, tunParam1);
+						// helpFun->plotVel(curVelObjMarkerA, tune1);
 						// cout << "curVelObjMarkerA " << curVelObjMarkerA.transpose() <<endl<<endl;
 
 
@@ -301,28 +322,49 @@ namespace mc_handover
 
 
 						/*get way points between obj inital motion*/
-						auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, tunParam1);
+						auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, tune1);
 						// cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
 						// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
 
-						/*predict position in straight line after tunParam2 time*/  
+						/*predict position in straight line after tune2 time*/  
 						//avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
-						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tunParam2);
+						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tune2);
 						// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl<< endl;
 
 
 						/*get predicted way points between left ef and obj*/
-						wp_efL_objMarkerA = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tunParam2);
+						wp_efL_objMarkerA = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tune2);
 						// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
 						// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
 
-						// ctl.handoverTrajTask->config.pos = get<0>(wp_efL_objMarkerA);
+						wp = get<0>(wp_efL_objMarkerA);
+						// cout << "wp.cols() " << wp.cols() << endl;
+						// cout << "wp.rows() " << wp.rows() << endl;
 
+						/*provide ref pos,vel,ace for trajectoryTask*/
+						if(wpReady)
+						{
+							for(int k=0; k<wp.cols();k++)
+							{
+								ctl.handoverTrajTask->pos(0,k) = wp(0,k);
+								ctl.handoverTrajTask->pos(1,k) = wp(1,k);
+								ctl.handoverTrajTask->pos(2,k) = wp(2,k);
 
-						/* set ef pose based on prediction */
+								ctl.handoverTrajTask->vel.col(k) = avgVelObjMarkerA;
+
+								ctl.handoverTrajTask->ace.col(k) = Eigen::Vector3d::Zero();
+
+								wpReady = false;
+
+							// cout << "size vel " << ctl.handoverTrajTask->vel.size() << endl;
+							// cout << "size ace " << ctl.handoverTrajTask->ace.size() << endl;
+							// cout << "trajTask pos\n"<< ctl.handoverTrajTask->pos.transpose() << endl;
+							}
+						}
 						
 
+						/* set ef pose based on random prediction */
 						if(Flag_PosTask)
 						{
 							auto gothere = Eigen::MatrixXd::Random(3,1);
@@ -330,7 +372,7 @@ namespace mc_handover
 							{
 								// cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
 
-								if( gothere(0)<= 0.5 && gothere(1)<= 0.5 && gothere(2)<=1.5 &&
+								if( gothere(0)<= 1.5 && gothere(1)<= 1.5 && gothere(2)<=1.5 &&
 									gothere(0)>= 0.0 && gothere(1)>= 0.0 && gothere(2)>=0.5)
 								{
 									sva::PTransformd dtrL(curRotLeftEf, {fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3 });
@@ -338,8 +380,8 @@ namespace mc_handover
 									// ctl.efTaskL->set_ef_pose(dtrL);
 
 									ctl.posTask->position({fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3});
-									ctl.posTask->refVel(Eigen::MatrixXd::Zero(3,1));
-									cout << "avg velocity " << avgVelObjMarkerA.transpose() << endl;
+									ctl.posTask->refVel(avgVelObjMarkerA);//Eigen::MatrixXd::Zero(3,1)
+									// cout << "avg velocity " << avgVelObjMarkerA.transpose() << endl;
 
 									/*real-time*/
 									// ctl.posTask->position(predictPos);
@@ -349,20 +391,25 @@ namespace mc_handover
 									// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
 								}
 								onceTrue = false;
+								//  put this "onceTrue = true;" before-> }// check for non zero frame
 							}
 						}
 
 
-					} //tunParam1
+					} //tune1
 					i = i + 1;
-
-					/*------------------------------TO DOs----------------------------------------------
-					1) trajectory task here and don't wait for it to finish -- overwrite in every loop
-					2) if(wp_efL_objMarkerA-predictPos).eval().norm()> xxx -- pick another closet point on line
-					3) replace predictPos with wp using trajTask
-					4) if(ctl.efTaskL->eval().norm()<0.02) // ctl.efTaskL->eval().speed()<0.02
-					----------------------------------------------------------------------------------*/
 					
+
+					if(ctl.handoverTrajTask && wpReady==false)
+					{	
+						LOG_WARNING("new traj")
+						if(ctl.handoverTrajTask->update())
+						{	
+							LOG_WARNING("traj update ")
+							wpReady = true; // should be true for next iteration
+						}
+					}
+
 
 					/*move ef in circle*/
 					if(Flag_CirTraj)
@@ -375,21 +422,14 @@ namespace mc_handover
 						}
 						onceTrue = false;
 					}
-
-
-
-					onceTrue = true;
+					
 				}// check for non zero frame
 
 			} // startCapture
 			// output("OK");
 			return false;
-		}
 
-
-
-
-
+		}// run
 
 	} // namespace states
 
@@ -398,6 +438,13 @@ namespace mc_handover
 
 
 
+
+	/*------------------------------TO DOs----------------------------------------------
+	1) trajectory task here and don't wait for it to finish -- overwrite in every loop
+	2) if(wp_efL_objMarkerA-predictPos).eval().norm()> xxx -- pick another closet point on line
+	3) replace predictPos with wp using trajTask
+	4) if(ctl.efTaskL->eval().norm()<0.02) // ctl.efTaskL->eval().speed()<0.02
+	----------------------------------------------------------------------------------*/
 
 
 
@@ -420,17 +467,17 @@ namespace mc_handover
 
 // cout << "size newPosObjMarkerA " << newPosObjMarkerA.cols() << endl;
 // cout << "size curVelObjMarkerA " << curVelObjMarkerA.cols() << endl;
-// cout << "tunParam1 " << tunParam1 << "tunParam2  " << tunParam2 <<  endl;
+// cout << "tune1 " << tune1 << "tune2  " << tune2 <<  endl;
 
 
-// if(j%(tunParam1/5)==0)
+// if(j%(tune1/5)==0)
 // {
 //   cout <<"curposObjMarkerA " <<M_X_ObjMarkerA.translation().transpose()<<endl;
 //   cout <<"newPosObjMarkerA  "<< newPosObjMarkerA.col(j-1).transpose() << endl;
 //   cout << "diff    " << M_X_ObjMarkerA.translation().transpose() - newPosObjMarkerA.col(j-1).transpose() << endl;
 // }
 
-// if(j%(tunParam1/5)==0)
+// if(j%(tune1/5)==0)
 // {
 // cout << "efL_X_ObjMarkerA\n"<< efL_X_ObjMarkerA.translation().transpose() << endl;
 // cout << "newPosObjMarkerA\n"<< newPosObjMarkerA.col(j-1) << endl;
@@ -453,7 +500,7 @@ namespace mc_handover
 //     plt::plot(tp,x);
 //     plt::plot(tp,y);
 //     plt::plot(tp,z);
-//     plt::xlim(0, tunParam2);
+//     plt::xlim(0, tune2);
 //     plt::pause(0.0000000001);                    
 //   }
 // }
@@ -497,7 +544,7 @@ relEfTaskL->set_ef_pose(dtrL);
 
 sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 initPosR <<  0.30, -0.35, 0.3;
-relEfTaskR->set_ef_pose(sva::PTransformd(i-tunParam1+1sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.i-tunParam1+1rotation(), initPosR));
+relEfTaskR->set_ef_pose(sva::PTransformd(i-tune1+1sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.i-tune1+1rotation(), initPosR));
 solver().addTask(relEfTaskR);*/
 
 

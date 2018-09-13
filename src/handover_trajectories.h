@@ -34,6 +34,7 @@ using namespace Eigen;
 
 namespace mc_handover 
 {
+
 	struct HandoverTrajectory
 	{
 
@@ -59,7 +60,7 @@ namespace mc_handover
 	struct CircularTrajectory
 	{
 	public:
-		CircularTrajectory() {}
+		CircularTrajectory();
 		CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial);
 		std::pair<Eigen::Vector3d, Eigen::Vector3d> pop();
 		void reset();
@@ -71,38 +72,58 @@ namespace mc_handover
 	};
 
 
-	struct HandoverTrajectoryConfig
-	{
-		HandoverTrajectoryConfig() {}
-		
-		double gainPos	= 1e3;
-		double gainVel	= 1e2;
-		double weight	= 1e3;
-
-		Eigen::MatrixXd pos;
-		Eigen::MatrixXd vel;
-		Eigen::MatrixXd ace;
-	};
-
-
 	class HandoverTrajectoryTask
 	{
 	public:
-		HandoverTrajectoryTask(mc_solver::QPSolver & solver, HandoverTrajectoryConfig & config);
+		HandoverTrajectoryTask(mc_solver::QPSolver & solver);
 		~HandoverTrajectoryTask();
 
 		bool update();
 
+		long wp_index =0;
+
+		double gainPos	= 1e3;
+		double gainVel	= 1e2;
+		double weight	= 1e3;
+
+		int tunParam1{20}; //100ms
+		int tunParam2{200}; //1sec
+
+		Eigen::MatrixXd pos = Eigen::MatrixXd::Zero(3,tunParam2);
+		Eigen::MatrixXd vel = Eigen::MatrixXd::Zero(3,tunParam2);;
+		Eigen::MatrixXd ace = Eigen::MatrixXd::Zero(3,tunParam2);;
+
+
 		mc_solver::QPSolver & solver;
-		HandoverTrajectoryConfig & config;
 
 		std::shared_ptr<tasks::qp::PositionTask> positionTask;
 		std::shared_ptr<tasks::qp::TrajectoryTask> trajTask;
 
-		Eigen::Vector3d initPos;
-		Eigen::Vector3d refVel;
+		Eigen::Vector3d initPos, refVel, refAce;
 
 	};
 
 
 } // namespace mc_handover
+
+
+
+
+
+
+	// struct HandoverTrajectoryConfig
+	// {
+	// 	HandoverTrajectoryConfig();
+	// 	~HandoverTrajectoryConfig();
+
+	// 	double gainPos	= 1e3;
+	// 	double gainVel	= 1e2;
+	// 	double weight	= 1e3;
+
+	// 	Eigen::MatrixXd pos;
+	// 	Eigen::MatrixXd vel;
+	// 	Eigen::MatrixXd ace;
+
+	// 	long tunParam1{20}; //100ms
+	// 	long tunParam2{200}; //1sec
+	// };

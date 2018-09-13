@@ -118,14 +118,14 @@ namespace mc_handover
 	{	
 		MatrixXd pos;
 
-		pos.resize(tf,3);
+		pos.resize(3,tf);
 
 		Eigen::Vector3d slope		= -(xi-xf)/(tf*0.005);
 		Eigen::Vector3d constant	=  xf-slope*tf*0.005;
 
 		for(int i=0; i<tf; i++)
 		{
-			pos.row(i) = slope*i*0.005 + constant;
+			pos.col(i) = slope*i*0.005 + constant;
 		}
 
 		// cout << pos << endl<< endl;
@@ -253,7 +253,7 @@ namespace mc_handover
 
 	void CircularTrajectory::reset()
 	{
-			//Clear queue
+		//Clear queue
 		std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > empty;
 		std::swap(empty, queue);
 		for(std::size_t i = 0; i < nr_points; ++i)
@@ -266,8 +266,19 @@ namespace mc_handover
 	}
 
 
-	HandoverTrajectoryTask::HandoverTrajectoryTask(mc_solver::QPSolver & solver, HandoverTrajectoryConfig & config)
-	:solver(solver), config(config)
+
+
+
+
+
+
+
+
+
+
+
+	HandoverTrajectoryTask::HandoverTrajectoryTask(mc_solver::QPSolver & solver)
+	:solver(solver)
 	{
 		auto & robot = solver.robot();
 
@@ -275,20 +286,63 @@ namespace mc_handover
 
 		Eigen::Vector3d dimW; dimW << 1, 1, 1;
 
-		trajTask = std::make_shared<tasks::qp::TrajectoryTask>(solver.robots().mbs(), 0, positionTask.get(), config.gainPos, config.gainVel, dimW, config.weight);
+		trajTask = std::make_shared<tasks::qp::TrajectoryTask>(solver.robots().mbs(), 0, positionTask.get(), gainPos, gainVel, dimW, weight);
 		solver.addTask(trajTask.get());
 
 		/* Update position vector */
-		initPos = positionTask->position();		
+		initPos = positionTask->position();
+		cout << "efL initial Pos " << initPos.transpose() << endl;
 	}
+
 
 	HandoverTrajectoryTask::~HandoverTrajectoryTask()
 	{
-		solver.removeTask(trajTask.get());
+		solver.removeTask(trajTask.get());		
 	}
 
+
 	bool HandoverTrajectoryTask::update()
-	{
+	{			
+		
+			// cout << "pos.rows() " << pos.rows() <<endl;
+			// cout << "pos.cols() " << pos.cols() <<endl;
+
+ 		if(wp_index < pos.cols())
+		{
+			// cout << " Pos " << pos.col(wp_index).transpose() << endl;
+
+			positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
+			trajTask->refVel(vel.col(wp_index));
+			refVel = vel.col(wp_index);
+			trajTask->refAccel(ace.col(wp_index));
+			refAce = ace.col(wp_index);
+			wp_index++;
+
+			// cout << " Pos " << positionTask->position().transpose() << endl;
+
+			if(wp_index==tunParam1-1) //check if observation time is over then go to new observed pos
+			{
+				LOG_INFO("next iteration ")
+				wp_index = 0;
+				return true;
+
+			}
+			return false;
+		}
+		else
+		{	
+			LOG_WARNING(" nothing to do ")
+			// wpReady = true;
+
+			positionTask->position(initPos);
+
+			trajTask->refVel(Eigen::Vector3d::Zero());
+			refVel=Eigen::Vector3d::Zero();
+			
+			trajTask->refAccel(Eigen::Vector3d::Zero());
+			refAce=Eigen::Vector3d::Zero();
+			return false;
+		}
 
 	}
 

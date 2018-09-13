@@ -50,8 +50,7 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			cout << "run" << endl;
-			cout << "moving to initial pose" <<endl;
+			cout << "run" << endl<< "moving to initial pose" <<endl;
 
 			ctl.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down
 

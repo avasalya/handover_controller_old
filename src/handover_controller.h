@@ -81,14 +81,12 @@ namespace mc_handover
 
 		std::shared_ptr<mc_tasks::PositionTask> posTask;
 
-		// std::shared_ptr<tasks::qp::TrajectoryTask> trajTask;
-
 		std::shared_ptr<mc_handover::HandoverComplianceTask> compliTaskL;
 		std::shared_ptr<mc_handover::HandoverComplianceTask> compliTaskR;
 
 		std::shared_ptr<mc_handover::CircularTrajectory> cirTraj;
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-		std::shared_ptr<mc_handover::HandoverTrajectoryTask>handoverTrajTask;
+		std::shared_ptr<mc_handover::HandoverTrajectoryTask>handoverTrajTask = nullptr;
 
 		std::shared_ptr<mc_handover::HelperFunctions> helpFun;
 
