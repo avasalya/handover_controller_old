@@ -42,6 +42,11 @@ namespace mc_handover
 			ctl.solver().addTask(comTask);
 
 
+			/*remove previous Ef tasks */
+			// ctl.solver().removeTask(ctl.efTaskL);
+			ctl.solver().removeTask(ctl.efTaskR);
+			
+
 			if(Flag_PosTask)
 			{
 				ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
@@ -120,7 +125,21 @@ namespace mc_handover
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
-			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);					
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+
+			/*initiate HandoverTrajectoryTask*/
+			if(ctl.efTaskL->speed().norm()<0.02)
+			{
+				if(startTraj)
+				{
+					cout << "ctl.efTaskL->speed().norm() " << ctl.efTaskL->eval().norm()<<endl;
+					startTraj = false;
+					wpReady = true;
+					
+					// ctl.handoverTrajTask = std::make_shared<mc_handover::HandoverTrajectoryTask>(ctl.solver());
+					ctl.handoverTrajTask.reset(new mc_handover::HandoverTrajectoryTask(ctl.solver()));
+				}
+			}
 			
 			if(Flag_CORTEX)
 			{
@@ -157,28 +176,6 @@ namespace mc_handover
 				// eflrot = Eigen::MatrixXd::Random(3,3);
 				eflpos = bot;// Eigen::MatrixXd::Random(3,1);
 			}
-
-
-			/*HandoverTrajectoryTask*/
-
-			// ctl.solver().removeTask(ctl.efTaskL);
-			// ctl.solver().removeTask(ctl.efTaskR);
-			
-			if(startTraj)
-			{
-				startTraj = false;
-
-				wpReady = true;
-
-				// ctl.handoverTrajTask = std::make_shared<mc_handover::HandoverTrajectoryTask>(ctl.solver());
-				ctl.handoverTrajTask.reset(new mc_handover::HandoverTrajectoryTask(ctl.solver()));
-				tune1 = ctl.handoverTrajTask->tunParam1;
-				tune2 = ctl.handoverTrajTask->tunParam2;
-
-				// cout << tune1 << " tune " << tune2 << endl;
-				newPosObjMarkerA = Eigen::MatrixXd::Zero(3,tune1);
-			}
-
 
 
 			/* start only when ithFrame == 1 */
@@ -266,7 +263,7 @@ namespace mc_handover
 
 							sva::PTransformd efL_X_ObjMarkerA;
 
-							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
+							// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
 							// cout << "efL_X_ObjMarkerA "<< efL_X_ObjMarkerA.translation().transpose() << endl;
 							// cout <<"error " << M_X_ObjMarkerA.translation()- efL_X_ObjMarkerA.translation()<<endl;
@@ -284,7 +281,7 @@ namespace mc_handover
 
 
 							// // or
-							// efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
+							efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
 
 							// cout << "efL_X_ObjMarkerA3 "<< efL_X_ObjMarkerA.translation().transpose() << endl;
 							// cout << endl << endl;
@@ -351,15 +348,15 @@ namespace mc_handover
 								ctl.handoverTrajTask->pos(1,k) = wp(1,k);
 								ctl.handoverTrajTask->pos(2,k) = wp(2,k);
 
-								ctl.handoverTrajTask->vel.col(k) = avgVelObjMarkerA;
+								ctl.handoverTrajTask->vel.col(k) = avgVelObjMarkerA*0;
 
 								ctl.handoverTrajTask->ace.col(k) = Eigen::Vector3d::Zero();
 
 								wpReady = false;
 
+							// cout << "trajTask pos\n"<< ctl.handoverTrajTask->pos.transpose() << endl;
 							// cout << "size vel " << ctl.handoverTrajTask->vel.size() << endl;
 							// cout << "size ace " << ctl.handoverTrajTask->ace.size() << endl;
-							// cout << "trajTask pos\n"<< ctl.handoverTrajTask->pos.transpose() << endl;
 							}
 						}
 						
@@ -402,7 +399,8 @@ namespace mc_handover
 
 					if(ctl.handoverTrajTask && wpReady==false)
 					{	
-						LOG_WARNING("new traj")
+						// ctl.handoverTrajTask->update();
+						// LOG_WARNING("new traj wp ")
 						if(ctl.handoverTrajTask->update())
 						{	
 							LOG_WARNING("traj update ")

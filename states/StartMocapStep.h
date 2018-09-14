@@ -34,13 +34,13 @@ namespace mc_handover
 			int robotBody{0};
 			int robotMarkerNo{1};
 
-			int objMarkerNo{0};
 			int objBody{1};
+			int objMarkerNo{0};
 
 			int fps{200};
 
-			int tune1{0};
-			int tune2{0};
+			int tune1{10}; //100ms
+			int tune2{20};//1sec
 
 			/*mocap*/
 			Eigen::Vector3d robotBodyMarker, objectBodyMarker;
@@ -50,7 +50,8 @@ namespace mc_handover
 			Eigen::MatrixXd posLeftEfMarker  = Eigen::MatrixXd::Zero(3,60000);
 			Eigen::MatrixXd posObjMarkerA    = Eigen::MatrixXd::Zero(3,60000);
 			
-			Eigen::MatrixXd newPosObjMarkerA;
+			Eigen::MatrixXd newPosObjMarkerA = Eigen::MatrixXd::Zero(3,tune1);
+
 			Eigen::MatrixXd curVelObjMarkerA, wp;//, curPosObjMarkerA;
 
 			Eigen::Matrix3d curRotLeftEf;
@@ -63,12 +64,15 @@ namespace mc_handover
 		private:
 
 			bool startCapture{false};
-			bool startTraj{true};
+			
 			bool wpReady{false};
+			bool startTraj{true};
 
 			bool Flag_CirTraj{false};
+			
 			bool Flag_PosTask{false};			
-			bool Flag_CORTEX{false};
+			
+			bool Flag_CORTEX{true};
 
 			Eigen::MatrixXd bot, obj, eflrot, eflpos;
 

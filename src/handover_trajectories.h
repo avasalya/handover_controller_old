@@ -86,12 +86,12 @@ namespace mc_handover
 		double gainVel	= 1e2;
 		double weight	= 1e3;
 
-		int tunParam1{20}; //100ms
-		int tunParam2{200}; //1sec
+		int tunParam1{10}; //100ms
+		int tunParam2{20}; //1sec
 
-		Eigen::MatrixXd pos = Eigen::MatrixXd::Zero(3,tunParam2);
-		Eigen::MatrixXd vel = Eigen::MatrixXd::Zero(3,tunParam2);;
-		Eigen::MatrixXd ace = Eigen::MatrixXd::Zero(3,tunParam2);;
+		Eigen::MatrixXd pos;
+		Eigen::MatrixXd vel;
+		Eigen::MatrixXd ace;
 
 
 		mc_solver::QPSolver & solver;

@@ -56,6 +56,15 @@ namespace mc_handover
 
 			// BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
+
+			auto ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
+			auto rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
+
+			cout << "ltHand " << ltHand.translation().transpose() 
+			<< "\n rtHand " << rtHand.translation().transpose() << endl;
+
+
+
 			initPosL <<  0.3, 0.3, 1.1;      //0.30, 0.35, 0.3;      
 			ctl.efTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX((M_PI/180)*90), initPosL));
 			// ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));

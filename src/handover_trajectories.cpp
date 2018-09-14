@@ -292,12 +292,17 @@ namespace mc_handover
 		/* Update position vector */
 		initPos = positionTask->position();
 		cout << "efL initial Pos " << initPos.transpose() << endl;
+
+
+		pos = Eigen::MatrixXd::Zero(3,tunParam2);
+		vel = Eigen::MatrixXd::Zero(3,tunParam2);
+		ace = Eigen::MatrixXd::Zero(3,tunParam2);
 	}
 
 
 	HandoverTrajectoryTask::~HandoverTrajectoryTask()
 	{
-		solver.removeTask(trajTask.get());		
+		solver.removeTask(trajTask.get());
 	}
 
 
@@ -311,16 +316,21 @@ namespace mc_handover
 		{
 			// cout << " Pos " << pos.col(wp_index).transpose() << endl;
 
-			positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
+			//************ change initPos after every itr
+
+			// positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
+			positionTask->position(pos.col(wp_index));
+
 			trajTask->refVel(vel.col(wp_index));
 			refVel = vel.col(wp_index);
 			trajTask->refAccel(ace.col(wp_index));
 			refAce = ace.col(wp_index);
 			wp_index++;
+			// cout << "wp_index "<< wp_index <<endl;
 
 			// cout << " Pos " << positionTask->position().transpose() << endl;
 
-			if(wp_index==tunParam1-1) //check if observation time is over then go to new observed pos
+			if(wp_index==tunParam2-1) //check if observation time is over then go to new observed pos
 			{
 				LOG_INFO("next iteration ")
 				wp_index = 0;
