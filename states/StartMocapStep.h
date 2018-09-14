@@ -39,8 +39,8 @@ namespace mc_handover
 
 			int fps{200};
 
-			int tune1{10}; //100ms
-			int tune2{20};//1sec
+			int tune1{20}; //100ms
+			int tune2{100};//1sec
 
 			/*mocap*/
 			Eigen::Vector3d robotBodyMarker, objectBodyMarker;
@@ -61,39 +61,58 @@ namespace mc_handover
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_objMarkerA;
 
 
-		private:
-
-			bool startCapture{false};
-			
-			bool wpReady{false};
-			bool startTraj{true};
-
-			bool Flag_CirTraj{false};
-			
-			bool Flag_PosTask{false};			
-			
-			bool Flag_CORTEX{true};
-
-			Eigen::MatrixXd bot, obj, eflrot, eflpos;
-
-			sBodyDefs* pBodyDefs{NULL};
-			sFrameOfData* getCurFrame{NULL};
-			sFrameOfData FrameofData;
-
-			std::vector<int> bodyMarkers;
-
-			void *pResponse;
-			int nBytes;
-			int retval = RC_Okay;
-			int totalBodies;
-			int i{1};
+			std::vector<std::string> activeJointsLeftArm =
+			{
+				"LARM_JOINT0",
+				"LARM_JOINT1",
+				"LARM_JOINT2",
+				"LARM_JOINT3",
+				"LARM_JOINT4",
+				"LARM_JOINT5",
+				"LARM_JOINT6",
+				"LARM_JOINT7"};
 
 
-			
-			double del{0};
+			private:
+
+				bool Flag_CORTEX{false};
+				bool startCapture{false};
 
 
-		};
+				bool Flag_CirTraj{false};
+
+				bool Flag_PosTask{false};
+
+
+				bool Flag_HandoverTrajTask{false};
+				bool wpReady{false};
+				bool startTraj{true};
+
+
+				bool collected{false};
+				Eigen::Vector3d refPos, refVel, refAcc;
+
+				Eigen::MatrixXd bot, obj, eflrot, eflpos;
+
+
+				sBodyDefs* pBodyDefs{NULL};
+				sFrameOfData* getCurFrame{NULL};
+				sFrameOfData FrameofData;
+
+				std::vector<int> bodyMarkers;
+
+				void *pResponse;
+				int nBytes;
+				int retval = RC_Okay;
+				int totalBodies;
+				int i{1};
+
+				double del{0};
+
+
+
+
+			};
 
 
 	} // namespace states

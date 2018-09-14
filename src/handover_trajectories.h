@@ -86,8 +86,8 @@ namespace mc_handover
 		double gainVel	= 1e2;
 		double weight	= 1e3;
 
-		int tunParam1{10}; //100ms
-		int tunParam2{20}; //1sec
+		int tunParam1{20}; //100ms
+		int tunParam2{200}; //1sec
 
 		Eigen::MatrixXd pos;
 		Eigen::MatrixXd vel;

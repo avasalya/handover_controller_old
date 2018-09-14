@@ -294,9 +294,9 @@ namespace mc_handover
 		cout << "efL initial Pos " << initPos.transpose() << endl;
 
 
-		pos = Eigen::MatrixXd::Zero(3,tunParam2);
-		vel = Eigen::MatrixXd::Zero(3,tunParam2);
-		ace = Eigen::MatrixXd::Zero(3,tunParam2);
+		pos = Eigen::MatrixXd(3,tunParam2);
+		vel = Eigen::MatrixXd(3,tunParam2);
+		ace = Eigen::MatrixXd(3,tunParam2);
 	}
 
 
@@ -316,10 +316,11 @@ namespace mc_handover
 		{
 			// cout << " Pos " << pos.col(wp_index).transpose() << endl;
 
-			//************ change initPos after every itr
+			//************ change initPos after every itr *****************8
 
-			// positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
-			positionTask->position(pos.col(wp_index));
+			positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
+			// positionTask->position(pos.col(wp_index) + initPos);
+			// positionTask->position(pos.col(wp_index));
 
 			trajTask->refVel(vel.col(wp_index));
 			refVel = vel.col(wp_index);
@@ -334,6 +335,7 @@ namespace mc_handover
 			{
 				LOG_INFO("next iteration ")
 				wp_index = 0;
+				initPos = positionTask->position();
 				return true;
 
 			}
