@@ -42,46 +42,9 @@ namespace mc_handover
 			ctl.solver().addTask(comTask);
 
 
-
-
-
-			ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);			
+			/*position Task*/
+			ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
 			
-
-
-
-
-
-			if(Flag_HandoverTrajTask)
-			{
-				// ctl.solver().removeTask(ctl.efTaskL); //removing is not btter
-				// ctl.efTaskL->selectActiveJoints(ctl.solver(),activeJointsLeftArm);
-
-				/*remove previous Ef tasks */
-				ctl.solver().removeTask(ctl.efTaskR);
-			}
-
-
-
-			if(Flag_PosTask)
-			{
-				ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-				ctl.solver().addTask(ctl.posTask);
-			}
-
-
-
-			if(Flag_CirTraj)
-			{
-				ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-				ctl.solver().addTask(ctl.posTask);
-
-				Eigen::Vector3d zeroPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
-				ctl.posTask->position(zeroPos);
-				ctl.cirTraj = std::make_shared<mc_handover::CircularTrajectory>(CircularTrajectory(0.1, 2000, zeroPos+Eigen::Vector3d(0, -0.1, 0)));
-			}
-
-
 
 			if(Flag_CORTEX)
 			{
@@ -142,26 +105,6 @@ namespace mc_handover
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-
-
-
-			if(Flag_HandoverTrajTask)
-			{
-				/*initiate HandoverTrajectoryTask*/
-				if(ctl.efTaskL->speed().norm()<0.02)
-				{
-					if(startTraj)
-					{
-						// cout << "ctl.efTaskL->speed().norm() " << ctl.efTaskL->eval().norm()<<endl;
-						startTraj = false;
-						wpReady = true;
-						
-						// ctl.handoverTrajTask = std::make_shared<mc_handover::HandoverTrajectoryTask>(ctl.solver());
-						ctl.handoverTrajTask.reset(new mc_handover::HandoverTrajectoryTask(ctl.solver()));
-					}
-				}
-			}
-
 
 			
 			if(Flag_CORTEX)
@@ -236,11 +179,7 @@ namespace mc_handover
 					posObjMarkerA(0, i) = objectBodyMarker(0); // X
 					posObjMarkerA(1, i) = objectBodyMarker(1); // Y
 					posObjMarkerA(2, i) = objectBodyMarker(2); // Z
-					// if(i%100==0)
-					// {
-					//   // cout <<"i "<< i << " posLeftEfMarker X " << posLeftEfMarker(0, i) << " ithFrame " << ithFrame <<endl;
-					//   // cout << " posObjMarkerA X " << posObjMarkerA(0, i) << " ith  Frame " << ithFrame << endl;
-					// }
+					
 
 					if(i%tune1 == 0)
 					{
@@ -345,78 +284,12 @@ namespace mc_handover
 						// cout << "wp.cols() " << wp.cols() << endl;
 						// cout << "wp.rows() " << wp.rows() << endl;
 
-
-
-						/*provide ref pos,vel,ace for trajectoryTask*/
-						if(Flag_HandoverTrajTask)
-						{
-							if(wpReady && 
-								predictPos(0)<= 1.5 && predictPos(1)<= 1 && predictPos(2)<=1.5 &&
-								predictPos(0)>= 0.0 && predictPos(1)>= 0.0 && predictPos(2)>=0.8
-								)
-							{
-								for(int k=0; k<wp.cols();k++)
-								{
-									ctl.handoverTrajTask->pos(0,k) = wp(0,k);
-									ctl.handoverTrajTask->pos(1,k) = wp(1,k);
-									ctl.handoverTrajTask->pos(2,k) = wp(2,k);
-
-									ctl.handoverTrajTask->vel.col(k) = Eigen::Vector3d::Zero();//avgVelObjMarkerA*0;
-
-									ctl.handoverTrajTask->ace.col(k) = Eigen::Vector3d::Zero();
-
-									wpReady = false;
-
-								// if(k%5==0)
-								// {
-								// 	cout << "\ntrajTask pos\n"<< ctl.handoverTrajTask->pos.transpose() << endl<<endl;
-								// }
-								// cout << "size vel " << ctl.handoverTrajTask->vel.size() << endl;
-								// cout << "size ace " << ctl.handoverTrajTask->ace.size() << endl;
-								}
-							}
-						}
-						
-
-						/* set ef pose based on random prediction */
-						if(Flag_PosTask)
-						{
-							auto gothere = Eigen::MatrixXd::Random(3,1);
-							if(onceTrue)
-							{
-								// cout << " from curPosLeftEf " << curPosLeftEf.transpose() << " To predictPose "<< predictPos.transpose() << endl;
-
-								if( gothere(0)<= 1.5 && gothere(1)<= 1.5 && gothere(2)<=1.5 &&
-									gothere(0)>= 0.0 && gothere(1)>= 0.0 && gothere(2)>=0.5)
-								{
-									sva::PTransformd dtrL(curRotLeftEf, {fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3 });
-									cout << "gothere " << dtrL.translation().transpose() << endl;
-									// ctl.efTaskL->set_ef_pose(dtrL);
-
-									ctl.posTask->position({fabs(gothere(0)), fabs(gothere(1)), fabs(gothere(2))+0.3});
-									ctl.posTask->refVel(avgVelObjMarkerA);//Eigen::MatrixXd::Zero(3,1)
-									// cout << "avg velocity " << avgVelObjMarkerA.transpose() << endl;
-
-									/*real-time*/
-									// ctl.posTask->position(predictPos);
-									// ctl.posTask->refVel(avgVelObjMarkerA);
-
-									// ctl.posTask->position(get<0>(wp_efL_objMarkerA).col(1));
-									// ctl.posTask->refVel(get<1>(wp_efL_objMarkerA));
-								}
-								onceTrue = false;
-								//  put this "onceTrue = true;" before-> }// check for non zero frame
-							}
-						}
-
 						collected  = true;
-
 					} //tune1
-					i = i + 1;
 
 
 					if(collected)
-					{	
+					{
 						LOG_WARNING("new object pos updated ")
 						cout << i << endl;
 
@@ -452,41 +325,15 @@ namespace mc_handover
 						}
 						collected = false;
 					}
+
 					
-
-
-					if(Flag_HandoverTrajTask)
-					{
-						if(ctl.handoverTrajTask && wpReady==false)
-						{
-							// LOG_WARNING("new traj wp ")
-							if(ctl.handoverTrajTask->update())
-							{	
-								// LOG_WARNING("traj update ")
-								wpReady = true; // should be true for next iteration
-							}
-						}
-					}
-
-
-					/*move ef in circle*/
-					if(Flag_CirTraj)
-					{
-						if(onceTrue)
-						{   
-							auto pair = ctl.cirTraj->pop();
-							ctl.posTask->position(pair.first);
-							ctl.posTask->refVel(pair.second);
-						}
-						onceTrue = false;
-					}
-					
+					i = i + 1;
 				}// check for non zero frame
 
 			} // startCapture
+			
 			// output("OK");
 			return false;
-
 		}// run
 
 	} // namespace states

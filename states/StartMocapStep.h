@@ -75,12 +75,11 @@ namespace mc_handover
 
 			private:
 
-				bool Flag_CORTEX{false};
+				bool Flag_CORTEX{true};
 				bool startCapture{false};
 
 
 				bool Flag_CirTraj{false};
-
 				bool Flag_PosTask{false};
 
 

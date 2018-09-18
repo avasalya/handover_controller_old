@@ -105,25 +105,3 @@ namespace mc_handover
 
 
 } // namespace mc_handover
-
-
-
-
-
-
-	// struct HandoverTrajectoryConfig
-	// {
-	// 	HandoverTrajectoryConfig();
-	// 	~HandoverTrajectoryConfig();
-
-	// 	double gainPos	= 1e3;
-	// 	double gainVel	= 1e2;
-	// 	double weight	= 1e3;
-
-	// 	Eigen::MatrixXd pos;
-	// 	Eigen::MatrixXd vel;
-	// 	Eigen::MatrixXd ace;
-
-	// 	long tunParam1{20}; //100ms
-	// 	long tunParam2{200}; //1sec
-	// };
