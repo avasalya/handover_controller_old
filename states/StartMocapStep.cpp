@@ -136,9 +136,6 @@ namespace mc_handover
 				bot = Eigen::MatrixXd::Random(3,1)*0.01;
 				obj = Eigen::MatrixXd::Random(3,1)*0.01;
 
-				// cout << "bot " << bot.transpose() << endl;
-				// cout << "obj " << obj.transpose() << endl;
-
 				// eflrot = Eigen::MatrixXd::Random(3,3);
 				eflpos = bot;// Eigen::MatrixXd::Random(3,1);
 			}
@@ -284,14 +281,14 @@ namespace mc_handover
 						// cout << "wp.cols() " << wp.cols() << endl;
 						// cout << "wp.rows() " << wp.rows() << endl;
 
-						collected  = true;
+						collected = true;
 					} //tune1
 
 
 					if(collected)
 					{
-						LOG_WARNING("new object pos updated ")
-						cout << i << endl;
+						// LOG_WARNING("new object pos updated ")
+						// cout << i << endl;
 
 						Eigen::Vector3d initPos = 
 						ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
@@ -312,7 +309,7 @@ namespace mc_handover
 							{
 
 								refPos << wp.col(it);
-								refVel << Eigen::MatrixXd::Zero(3,1);
+								refVel << avgVelObjMarkerA;// Eigen::MatrixXd::Zero(3,1);
 								refAcc << Eigen::MatrixXd::Zero(3,1);
 
 								// cout << "wp " << wp.col(it).transpose()<<endl;
