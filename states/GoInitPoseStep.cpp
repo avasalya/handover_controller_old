@@ -21,6 +21,8 @@ namespace mc_handover
 
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+			// ctl.set_joint_pos("HEAD_JOINT1",  -0.7); //+ve to move head down
+
 			// ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
 			// ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
 
@@ -50,9 +52,7 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			cout << "run" << endl<< "moving to initial pose" <<endl;
-
-			ctl.set_joint_pos("HEAD_JOINT1",  0.7); //+ve to move head down
+			cout << "run" << endl<< "moving to initial pose" <<endl;			
 
 			// BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 

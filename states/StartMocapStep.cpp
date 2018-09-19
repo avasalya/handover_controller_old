@@ -263,11 +263,11 @@ namespace mc_handover
 
 							sva::PTransformd efL_X_ObjMarkerA;
 
+							// efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
 							// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
 							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
 							
-							// efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
 
 							newPosObjMarkerA(0,j-1) = efL_X_ObjMarkerA.translation()(0);
 							newPosObjMarkerA(1,j-1) = efL_X_ObjMarkerA.translation()(1);
@@ -378,6 +378,27 @@ namespace mc_handover
 								ctl.posTask->refVel(refVel);
 								ctl.posTask->refAccel(refAcc);
 								// cout << "PosTask pos " << ctl.posTask->position().transpose()<<endl;
+
+								if(gothere(1) >.45) //y
+								{
+									ctl.set_joint_pos("HEAD_JOINT0",  0.8); //+ve to move head left	
+								}
+								else
+								{
+									ctl.set_joint_pos("HEAD_JOINT0",  0.); //+ve to move head left
+								}
+
+								if(gothere(2) < 1.1) //z
+								{
+									ctl.set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down	
+								}
+								else
+								{
+									ctl.set_joint_pos("HEAD_JOINT1",  -0.4); //+ve to move head down		
+								}
+								
+								
+								
 							}
 						}
 
