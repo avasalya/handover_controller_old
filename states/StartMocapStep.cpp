@@ -52,7 +52,7 @@ namespace mc_handover
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
 				// retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
-				retval = Cortex_Initialize("10.1.1.200", "10.1.1.180"); //for robot local PC
+				retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
 
 				if (retval != RC_Okay)
 				{
@@ -241,7 +241,8 @@ namespace mc_handover
 							curPosLeftEf << eflpos;
 						}
 						// cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
-						sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf); 
+						//sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf); 
+						sva::PTransformd R_X_efL(curPosLeftEf); 
 
 
 						/*get transformation martix from mocap frame to robot frame*/
@@ -264,7 +265,7 @@ namespace mc_handover
 
 							// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
-							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_efLMarker.inv()*R_X_efL*M_X_ObjMarkerA;
+							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
 							
 							// efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
 
