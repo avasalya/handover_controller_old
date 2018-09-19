@@ -57,8 +57,14 @@ LOCAL unsigned short wMyPort = 0; //1600; // Let the socket library find an avai
 LOCAL unsigned short wCortexPort = 1002; // Cortex is listening at this port
 LOCAL unsigned short wMultiCastPort = 1001; // Cortex sends frames to this port and associated address
 
+
+
 /* /////////////////////////////  my addresses ///////////////////////// */
-LOCAL in_addr MyNicCardAddress = { (10 << 24)  + (1 << 16)   + (1 << 8)   + 200 }; // My local IP address
+// LOCAL in_addr MyNicCardAddress = { (10 << 24)  + (1 << 16)   + (1 << 8)   + 200 }; // My local IP address
+LOCAL in_addr MyNicCardAddress = { (10 << 24)  + (1 << 16)   + (1 << 8)   + 180 }; // robot local PC IP address
+
+
+
 LOCAL in_addr MultiCastAddress = {  3774939393 };//{ (225 << 24) + (1<< 16) + (1 << 8) + 1 }; // Cortex sends frames to this address and associated port
 
 /* convert IP address to integer */

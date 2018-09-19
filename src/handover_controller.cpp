@@ -273,6 +273,7 @@ namespace mc_handover
       {
         for (int i = 0; i<8; ++i)
         {
+          std::stringstream ss;
           ss << "RARM_JOINT" << i;
           std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
         }
@@ -286,6 +287,7 @@ namespace mc_handover
       {
         for (int i = 0; i<8; ++i)
         {
+          std::stringstream ss;
           ss << "LARM_JOINT" << i;
           std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
         }
@@ -297,8 +299,6 @@ namespace mc_handover
       return mc_control::fsm::Controller::read_msg(msg);
 
     }
-
-
 
 
     //////////////

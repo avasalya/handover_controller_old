@@ -51,7 +51,9 @@ namespace mc_handover
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
-				retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
+				// retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
+				retval = Cortex_Initialize("10.1.1.200", "10.1.1.180"); //for robot local PC
+
 				if (retval != RC_Okay)
 				{
 					printf("Error: Unable to initialize ethernet communication\n");
@@ -96,7 +98,30 @@ namespace mc_handover
 			else
 			{
 				startCapture = true;
+
+				dummyPredictPos(0,0) = 0.3;
+				dummyPredictPos(1,0) = 0.3;
+				dummyPredictPos(2,0) = 1.1;
+
+				dummyPredictPos(0,1) = 0.6;
+				dummyPredictPos(1,1) = 0.5;
+				dummyPredictPos(2,1) = 1.4;
+
+				dummyPredictPos(0,2) = 0.4;
+				dummyPredictPos(1,2) = 0.35;
+				dummyPredictPos(2,2) = .9;
+
+				dummyPredictPos(0,3) = 0.3;
+				dummyPredictPos(1,3) = 0.45;
+				dummyPredictPos(2,3) = 1.;
+
+				dummyPredictPos(0,4) = 0.5;
+				dummyPredictPos(1,4) = 0.65;
+				dummyPredictPos(2,4) = 1.4;
+
+				// cout << "dummyPredictPos\n " <<dummyPredictPos.transpose()<<endl;
 			}
+
 		}// start
 
 
@@ -149,15 +174,29 @@ namespace mc_handover
 				/* get object marker pose */
 				if(Flag_CORTEX)
 				{
-					robotBodyMarker <<	
-					FrameofData.BodyData[robotBody].Markers[robotMarkerNo][0], // X left marker
-					FrameofData.BodyData[robotBody].Markers[robotMarkerNo][1], // Y
-					FrameofData.BodyData[robotBody].Markers[robotMarkerNo][2]; // Z
+					// robotBodyMarker <<	
+					// FrameofData.BodyData[robotBody].Markers[robotMarkerNo][0], // X left marker
+					// FrameofData.BodyData[robotBody].Markers[robotMarkerNo][1], // Y
+					// FrameofData.BodyData[robotBody].Markers[robotMarkerNo][2]; // Z
+
+					// objectBodyMarker <<	
+					// FrameofData.BodyData[objBody].Markers[objMarkerNo][0], // X farmost
+					// FrameofData.BodyData[objBody].Markers[objMarkerNo][1], // Y
+					// FrameofData.BodyData[objBody].Markers[objMarkerNo][2]; // Z
+
 
 					objectBodyMarker <<	
-					FrameofData.BodyData[objBody].Markers[objMarkerNo][0], // X farmost
-					FrameofData.BodyData[objBody].Markers[objMarkerNo][1], // Y
-					FrameofData.BodyData[objBody].Markers[objMarkerNo][2]; // Z
+					FrameofData.BodyData[body].Markers[markerO][0], // X
+					FrameofData.BodyData[body].Markers[markerO][1], // Y
+					FrameofData.BodyData[body].Markers[markerO][2]; // Z
+
+					robotBodyMarker <<	
+					FrameofData.BodyData[body].Markers[markerR][0], // X
+					FrameofData.BodyData[body].Markers[markerR][1], // Y
+					FrameofData.BodyData[body].Markers[markerR][2]; // Z
+
+
+
 				}
 				else
 				{
@@ -225,9 +264,9 @@ namespace mc_handover
 
 							// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
-							// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_efLMarker.inv()*R_X_efL*M_X_ObjMarkerA;
+							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_efLMarker.inv()*R_X_efL*M_X_ObjMarkerA;
 							
-							efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
+							// efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
 
 							newPosObjMarkerA(0,j-1) = efL_X_ObjMarkerA.translation()(0);
 							newPosObjMarkerA(1,j-1) = efL_X_ObjMarkerA.translation()(1);
@@ -264,10 +303,21 @@ namespace mc_handover
 						// cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
 						// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
-
-						/*predict position in straight line after tune2 time*/  
-						//avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
-						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tune2);
+						if(Flag_CORTEX)
+						{
+							/*predict position in straight line after tune2 time*/  
+							//avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
+							predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tune2);
+						}
+						else
+						{	
+							predictPos << dummyPredictPos.col(dm);
+							dm++;
+							if(dm==4)
+							{
+								dm=0;
+							}
+						}
 						// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl;
 
 
@@ -295,31 +345,41 @@ namespace mc_handover
 						
 						// ctl.posTask->position(initPos);
 
+						if(removePrevTask)
+						{	
+							removePrevTask = false;
+							ctl.solver().removeTask(ctl.efTaskL);
+							ctl.solver().removeTask(ctl.efTaskR);
+							ctl.solver().addTask(ctl.posTask);
+						}
 
-						ctl.solver().removeTask(ctl.efTaskL);
-						ctl.solver().removeTask(ctl.efTaskR);
-						ctl.solver().addTask(ctl.posTask);
+						initRefPos << -wp(0,0), -wp(1,0), wp(2,0);
 
-						// if(	predictPos(0)<= 1.5 && predictPos(1)<= 1 && predictPos(2)<=1.5 &&
-						// 	predictPos(0)>= 0.0 && predictPos(1)>= 0.0 && predictPos(2)>=0.8
-						// 	)
+						for(int it=0; it<wp.cols(); it++)
 						{
 
-							for(int it=0; it<wp.cols(); it++)
+							// refPos << wp.col(it);
+							refPos << -wp(0,it), -wp(1,it), wp(2,it);// -ve X,Y
+
+							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
+							refAcc << Eigen::MatrixXd::Zero(3,1);
+
+							// cout << "wp " << wp.col(it).transpose()<<endl;
+							auto gothere = refPos + initPos -initRefPos;
+							// cout << "gothere " << gothere.transpose()<<endl;
+
+							if(
+								(gothere(0))<= 0.7 && (gothere(1))<= 0.6 && (gothere(2))<=1.5 &&
+								(gothere(0))>= 0.2 && (gothere(1))>= 0.25 && (gothere(2))>=0.9
+								) 
 							{
-
-								refPos << wp.col(it);
-								refVel << avgVelObjMarkerA;// Eigen::MatrixXd::Zero(3,1);
-								refAcc << Eigen::MatrixXd::Zero(3,1);
-
-								// cout << "wp " << wp.col(it).transpose()<<endl;
-
-								ctl.posTask->position(refPos+initPos - wp.col(0));
+								ctl.posTask->position(gothere);
 								ctl.posTask->refVel(refVel);
 								ctl.posTask->refAccel(refAcc);
+								// cout << "PosTask pos " << ctl.posTask->position().transpose()<<endl;
 							}
-
 						}
+
 						collected = false;
 					}
 

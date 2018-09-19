@@ -65,7 +65,7 @@ namespace mc_handover
 
 
 
-			initPosL <<  0.3, 0.3, 1.1;      //0.30, 0.35, 0.3;      
+			initPosL <<  0.3, 0.3,1.1; //.7, .6, 1.5;      //0.30, 0.35, 0.3;      
 			ctl.efTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX((M_PI/180)*90), initPosL));
 			// ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
 

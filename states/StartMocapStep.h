@@ -31,8 +31,12 @@ namespace mc_handover
 			bool onceTrue{true};
 			bool plotSize{true};
 
+			int body{0};
+			int markerO{2};
+			int markerR{3};
+
 			int robotBody{0};
-			int robotMarkerNo{1};
+			int robotMarkerNo{0};
 
 			int objBody{1};
 			int objMarkerNo{0};
@@ -47,6 +51,7 @@ namespace mc_handover
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d initPosObjMarkerA, ithPosObjMarkerA, avgVelObjMarkerA, predictPos;
 
+			Eigen::MatrixXd dummyPredictPos	 = Eigen::MatrixXd::Zero(3,5);
 			Eigen::MatrixXd posLeftEfMarker  = Eigen::MatrixXd::Zero(3,60000);
 			Eigen::MatrixXd posObjMarkerA    = Eigen::MatrixXd::Zero(3,60000);
 			
@@ -76,7 +81,9 @@ namespace mc_handover
 			private:
 
 				bool Flag_CORTEX{true};
+				
 				bool startCapture{false};
+				bool removePrevTask{true};
 
 
 				bool Flag_CirTraj{false};
@@ -89,7 +96,7 @@ namespace mc_handover
 
 
 				bool collected{false};
-				Eigen::Vector3d refPos, refVel, refAcc;
+				Eigen::Vector3d refPos, refVel, refAcc, initRefPos;
 
 				Eigen::MatrixXd bot, obj, eflrot, eflpos;
 
@@ -105,6 +112,7 @@ namespace mc_handover
 				int retval = RC_Okay;
 				int totalBodies;
 				int i{1};
+				int dm{0};
 
 				double del{0};
 
