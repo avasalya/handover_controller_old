@@ -6,7 +6,7 @@ namespace mc_handover
 
 		void GoInitPoseStep::configure(const mc_rtc::Configuration & config)
 		{
-			cout << "config" << endl;
+			// cout << "config" << endl;
 
 			threshold_eval_ = config("threshold_eval", 0.005);
 			threshold_speed_ = config("threshold_speed", 0.005);
@@ -17,7 +17,7 @@ namespace mc_handover
 		void GoInitPoseStep::start(mc_control::fsm::Controller & controller)
 		{	
 			
-			cout << "start" << endl;
+			// cout << "start" << endl;
 
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
@@ -52,7 +52,7 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			cout << "run" << endl<< "moving to initial pose" <<endl;			
+			cout << "moving to initial pose" <<endl;			
 
 			// BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 

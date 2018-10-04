@@ -7,12 +7,6 @@ namespace mc_handover
 	namespace states 
 	{
 
-		void StartMocapStep::configure(const mc_rtc::Configuration & config)
-		{
-			cout << "config" << endl;
-		}
-
-
 		void MyErrorMsgHandler(int iLevel, const char *szMsg)
 		{
 			const char *szLevel = NULL;
@@ -32,6 +26,7 @@ namespace mc_handover
 
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
+
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);	
 
 			/*com Task*/
@@ -46,13 +41,14 @@ namespace mc_handover
 			ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
 			
 
+
 			if(Flag_CORTEX)
 			{
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
-				// retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
-				retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
+				retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
+				// retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
 
 				if (retval != RC_Okay)
 				{
@@ -99,29 +95,35 @@ namespace mc_handover
 			{
 				startCapture = true;
 
-				dummyPredictPos(0,0) = 0.3;
-				dummyPredictPos(1,0) = 0.3;
-				dummyPredictPos(2,0) = 1.1;
+				/*simData*/
+				name = {"simData_1"};
 
-				dummyPredictPos(0,1) = 0.6;
-				dummyPredictPos(1,1) = 0.5;
-				dummyPredictPos(2,1) = 1.4;
+				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
+				std::ifstream file(fn);
 
-				dummyPredictPos(0,2) = 0.4;
-				dummyPredictPos(1,2) = 0.35;
-				dummyPredictPos(2,2) = .9;
+				if(!file.is_open())
+				{
+					LOG_ERROR("Failed to open ")
+				}
 
-				dummyPredictPos(0,3) = 0.3;
-				dummyPredictPos(1,3) = 0.45;
-				dummyPredictPos(2,3) = 1.;
+				while(file >> pt)
+				{
+					pts.push_back(pt);
+				}
 
-				dummyPredictPos(0,4) = 0.5;
-				dummyPredictPos(1,4) = 0.65;
-				dummyPredictPos(2,4) = 1.4;
 
-				// cout << "dummyPredictPos\n " <<dummyPredictPos.transpose()<<endl;
+				pos = Eigen::MatrixXd(3, pts.size()/3);
+
+				for(size_t i = 0; i < pts.size(); i += 3)
+				{
+					pos(0, i/3) = pts[i];
+					pos(1, i/3) = pts[i+1];
+					pos(2, i/3) = pts[i+2];
+				}
+				ctl.gui()->addElement({"Fake mocap"},
+					// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
 			}
-
 		}// start
 
 
@@ -156,21 +158,12 @@ namespace mc_handover
 					return true;
 				}
 			}
-			else
-			{
-				bot = Eigen::MatrixXd::Random(3,1)*0.01;
-				obj = Eigen::MatrixXd::Random(3,1)*0.01;
-
-				// eflrot = Eigen::MatrixXd::Random(3,3);
-				eflpos = bot;// Eigen::MatrixXd::Random(3,1);
-			}
 
 
 
 			/* start only when ithFrame == 1 */
 			if(startCapture)
 			{
-
 				/* get object marker pose */
 				if(Flag_CORTEX)
 				{
@@ -194,15 +187,21 @@ namespace mc_handover
 					FrameofData.BodyData[body].Markers[markerR][0], // X
 					FrameofData.BodyData[body].Markers[markerR][1], // Y
 					FrameofData.BodyData[body].Markers[markerR][2]; // Z
-
-
-
 				}
 				else
-				{
-					robotBodyMarker << bot;
-					objectBodyMarker << obj;
+				{	//0.6115   -0.3264    0.4615; // only 1st itr
+					robotBodyMarker << ctl.efTaskL->get_ef_pose().translation(); //replace with LARM_LINK6 pos
+					objectBodyMarker << pos.col(i);
+					
+					// cout << "i & pos.size() " << i << " " << pos.size() << endl;
+					if(i==pos.size()/3)
+					{
+						LOG_WARNING("iter over, restarting again")
+						// i =0;	
+					}
 				}
+
+
 
 				/* check for non zero frame only and store them */ 
 				if( (robotBodyMarker(0) != 0 && objectBodyMarker(0) != 0 ) 
@@ -217,7 +216,26 @@ namespace mc_handover
 					posObjMarkerA(2, i) = objectBodyMarker(2); // Z
 					
 
-					if(i%tune1 == 0)
+
+					// if(!Flag_CORTEX)
+					// {
+					// 	if( (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() <0.5 )
+					// 	{
+					// 		cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
+					// 		startPrediction = true;
+					// 	}
+					// 	// else
+					// 	// {
+					// 	// 	startPrediction = false;
+					// 	// }
+					// }
+					// else
+					// {
+					// 	startPrediction = true;
+					// }
+
+					
+					if( (i%tune1 == 0) && (startPrediction) )
 					{
 						/*get robot ef marker current pose*/
 						curPosLeftEfMarker << posLeftEfMarker.col((i-tune1)+1);//1.162, -0.268, 1.074;
@@ -226,33 +244,16 @@ namespace mc_handover
 
 
 						/*get robot ef current pose*/
-						if(Flag_CORTEX)
-						{
-							// curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
-							// curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
+						// curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
+						// curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
 
-							curRotLeftEf = ctl.efTaskL->get_ef_pose().rotation();
-							curPosLeftEf = ctl.efTaskL->get_ef_pose().translation();
-						}
-						else
-						{
-							// curRotLeftEf << eflrot;
-							curRotLeftEf = ctl.efTaskL->get_ef_pose().rotation();
-							curPosLeftEf << eflpos;
-						}
+						curRotLeftEf = ctl.efTaskL->get_ef_pose().rotation();
+						curPosLeftEf = ctl.efTaskL->get_ef_pose().translation();
 						// cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
-						//sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf); 
-						sva::PTransformd R_X_efL(curPosLeftEf); 
 
-
-						/*get transformation martix from mocap frame to robot frame*/
-						Eigen::Vector3d pos(0.862, 0.032, 0.524);
-						Eigen::Matrix3d ori; ori <<  0, 0, 1,    0, 1, 0,    0, 0, 1;
-						sva::PTransformd M_X_R(ori,pos);
 						
-						/*may not need this with real-time robot demo*/
-						// sva::PTransformd M_X_R = R_X_efL.inv()*M_X_efLMarker;
-						// cout << "M_X_R " << M_X_R.translation().transpose() << endl;
+						//sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf); 
+						sva::PTransformd R_X_efL(curPosLeftEf);
 
 
 						/*object marker pose w.r.t to robot frame */
@@ -262,10 +263,6 @@ namespace mc_handover
 							// cout << "M_X_ObjMarkerA.trans() \n" << M_X_ObjMarkerA.translation().transpose() << endl;
 
 							sva::PTransformd efL_X_ObjMarkerA;
-
-							// efL_X_ObjMarkerA = M_X_efLMarker.inv()*M_X_ObjMarkerA;
-							// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
-
 							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
 							
 
@@ -273,6 +270,7 @@ namespace mc_handover
 							newPosObjMarkerA(1,j-1) = efL_X_ObjMarkerA.translation()(1);
 							newPosObjMarkerA(2,j-1) = efL_X_ObjMarkerA.translation()(2);
 							
+
 							/*get obj marker initials*/
 							if(j==1)
 							{
@@ -304,37 +302,29 @@ namespace mc_handover
 						// cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
 						// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
-						if(Flag_CORTEX)
-						{
-							/*predict position in straight line after tune2 time*/  
-							//avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
-							predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tune2);
-						}
-						else
-						{	
-							predictPos << dummyPredictPos.col(dm);
-							dm++;
-							if(dm==4)
-							{
-								dm=0;
-							}
-						}
-						// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl;
 
+
+						/*predict position in straight line after tune2 time*/
+						//avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
+						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tune2);
 
 						/*get predicted way points between left ef and obj*/
-						wp_efL_objMarkerA = ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tune2);
+						wp_efL_objMarkerA = 
+						ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tune2);
+						wp = get<0>(wp_efL_objMarkerA);
+						collected = true;
+						
+
+						// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl;
+						
 						// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
 						// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
 
-						wp = get<0>(wp_efL_objMarkerA);
 						// cout << "wp " << wp.col(0).transpose() << endl;
 						// cout << "wp.cols() " << wp.cols() << endl;
 						// cout << "wp.rows() " << wp.rows() << endl;
-
-						collected = true;
 					} //tune1
-
+					
 
 					if(collected)
 					{
@@ -361,11 +351,11 @@ namespace mc_handover
 
 							// refPos << wp.col(it);
 							refPos << -wp(0,it), -wp(1,it), wp(2,it);// -ve X,Y
+							// cout << "wp " << wp.col(it).transpose()<<endl;
 
 							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
 							refAcc << Eigen::MatrixXd::Zero(3,1);
 
-							// cout << "wp " << wp.col(it).transpose()<<endl;
 							auto gothere = refPos + initPos -initRefPos;
 							// cout << "gothere " << gothere.transpose()<<endl;
 
@@ -397,15 +387,12 @@ namespace mc_handover
 									ctl.set_joint_pos("HEAD_JOINT1",  -0.4); //+ve to move head down		
 								}
 								
-								
-								
 							}
 						}
 
 						collected = false;
 					}
 
-					
 					i = i + 1;
 				}// check for non zero frame
 
