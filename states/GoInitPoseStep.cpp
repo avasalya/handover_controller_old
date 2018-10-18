@@ -37,8 +37,8 @@ namespace mc_handover
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 
 
-			Eigen::Matrix3d ori; 
-			ori = chestOriTask->orientation();
+			// Eigen::Matrix3d ori; 
+			// ori = chestOriTask->orientation();
 			// cout <<"CHEST_LINK1 orientation\n"<< ori << endl;
 
 			// Eigen::VectorXd dimW(3);

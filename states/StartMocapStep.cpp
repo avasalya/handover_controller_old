@@ -24,6 +24,50 @@ namespace mc_handover
 		}
 
 
+
+		void StartMocapStep::plotPos(Eigen::MatrixXd m, int d)
+		{
+			if(plotSize)
+			{
+				plotSize = false;
+				plt::figure_size(1200, 780);
+			}
+
+			std::vector<double> x, y, z, tp;
+			for(int j=1;j<d; j++)
+			{ 
+				x.push_back(m(0,j));
+				y.push_back(m(1,j));
+				z.push_back(m(2,j));
+				tp.push_back(j);
+				if(j%(d/50)==0)
+				{
+				// cout <<"x y z   " << x.at(j-1) << "  " << y.at(j-1) << "  " << z.at(j-1) << endl;
+
+					plt::clf();
+
+					// plt::subplot(2,1,1);
+					// plt::plot(x,y,"r--");
+					// plt::plot(x,z,"g--");
+					// plt::plot(y,z,"b--");
+					// plt::ylim(-2,2);
+					// plt::xlim(-2,2);
+
+					// plt::subplot(2,1,2);
+					plt::plot(tp,x,"r--");
+					plt::plot(tp,y,"g--");
+					plt::plot(tp,z,"b--");
+					plt::ylim(-2,2);
+					plt::xlim(0,3000);
+
+					// plt::legend();
+
+					plt::pause(1e-10);
+				}
+			}
+		}
+
+
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
 
@@ -38,7 +82,8 @@ namespace mc_handover
 
 
 			/*position Task*/
-			ctl.posTask = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
 			
 
 
@@ -96,7 +141,7 @@ namespace mc_handover
 				startCapture = true;
 
 				/*simData*/
-				name = {"simData_1"};
+				name = {"simData"};
 
 				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
 				std::ifstream file(fn);
@@ -120,7 +165,11 @@ namespace mc_handover
 					pos(1, i/3) = pts[i+1];
 					pos(2, i/3) = pts[i+2];
 				}
-				ctl.gui()->addElement({"Fake mocap"},
+
+
+				// plotPos(pos, pos.size()/3);
+
+				ctl.gui()->addElement({"sim mocap"},
 					// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
 					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
 			}
@@ -197,7 +246,7 @@ namespace mc_handover
 					if(i==pos.size()/3)
 					{
 						LOG_WARNING("iter over, restarting again")
-						// i =0;	
+						// i =0;
 					}
 				}
 
@@ -217,28 +266,31 @@ namespace mc_handover
 					
 
 
-					// if(!Flag_CORTEX)
-					// {
-					// 	if( (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() <0.5 )
-					// 	{
-					// 		cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
-					// 		startPrediction = true;
-					// 	}
-					// 	// else
-					// 	// {
-					// 	// 	startPrediction = false;
-					// 	// }
-					// }
-					// else
-					// {
-					// 	startPrediction = true;
-					// }
+					if(!Flag_CORTEX)
+					{
+						if( (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() <0.5 )
+						{
+							// cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
+							startPrediction = true;
+							// ctl.gui()->addElement({"sim mocap"},
+							// // mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+							// mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
+						}
+						// else
+						// {
+						// 	startPrediction = false;
+						// }
+					}
+					else
+					{
+						startPrediction = true;
+					}
 
 					
-					if( (i%tune1 == 0) && (startPrediction) )
+					if( (i%t_observe == 0) && (startPrediction) )
 					{
 						/*get robot ef marker current pose*/
-						curPosLeftEfMarker << posLeftEfMarker.col((i-tune1)+1);//1.162, -0.268, 1.074;
+						curPosLeftEfMarker << posLeftEfMarker.col((i-t_observe)+1);//1.162, -0.268, 1.074;
 						sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
 						// cout << "curPosLeftEfMarker " << curPosLeftEfMarker.transpose() << endl;
 
@@ -257,18 +309,18 @@ namespace mc_handover
 
 
 						/*object marker pose w.r.t to robot frame */
-						for(int j=1;j<=tune1; j++)
+						for(int j=1;j<=t_observe; j++)
 						{
-							sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols((i-tune1)+j,i));
+							sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols((i-t_observe)+j,i));
 							// cout << "M_X_ObjMarkerA.trans() \n" << M_X_ObjMarkerA.translation().transpose() << endl;
 
-							sva::PTransformd efL_X_ObjMarkerA;
-							efL_X_ObjMarkerA = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
+							sva::PTransformd ObjMarkerA_X_efL;
+							ObjMarkerA_X_efL = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
 							
 
-							newPosObjMarkerA(0,j-1) = efL_X_ObjMarkerA.translation()(0);
-							newPosObjMarkerA(1,j-1) = efL_X_ObjMarkerA.translation()(1);
-							newPosObjMarkerA(2,j-1) = efL_X_ObjMarkerA.translation()(2);
+							newPosObjMarkerA(0,j-1) = ObjMarkerA_X_efL.translation()(0);
+							newPosObjMarkerA(1,j-1) = ObjMarkerA_X_efL.translation()(1);
+							newPosObjMarkerA(2,j-1) = ObjMarkerA_X_efL.translation()(2);
 							
 
 							/*get obj marker initials*/
@@ -277,19 +329,19 @@ namespace mc_handover
 								initPosObjMarkerA = newPosObjMarkerA.col(j-1);
 								// cout << " initPosObjMarkerA " << initPosObjMarkerA.transpose() << endl;
 							}
-							if(j==tune1)
+							if(j==t_observe)
 							{
-								ithPosObjMarkerA  = newPosObjMarkerA.col(tune1-1);
+								ithPosObjMarkerA  = newPosObjMarkerA.col(t_observe-1);
 								// cout << " ithPosObjMarkerA " << ithPosObjMarkerA.transpose() << endl; 
 							}
 						}
 						// cout << " newPosObjMarkerA " << newPosObjMarkerA.transpose() <<endl<< endl;
-						// helpFun->plotPos(newPosObjMarkerA, tune1);
+						// helpFun->plotPos(newPosObjMarkerA, t_observe);
 
 
 						/*get average velocity of previous 1sec obj motion*/
 						curVelObjMarkerA  = ctl.handoverTraj->diff(newPosObjMarkerA)*fps;//ignore diff > XXXX
-						// helpFun->plotVel(curVelObjMarkerA, tune1);
+						// helpFun->plotVel(curVelObjMarkerA, t_observe);
 						// cout << "curVelObjMarkerA " << curVelObjMarkerA.transpose() <<endl<<endl;
 
 
@@ -297,20 +349,19 @@ namespace mc_handover
 						// cout << "avgVelObjMarkerA " << avgVelObjMarkerA.transpose() << endl<<endl;
 
 
-						/*get way points between obj inital motion*/
-						auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, tune1);
+						/*get way points between obj inital motion*/ // get constant
+						auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, t_observe);
 						// cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
 						// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
 
 
-						/*predict position in straight line after tune2 time*/
-						//avgVelObjMarkerA //get<1>(actualPosObjMarkerA)
-						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), tune2);
+						/*predict position in straight line after t_predict time*/
+						//avgVelObjMarkerA //get<1>(actualPosObjMarkerA) //(constant)
+						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), t_predict);
 
 						/*get predicted way points between left ef and obj*/
-						wp_efL_objMarkerA = 
-						ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, tune2);
+						wp_efL_objMarkerA=ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, t_predict);
 						wp = get<0>(wp_efL_objMarkerA);
 						collected = true;
 						
@@ -320,10 +371,10 @@ namespace mc_handover
 						// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
 						// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
 
-						// cout << "wp " << wp.col(0).transpose() << endl;
+						// cout << "wp " << wp.col(0).transpose() << endl
 						// cout << "wp.cols() " << wp.cols() << endl;
 						// cout << "wp.rows() " << wp.rows() << endl;
-					} //tune1
+					} //t_observe
 					
 
 					if(collected)
@@ -334,14 +385,15 @@ namespace mc_handover
 						Eigen::Vector3d initPos = 
 						ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
 						
-						// ctl.posTask->position(initPos);
+						// ctl.posTaskL->position(initPos);
 
 						if(removePrevTask)
 						{	
 							removePrevTask = false;
 							ctl.solver().removeTask(ctl.efTaskL);
 							ctl.solver().removeTask(ctl.efTaskR);
-							ctl.solver().addTask(ctl.posTask);
+							ctl.solver().addTask(ctl.posTaskL);
+							ctl.solver().addTask(ctl.posTaskR);
 						}
 
 						initRefPos << -wp(0,0), -wp(1,0), wp(2,0);
@@ -364,10 +416,10 @@ namespace mc_handover
 								(gothere(0))>= 0.2 && (gothere(1))>= 0.25 && (gothere(2))>=0.9
 								) 
 							{
-								ctl.posTask->position(gothere);
-								ctl.posTask->refVel(refVel);
-								ctl.posTask->refAccel(refAcc);
-								// cout << "PosTask pos " << ctl.posTask->position().transpose()<<endl;
+								ctl.posTaskL->position(gothere);
+								ctl.posTaskL->refVel(refVel);
+								ctl.posTaskL->refAccel(refAcc);
+								// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
 
 								if(gothere(1) >.45) //y
 								{
@@ -409,24 +461,31 @@ namespace mc_handover
 
 
 
+			// auto  gripper = ctl.grippers["l_gripper"].get();
+			// gripper->setTargetQ({openGrippers});
+			// // gripper->setTargetOpening(1.8);
+
+			// gripper = ctl.grippers["r_gripper"].get();
+			// gripper->setTargetQ({openGrippers});
+
 
 	/*------------------------------TO DOs----------------------------------------------
 	1) trajectory task here and don't wait for it to finish -- overwrite in every loop
 	2) if(wp_efL_objMarkerA-predictPos).eval().norm()> xxx -- pick another closet point on line
 	----------------------------------------------------------------------------------*/
 
-	// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
+	// ObjMarkerA_X_efL = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
-	// cout << "efL_X_ObjMarkerA "<< efL_X_ObjMarkerA.translation().transpose() << endl;
-	// cout <<"error " << M_X_ObjMarkerA.translation()- efL_X_ObjMarkerA.translation()<<endl;
+	// cout << "ObjMarkerA_X_efL "<< ObjMarkerA_X_efL.translation().transpose() << endl;
+	// cout <<"error " << M_X_ObjMarkerA.translation()- ObjMarkerA_X_efL.translation()<<endl;
 	// cout << endl << endl;
 
 
 
 	// // or
-	// efL_X_ObjMarkerA = R_X_efL.inv()*M_X_efLMarker.inv()*R_X_efL*M_X_ObjMarkerA;
+	// ObjMarkerA_X_efL = R_X_efL.inv()*M_X_efLMarker.inv()*R_X_efL*M_X_ObjMarkerA;
 
-	// cout << "efL_X_ObjMarkerA2 "<< efL_X_ObjMarkerA.translation().transpose() << endl;
-	// cout <<"error " << M_X_ObjMarkerA.translation()- efL_X_ObjMarkerA.translation()<<endl;
+	// cout << "ObjMarkerA_X_efL2 "<< ObjMarkerA_X_efL.translation().transpose() << endl;
+	// cout <<"error " << M_X_ObjMarkerA.translation()- ObjMarkerA_X_efL.translation()<<endl;
 	// cout << endl << endl;
 

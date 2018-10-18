@@ -3,7 +3,14 @@
 
 namespace mc_handover
 {
-	void StartMocapStep::plotPos(Eigen::MatrixXd m, int d)
+
+	HelperFunctions::HelperFunctions()
+	{
+
+	}
+
+	
+	void HelperFunctions::plotPos(Eigen::MatrixXd m, int d)
 	{
 		if(plotSize)
 		{
@@ -47,7 +54,7 @@ namespace mc_handover
 
 
 
-	void StartMocapStep::plotVel(Eigen::MatrixXd m, int d)
+	void HelperFunctions::plotVel(Eigen::MatrixXd m, int d)
 	{
 		if(plotSize)
 		{

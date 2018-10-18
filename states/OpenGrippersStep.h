@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/fsm/State.h>
 
@@ -16,16 +18,18 @@ namespace mc_handover
 
 				void start(mc_control::fsm::Controller&) override;
 
-				bool run(mc_control::fsm::Controller&) override {
-					output("OK");
-					return true;
-				}
+				bool run(mc_control::fsm::Controller&) override;
+				// {
+				// 	output("OK");
+				// 	return true;
+				// }
 
 				void teardown(mc_control::fsm::Controller&) override {}
 
 			private:
 				// Configs
 				double openGrippers{0.5};
+				bool target{true};
 
 
 		};

@@ -2,6 +2,7 @@ set(controller_SRC
   handover_controller.cpp
   handover_trajectories.cpp
   handover_complianceTask.cpp
+  # helper_functions.cpp
  
 )
 
@@ -9,7 +10,8 @@ set(controller_HDR
   handover_controller.h
   handover_trajectories.h
   handover_complianceTask.h
-  matplotlibcpp.h
+  # helper_functions.h
+  # matplotlibcpp.h
  
 )
 

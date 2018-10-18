@@ -9,7 +9,11 @@
 #include <mc_rbdyn/Robot.h>
 
 #include "handover_controller.h"
-#include "helper_functions.h"
+
+
+// #include "helper_functions.h"
+// #include "matplotlibcpp.h"
+// namespace plt = matplotlibcpp;
 
 
 #include "../cortex/cortex.h"
@@ -35,8 +39,11 @@ namespace mc_handover
 
 			void teardown(mc_control::fsm::Controller&) override {}
 
-			bool onceTrue{true};
+
+
+			void plotPos(Eigen::MatrixXd m, int d);
 			bool plotSize{true};
+
 
 			int body{0};
 			int markerO{2};
@@ -50,8 +57,8 @@ namespace mc_handover
 
 			int fps{200};
 
-			int tune1{50}; //100ms
-			int tune2{400};//1sec
+			int t_observe{20}; //100ms
+			int t_predict{100};//1sec
 
 			/*mocap*/
 			Eigen::Vector3d robotBodyMarker, objectBodyMarker;
@@ -62,7 +69,7 @@ namespace mc_handover
 			Eigen::MatrixXd posLeftEfMarker  = Eigen::MatrixXd::Zero(3,60000);
 			Eigen::MatrixXd posObjMarkerA    = Eigen::MatrixXd::Zero(3,60000);
 			
-			Eigen::MatrixXd newPosObjMarkerA = Eigen::MatrixXd::Zero(3,tune1);
+			Eigen::MatrixXd newPosObjMarkerA = Eigen::MatrixXd::Zero(3,t_observe);
 
 			Eigen::MatrixXd curVelObjMarkerA, wp;//, curPosObjMarkerA;
 
@@ -72,6 +79,7 @@ namespace mc_handover
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_objMarkerA;
 
+			// std::shared_ptr<mc_handover::HelperFunctions> helpFun;
 
 			std::vector<std::string> activeJointsLeftArm =
 			{
@@ -95,7 +103,7 @@ namespace mc_handover
 
 				bool Flag_CORTEX{false};
 
-				bool startPrediction{true}; // default false for simData
+				bool startPrediction{false}; // default false for simData
 
 				bool startCapture{false};
 
@@ -115,7 +123,7 @@ namespace mc_handover
 				int retval = RC_Okay;
 				int totalBodies;
 				int i{1};
-				int dm{0};
+				
 
 				double del{0};
 
