@@ -28,6 +28,7 @@ namespace mc_handover
 				double threshold_speed_;
 				double stiffness_;
 				double weight_;
+				double closeGrippers;
 
 				Eigen::Vector3d initPosR, initPosL;
 				sva::PTransformd BodyPosW;

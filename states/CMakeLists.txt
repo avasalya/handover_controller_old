@@ -19,11 +19,12 @@ macro(add_fsm_handover_state state_name)
 endmacro()
 
 
-add_fsm_handover_state(GoInitPoseStep)
-add_fsm_handover_state(OpenGrippersStep)
-add_fsm_handover_state(ApproachObjectStep)
-add_fsm_handover_state(CloseGrippersStep)
-add_fsm_handover_state(ForceControlGrippersStep)
+# add_fsm_handover_state(GoInitPoseStep)
+# add_fsm_handover_state(OpenGrippersStep)
+# add_fsm_handover_state(ApproachObjectStep)
+# add_fsm_handover_state(CloseGrippersStep)
+# add_fsm_handover_state(ForceControlGrippersStep)
+
 add_fsm_handover_state(StartMocapStep)
 target_link_libraries(StartMocapStep cortex_sdk pthread m)
 

@@ -31,14 +31,13 @@ namespace mc_handover
 			EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 		public:
-			void configure(const mc_rtc::Configuration & config) override {}
+			void configure(const mc_rtc::Configuration & config) override;
 
 			void start(mc_control::fsm::Controller&) override;
 
 			bool run(mc_control::fsm::Controller&) override;
 
 			void teardown(mc_control::fsm::Controller&) override {}
-
 
 
 			void plotPos(Eigen::MatrixXd m, int d);
@@ -81,6 +80,16 @@ namespace mc_handover
 
 			// std::shared_ptr<mc_handover::HelperFunctions> helpFun;
 
+
+			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
+			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
+
+
+			sva::PTransformd ltHand;
+			sva::PTransformd rtHand;
+			
+			Eigen::Vector3d dummy;
+
 			std::vector<std::string> activeJointsLeftArm =
 			{
 				"LARM_JOINT0",
@@ -90,12 +99,14 @@ namespace mc_handover
 				"LARM_JOINT4",
 				"LARM_JOINT5",
 				"LARM_JOINT6",
-				"LARM_JOINT7"};
+				"LARM_JOINT7"
+			};
 
 
 			private:
 
-				
+				double closeGrippers;
+
 				double pt;
 				Eigen::MatrixXd pos;
 				std::vector<double> pts;

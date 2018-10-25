@@ -62,27 +62,29 @@ namespace mc_handover
 				cout << gripperL->curPosition()[0] <<endl; //0.8
 				cout << gripperR->curPosition()[0] <<endl; //0.0
 			}
-			else
-			{
-				// for(int k=0; k<=10;k++)
-				// {
-				// 	gripperL->setTargetQ({sin(1+(k*0.1))});
-				// }
-				
-				// for(int k=10; k>=0;k--)
-				// {
-				// 	gripperR->setTargetQ({sin(1-(k*0.1))});
-				// }
-				
-
-				// target = true;
-
-				// cout <<"a " << gripperL->curPosition()[0] <<endl; //0.8
-				// cout <<"a " << gripperR->curPosition()[0] <<endl; //0.0
-			}
+			// else
+			// {
+			// 	if( (gripperL->curPosition()[0] > 0.5) && (gripperR->curPosition()[0] < 0.5) )
+			// 	{
+			// 		for(int k=0; k<=10;k++)
+			// 		{
+			// 			gripperL->setTargetQ({-sin(1-(k*0.1))});
+			// 		}
+					
+			// 		for(int k=10; k>=0;k--)
+			// 		{
+			// 			gripperR->setTargetQ({-sin(1+(k*0.1))});
+			// 		}					
+	
+			// 		target = true;
+	
+			// 		cout <<"L " << gripperL->curPosition()[0] <<endl; //0.5
+			// 		cout <<"R " << gripperR->curPosition()[0] <<endl; //0.0
+			// 	}
+			// }
 			
 			output("OK");
-			return true;
+			return false;
 
 
 		}

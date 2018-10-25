@@ -12,6 +12,7 @@ namespace mc_handover
 			threshold_speed_ = config("threshold_speed", 0.005);
 			stiffness_ = config("stiffness", 2.);
 			weight_ = config("weight", 1500.);
+			config("closeGrippers", closeGrippers);
 		}
 
 		void GoInitPoseStep::start(mc_control::fsm::Controller & controller)
@@ -23,18 +24,29 @@ namespace mc_handover
 
 			// ctl.set_joint_pos("HEAD_JOINT1",  -0.7); //+ve to move head down
 
-			// ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
-			// ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
+			// ctl.relEfTaskL.reset(new mc_tasks::RelativeEndEffectorTask("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), "", 1.0,1e3));
+			// ctl.relEfTaskR.reset(new mc_tasks::RelativeEndEffectorTask("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), "BODY", 1.0,1e3));
+			// cout << "ef pos R" << ctl.relEfTaskR->get_ef_pose().translation().transpose() << endl;
+			// cout << "ef pos L" << ctl.relEfTaskL->get_ef_pose().translation().transpose() << endl;
 
 			ctl.efTaskR.reset(new mc_tasks::EndEffectorTask("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 1.0, 1e3));
 			ctl.efTaskL.reset(new mc_tasks::EndEffectorTask("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 1.0, 1e3));
 			
-			ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
-			ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
+			// ctl.oriTaskR.reset(new mc_tasks::OrientationTask("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
+			// ctl.oriTaskL.reset(new mc_tasks::OrientationTask("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(),1.0,1e2));
 
 			/* CHEST */
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+
+
+
+			/*close grippers for safety*/
+			auto  gripperL = ctl.grippers["l_gripper"].get();
+			auto  gripperR = ctl.grippers["r_gripper"].get();
+
+			gripperL->setTargetQ({closeGrippers});
+			gripperR->setTargetQ({closeGrippers});
 
 
 			// Eigen::Matrix3d ori; 
@@ -56,32 +68,49 @@ namespace mc_handover
 
 			// BodyPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("BODY")];
 
+			ctl.solver().addTask(chestPosTask);
+			ctl.solver().addTask(chestOriTask);
+
 
 			auto ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
 			auto rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
 
 			cout << "ltHand " << ltHand.translation().transpose() 
-			<< "\n rtHand " << rtHand.translation().transpose() << endl;
+			<< "\nrtHand " << rtHand.translation().transpose() << endl;
 
+			// ctl.solver().addTask(ctl.oriTaskL);
+			// ctl.solver().addTask(ctl.oriTaskR);
 
-
-			initPosL <<  0.3, 0.3,1.1; //.7, .6, 1.5;      //0.30, 0.35, 0.3;      
+			initPosL <<  0.3, 0.3,1.1;
 			ctl.efTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX((M_PI/180)*90), initPosL));
-			// ctl.relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosL));
 
 			initPosR <<  0.3, -0.3,1.1; //0.30, -0.35, 0.3;
 			ctl.efTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90), initPosR));
-			// ctl.relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation(), initPosR));
+
+			// ctl.solver().addTask(ctl.efTaskL);
+			// ctl.solver().addTask(ctl.efTaskR);
+
+
+
+			// initPosL <<  0.30, 0.35, 0.3;
+			// auto rotL = sva::RotY(-(M_PI/180)*90);
+			// //sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation();
+			// ctl.relEfTaskL->set_ef_pose(sva::PTransformd(rotL, initPosL));
+			
+
+			// initPosR <<  0.30, -0.35, 0.3;
+			// auto rotR = sva::RotY(-(M_PI/180)*90);
+			// //sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyPosW.rotation();
+			// ctl.relEfTaskR->set_ef_pose(sva::PTransformd(rotR, initPosR));
 
 
 			// ctl.solver().addTask(ctl.relEfTaskL);
 			// ctl.solver().addTask(ctl.relEfTaskR);
 
-			ctl.solver().addTask(ctl.efTaskL);
-			ctl.solver().addTask(ctl.efTaskR);
+			// cout << "ef pos R" << ctl.relEfTaskR->get_ef_pose().translation().transpose() << endl;
+			// cout << "ef pos L" << ctl.relEfTaskL->get_ef_pose().translation().transpose() << endl;
 
-			ctl.solver().addTask(chestPosTask);
-			ctl.solver().addTask(chestOriTask);
+
 
 			output("OK");
 

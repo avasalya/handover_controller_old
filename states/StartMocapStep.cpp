@@ -4,8 +4,16 @@
 namespace mc_handover
 {
 
-	namespace states 
+	namespace states
 	{
+
+
+		void StartMocapStep::configure(const mc_rtc::Configuration & config)
+		{
+			config("closeGrippers", closeGrippers);
+		}
+
+		
 
 		void MyErrorMsgHandler(int iLevel, const char *szMsg)
 		{
@@ -68,10 +76,20 @@ namespace mc_handover
 		}
 
 
+
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
 
-			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);	
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+
+
+			/*close grippers for safety*/
+			auto  gripperL = ctl.grippers["l_gripper"].get();
+			auto  gripperR = ctl.grippers["r_gripper"].get();
+
+			gripperL->setTargetQ({closeGrippers});
+			gripperR->setTargetQ({closeGrippers});
+
 
 			/*com Task*/
 			auto initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
@@ -81,10 +99,27 @@ namespace mc_handover
 			ctl.solver().addTask(comTask);
 
 
+			/*chest task*/
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			ctl.solver().addTask(chestPosTask);
+			ctl.solver().addTask(chestOriTask);
+
+
 			/*position Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
 			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			
+
+			// ctl.solver().addTask(ctl.posTaskL);
+			// ctl.solver().addTask(ctl.posTaskR);
+
+
+			/*hand positions*/
+			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
+			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
+
+			// cout << "ltHand" << ltHand.translation().transpose()<<endl;
+			// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
 
 
 			if(Flag_CORTEX)
@@ -156,14 +191,14 @@ namespace mc_handover
 					pts.push_back(pt);
 				}
 
-
+				// 0.61140	-0.32642	0.46167 // robotefMarker
 				pos = Eigen::MatrixXd(3, pts.size()/3);
 
 				for(size_t i = 0; i < pts.size(); i += 3)
 				{
-					pos(0, i/3) = pts[i];
-					pos(1, i/3) = pts[i+1];
-					pos(2, i/3) = pts[i+2];
+					pos(0, i/3) = -(pts[i]-0.61140);
+					pos(1, i/3) = -(pts[i+1]+0.32642);
+					pos(2, i/3) = (pts[i+2]); //+0.46167
 				}
 
 
@@ -216,17 +251,6 @@ namespace mc_handover
 				/* get object marker pose */
 				if(Flag_CORTEX)
 				{
-					// robotBodyMarker <<	
-					// FrameofData.BodyData[robotBody].Markers[robotMarkerNo][0], // X left marker
-					// FrameofData.BodyData[robotBody].Markers[robotMarkerNo][1], // Y
-					// FrameofData.BodyData[robotBody].Markers[robotMarkerNo][2]; // Z
-
-					// objectBodyMarker <<	
-					// FrameofData.BodyData[objBody].Markers[objMarkerNo][0], // X farmost
-					// FrameofData.BodyData[objBody].Markers[objMarkerNo][1], // Y
-					// FrameofData.BodyData[objBody].Markers[objMarkerNo][2]; // Z
-
-
 					objectBodyMarker <<	
 					FrameofData.BodyData[body].Markers[markerO][0], // X
 					FrameofData.BodyData[body].Markers[markerO][1], // Y
@@ -238,11 +262,13 @@ namespace mc_handover
 					FrameofData.BodyData[body].Markers[markerR][2]; // Z
 				}
 				else
-				{	//0.6115   -0.3264    0.4615; // only 1st itr
-					robotBodyMarker << ctl.efTaskL->get_ef_pose().translation(); //replace with LARM_LINK6 pos
+				{	
 					objectBodyMarker << pos.col(i);
-					
-					// cout << "i & pos.size() " << i << " " << pos.size() << endl;
+					robotBodyMarker << ltHand.translation(); //leftEfmarkerPos same as leftEf
+
+					// cout << "pos " << pos.col(i).transpose()<<endl;
+					// cout << "robotBodyMarker\n" << robotBodyMarker.transpose() << endl;
+
 					if(i==pos.size()/3)
 					{
 						LOG_WARNING("iter over, restarting again")
@@ -266,24 +292,21 @@ namespace mc_handover
 					
 
 
-					if(!Flag_CORTEX)
+					if(Flag_CORTEX)
 					{
-						if( (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() <0.5 )
-						{
-							// cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
-							startPrediction = true;
-							// ctl.gui()->addElement({"sim mocap"},
-							// // mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-							// mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
-						}
-						// else
-						// {
-						// 	startPrediction = false;
-						// }
+						startPrediction = true;
 					}
 					else
 					{
-						startPrediction = true;
+						// if( (posObjMarkerA.col(i) - posLeftEfMarker.col(i)).norm() <0.5 )
+						{
+							cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
+							startPrediction = true;
+						}
+						// else
+						// {
+						// 	startPrediction = true;
+						// }
 					}
 
 					
@@ -299,8 +322,8 @@ namespace mc_handover
 						// curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
 						// curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
 
-						curRotLeftEf = ctl.efTaskL->get_ef_pose().rotation();
-						curPosLeftEf = ctl.efTaskL->get_ef_pose().translation();
+						// curRotLeftEf = ltHand.rotation(); //ctl.efTaskL->get_ef_pose().rotation();
+						curPosLeftEf = ltHand.translation(); //ctl.efTaskL->get_ef_pose().translation();
 						// cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
 
 						
@@ -308,7 +331,7 @@ namespace mc_handover
 						sva::PTransformd R_X_efL(curPosLeftEf);
 
 
-						/*object marker pose w.r.t to robot frame */
+						/*object marker pose w.r.t to robot EF frame */
 						for(int j=1;j<=t_observe; j++)
 						{
 							sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols((i-t_observe)+j,i));
@@ -316,7 +339,7 @@ namespace mc_handover
 
 							sva::PTransformd ObjMarkerA_X_efL;
 							ObjMarkerA_X_efL = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
-							
+
 
 							newPosObjMarkerA(0,j-1) = ObjMarkerA_X_efL.translation()(0);
 							newPosObjMarkerA(1,j-1) = ObjMarkerA_X_efL.translation()(1);
@@ -390,8 +413,8 @@ namespace mc_handover
 						if(removePrevTask)
 						{	
 							removePrevTask = false;
-							ctl.solver().removeTask(ctl.efTaskL);
-							ctl.solver().removeTask(ctl.efTaskR);
+							// ctl.solver().removeTask(ctl.efTaskL);
+							// ctl.solver().removeTask(ctl.efTaskR);
 							ctl.solver().addTask(ctl.posTaskL);
 							ctl.solver().addTask(ctl.posTaskR);
 						}
@@ -459,14 +482,6 @@ namespace mc_handover
 } // namespace mc_handover
 
 
-
-
-			// auto  gripper = ctl.grippers["l_gripper"].get();
-			// gripper->setTargetQ({openGrippers});
-			// // gripper->setTargetOpening(1.8);
-
-			// gripper = ctl.grippers["r_gripper"].get();
-			// gripper->setTargetQ({openGrippers});
 
 
 	/*------------------------------TO DOs----------------------------------------------
