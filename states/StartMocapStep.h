@@ -85,10 +85,13 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
 
+
 			sva::PTransformd ltHand;
 			sva::PTransformd rtHand;
-			
-			Eigen::Vector3d dummy;
+			sva::PTransformd object;
+
+
+			Eigen::Vector3d guiPos;
 
 			std::vector<std::string> activeJointsLeftArm =
 			{
@@ -112,9 +115,9 @@ namespace mc_handover
 				std::vector<double> pts;
 				std::string name;
 
-				bool Flag_CORTEX{false};
+				bool Flag_CORTEX{false}; // default True for MOCAP
 
-				bool startPrediction{false}; // default false for simData
+				bool startPrediction{false}; // default false
 
 				bool startCapture{false};
 

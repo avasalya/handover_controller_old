@@ -79,9 +79,9 @@ namespace mc_handover
 
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
-
+			
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-
+			
 
 			/*close grippers for safety*/
 			auto  gripperL = ctl.grippers["l_gripper"].get();
@@ -104,24 +104,38 @@ namespace mc_handover
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
-
+			
 
 			/*position Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
 			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+			// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
 
 			// ctl.solver().addTask(ctl.posTaskL);
 			// ctl.solver().addTask(ctl.posTaskR);
 
 
-			/*hand positions*/
-			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
-			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
 
-			// cout << "ltHand" << ltHand.translation().transpose()<<endl;
-			// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
+			/*move handoverObjects*/
+			ctl.gui()->addElement({"Pipe"},
+				mc_rtc::gui::Transform("Position", 
+					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+					[this,&ctl](const sva::PTransformd & pos) { 
+						ctl.robots().robot(2).posW(pos);
+						ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+						ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+					}));
 
 
+			/*move object using sim data*/
+			// ctl.gui()->addElement({"sim mocap"},
+			// // mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+			// mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
+
+
+
+
+			/*configure MOCAP*/
 			if(Flag_CORTEX)
 			{
 				Cortex_SetVerbosityLevel(VL_Info);
@@ -171,11 +185,10 @@ namespace mc_handover
 				printf("\n*** start live mode ***\n");
 				Cortex_Request("LiveMode", &pResponse, &nBytes);
 			}
-			else
+			else /*simData*/
 			{
 				startCapture = true;
-
-				/*simData*/
+				
 				name = {"simData"};
 
 				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
@@ -200,14 +213,10 @@ namespace mc_handover
 					pos(1, i/3) = -(pts[i+1]+0.32642);
 					pos(2, i/3) = (pts[i+2]); //+0.46167
 				}
-
-
 				// plotPos(pos, pos.size()/3);
 
-				ctl.gui()->addElement({"sim mocap"},
-					// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
 			}
+
 		}// start
 
 
@@ -217,7 +226,20 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+			/*hand positions*/
+			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
+			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
+
+
+
+			// object = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
+			// cout << "object pos " << object.translation().transpose()<<endl;
 			
+
+
+
+
+			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
 			{
 				getCurFrame =  Cortex_GetCurrentFrame();
@@ -248,7 +270,7 @@ namespace mc_handover
 			/* start only when ithFrame == 1 */
 			if(startCapture)
 			{
-				/* get object marker pose */
+				/*get object marker pos*/
 				if(Flag_CORTEX)
 				{
 					objectBodyMarker <<	
@@ -261,7 +283,7 @@ namespace mc_handover
 					FrameofData.BodyData[body].Markers[markerR][1], // Y
 					FrameofData.BodyData[body].Markers[markerR][2]; // Z
 				}
-				else
+				else /*for simulation*/
 				{	
 					objectBodyMarker << pos.col(i);
 					robotBodyMarker << ltHand.translation(); //leftEfmarkerPos same as leftEf
@@ -282,6 +304,7 @@ namespace mc_handover
 				if( (robotBodyMarker(0) != 0 && objectBodyMarker(0) != 0 ) 
 					&& (robotBodyMarker(0) < 100 && objectBodyMarker(0) < 100) )
 				{
+
 					posLeftEfMarker(0, i) = robotBodyMarker(0); // X
 					posLeftEfMarker(1, i) = robotBodyMarker(1); // Y
 					posLeftEfMarker(2, i) = robotBodyMarker(2); // Z
@@ -292,26 +315,22 @@ namespace mc_handover
 					
 
 
-					if(Flag_CORTEX)
-					{
-						startPrediction = true;
-					}
-					else
-					{
-						// if( (posObjMarkerA.col(i) - posLeftEfMarker.col(i)).norm() <0.5 )
-						{
-							cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
-							startPrediction = true;
-						}
-						// else
-						// {
-						// 	startPrediction = true;
-						// }
-					}
+					/*when to start handover motion*/
+
+					// if( (posObjMarkerA.col(i) - posLeftEfMarker.col(i)).norm() <0.5 )
+					// {
+					// 	startPrediction = true;
+					// 	cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
+					// }
+					
+					startPrediction = true;
+
+
 
 					
 					if( (i%t_observe == 0) && (startPrediction) )
 					{
+
 						/*get robot ef marker current pose*/
 						curPosLeftEfMarker << posLeftEfMarker.col((i-t_observe)+1);//1.162, -0.268, 1.074;
 						sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
@@ -319,14 +338,10 @@ namespace mc_handover
 
 
 						/*get robot ef current pose*/
-						// curRotLeftEf = ctl.relEfTaskL->get_ef_pose().rotation();
-						// curPosLeftEf = ctl.relEfTaskL->get_ef_pose().translation();
-
-						// curRotLeftEf = ltHand.rotation(); //ctl.efTaskL->get_ef_pose().rotation();
-						curPosLeftEf = ltHand.translation(); //ctl.efTaskL->get_ef_pose().translation();
+						curRotLeftEf = ltHand.rotation();
+						curPosLeftEf = ltHand.translation();
 						// cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
 
-						
 						//sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf); 
 						sva::PTransformd R_X_efL(curPosLeftEf);
 
@@ -345,6 +360,9 @@ namespace mc_handover
 							newPosObjMarkerA(1,j-1) = ObjMarkerA_X_efL.translation()(1);
 							newPosObjMarkerA(2,j-1) = ObjMarkerA_X_efL.translation()(2);
 							
+
+							guiPos = newPosObjMarkerA.col(j);
+
 
 							/*get obj marker initials*/
 							if(j==1)
@@ -374,6 +392,7 @@ namespace mc_handover
 
 						/*get way points between obj inital motion*/ // get constant
 						auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, t_observe);
+						// cout<< "pos   " << get<0>(actualPosObjMarkerA).transpose()<< endl<< endl;
 						// cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
 						// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
@@ -424,7 +443,7 @@ namespace mc_handover
 						for(int it=0; it<wp.cols(); it++)
 						{
 
-							// refPos << wp.col(it);
+							/* PAY ATTENTION ON HERE */
 							refPos << -wp(0,it), -wp(1,it), wp(2,it);// -ve X,Y
 							// cout << "wp " << wp.col(it).transpose()<<endl;
 
