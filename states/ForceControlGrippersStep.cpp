@@ -16,8 +16,8 @@ namespace mc_handover
 		void ForceControlGrippersStep::start(mc_control::fsm::Controller & controller)
 		{
 			cout << "start -- ForceControlGrippersStep " << endl;
-    		auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-        
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+			
 
 			/* handover gui elements */
 			ctl.gui()->addElement({"FSM", "HandoverElements"},
@@ -28,40 +28,40 @@ namespace mc_handover
 				// 	-10.0, 10.0),
 
 				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {  
-				std::cout << "left hand wrench:: Torques, Forces " <<
+					std::cout << "left hand wrench:: Torques, Forces " <<
 				ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-				std::cout << "right hand wrench:: Torques, Forces " <<
+					std::cout << "right hand wrench:: Torques, Forces " <<
 				ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
 				}),
 
 				mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
-                      					[this]() { return move; },
-                      					[this](const Eigen::Vector3d v) { move = v;
-                      					cout << " com pos set to:\n" << initialCom + move << endl;}),
+					[this]() { return move; },
+					[this](const Eigen::Vector3d v) { move = v;
+						cout << " com pos set to:\n" << initialCom + move << endl;}),
 
 
-        mc_rtc::gui::ArrayInput("Threshold",
-                                {"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
-                                [this]() { return thresh; },
-                                [this](const Eigen::VectorXd & t)
-                                {
-                                  LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
-                                  thresh = t;
-                                })
-    );
+				mc_rtc::gui::ArrayInput("Threshold",
+					{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
+					[this]() { return thresh; },
+					[this](const Eigen::VectorXd & t)
+					{
+						LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
+						thresh = t;
+					})
+				);
 
 			/*add com task -- position it lower and bit backward */
 			comTask = std::make_shared<mc_tasks::CoMTask>
-				(ctl.robots(), ctl.robots().robotIndex(), 2., 10000.);
+			(ctl.robots(), ctl.robots().robotIndex(), 2., 10000.);
 			// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
 			ctl.solver().addTask(comTask);
 			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
-						
-    		cout << "initial_com X " << endl << initialCom[0] << endl;
-    		cout << "initial_com Y " << endl << initialCom[1] << endl;
-    		cout << "initial_com Z " << endl << initialCom[2] << endl;
+			
+			cout << "initial_com X " << endl << initialCom[0] << endl;
+			cout << "initial_com Y " << endl << initialCom[1] << endl;
+			cout << "initial_com Z " << endl << initialCom[2] << endl;
 
-      ctl.runOnce = true;
+			ctl.runOnce = true;
 		}
 
 
@@ -75,59 +75,60 @@ namespace mc_handover
 			target = initialCom + move;
 			comTask->com(target);
 
-      auto leftTh = thresh.head(6);
-      auto rightTh = thresh.tail(6);
-      auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
-      auto rightForce = ctl.wrenches.at("RightHandForceSensor").force();
+			auto leftTh = thresh.head(6);
+			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
+			
+			auto rightTh = thresh.tail(6);
+			auto rightForce = ctl.wrenches.at("RightHandForceSensor").force();
 
-      auto open_grippers = [&]()
-      {
-        ctl.publishWrench();
-        auto gripper = ctl.grippers["l_gripper"].get();
-        gripper->setTargetQ({openGrippers});
+			auto open_grippers = [&]()
+			{
+				ctl.publishWrench();
+				auto gripper = ctl.grippers["l_gripper"].get();
+				gripper->setTargetQ({openGrippers});
 
-        gripper = ctl.grippers["r_gripper"].get();
-        gripper->setTargetQ({openGrippers});
+				gripper = ctl.grippers["r_gripper"].get();
+				gripper->setTargetQ({openGrippers});
 
-        output("Repeat");
-        ctl.runOnce = false;
-      };
+				output("Repeat");
+				ctl.runOnce = false;
+			};
 
-      auto compareLogic = [&](const char * axis_name, int idx)
-      {
-        if(fabs(leftForce[idx]) > leftTh[idx+3])
-        {
-          if(fabs(rightForce[idx]) > rightTh[idx+3])
-          {
-            LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
-          }
-          else
-          {
-            LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
-          }
-          open_grippers();
-          return true;
-        }
-        else
-        {
-          if(fabs(rightForce[idx]) > rightTh[idx+3])
-          {
-            LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
-            open_grippers();
-            return true;
-          }
-          return false;
-        }
-      };
+			auto compareLogic = [&](const char * axis_name, int idx)
+			{
+				if(fabs(leftForce[idx]) > leftTh[idx+3])
+				{
+					if(fabs(rightForce[idx]) > rightTh[idx+3])
+					{
+						LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
+					}
+					else
+					{
+						LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
+					}
+					open_grippers();
+					return true;
+				}
+				else
+				{
+					if(fabs(rightForce[idx]) > rightTh[idx+3])
+					{
+						LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
+						open_grippers();
+						return true;
+					}
+					return false;
+				}
+			};
 
-      if(ctl.runOnce)
-      {
-        return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
-      }
-      else
-      {
-        return true;
-      }
+			if(ctl.runOnce)
+			{
+				return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
+			}
+			else
+			{
+				return true;
+			}
 
 		}
 
@@ -135,7 +136,7 @@ namespace mc_handover
 		void ForceControlGrippersStep::teardown(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-			
+
 			ctl.solver().removeTask(comTask);
 
 			ctl.gui()->removeElement({"FSM", "HandoverElements"},"publish_current_wrench");		

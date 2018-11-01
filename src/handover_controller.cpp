@@ -67,7 +67,7 @@ namespace mc_handover
         MCController::reset({q});
 
         /* gripper control */
-        gui()->addElement({"FSM", "HandoverElements"},
+        gui()->addElement({"Handover", "Grippers"},
           
 
           mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 

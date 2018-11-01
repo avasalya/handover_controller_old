@@ -10,7 +10,10 @@ namespace mc_handover
 
 		void StartMocapStep::configure(const mc_rtc::Configuration & config)
 		{
-			config("closeGrippers", closeGrippers);
+			// config("closeGrippers", closeGrippers);
+			// config("closeGrippers", openGrippers);
+			thresh         = config("handsWrenchTh");
+			handsWrenchDir = config("handsWrenchDir");
 		}
 
 		
@@ -82,57 +85,79 @@ namespace mc_handover
 			
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 			
+			/*initialization*/
+			{
+				/*close grippers for safety*/
+				auto  gripperL = ctl.grippers["l_gripper"].get();
+				auto  gripperR = ctl.grippers["r_gripper"].get();
 
-			/*close grippers for safety*/
-			auto  gripperL = ctl.grippers["l_gripper"].get();
-			auto  gripperR = ctl.grippers["r_gripper"].get();
-
-			gripperL->setTargetQ({closeGrippers});
-			gripperR->setTargetQ({closeGrippers});
-
-
-			/*com Task*/
-			auto initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
-			auto comTask = std::make_shared<mc_tasks::CoMTask>
-			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);//10, 1e3
-			comTask->com(initialCom);
-			ctl.solver().addTask(comTask);
+				gripperL->setTargetQ({closeGrippers});
+				gripperR->setTargetQ({closeGrippers});
 
 
-			/*chest task*/
-			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-			ctl.solver().addTask(chestPosTask);
-			ctl.solver().addTask(chestOriTask);
-			
+				/*chest task*/
+				chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+				chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+				ctl.solver().addTask(chestPosTask);
+				ctl.solver().addTask(chestOriTask);
+				
 
-			/*position Task*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
-
-			// ctl.solver().addTask(ctl.posTaskL);
-			// ctl.solver().addTask(ctl.posTaskR);
+				/*position Task*/
+				ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+				ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+				// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
 
 
+				/*publish wrench*/
+				ctl.gui()->addElement({"Handover", "wrench"},
+					
+					mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {  
+						std::cout << "left hand wrench:: Torques, Forces " <<
+				ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+						std::cout << "right hand wrench:: Torques, Forces " <<
+				ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+					}),
 
-			/*move handoverObjects*/
-			ctl.gui()->addElement({"Pipe"},
-				mc_rtc::gui::Transform("Position", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { 
-						ctl.robots().robot(2).posW(pos);
-						ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
-						ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
-					}));
+					mc_rtc::gui::ArrayInput("Threshold",
+						{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
+						[this]() { return thresh; },
+						[this](const Eigen::VectorXd & t)
+						{
+							LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
+							thresh = t;
+						}));
 
 
-			/*move object using sim data*/
-			// ctl.gui()->addElement({"sim mocap"},
-			// // mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-			// mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker; }));
+				/*move object using cursor or simData*/
+				ctl.gui()->addElement({"Handover","move object"},
+					mc_rtc::gui::Transform("Position", 
+						[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+						[this,&ctl](const sva::PTransformd & pos) { 
+							ctl.robots().robot(2).posW(pos);
+							ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+							ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+						}),
+					// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker;}));
 
 
+				/*com Task*/
+				ctl.gui()->addElement({"Handover", "com"},
+
+					mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
+						[this]() { return move; },
+						[this](const Eigen::Vector3d v) { move = v;
+							cout << " com pos set to:\n" << initialCom + move << endl;})
+					);
+
+				comTask = std::make_shared<mc_tasks::CoMTask>
+				(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);//10, 1e3
+				// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
+
+				initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
+				comTask->com(initialCom);
+				ctl.solver().addTask(comTask);
+			}// initialization
 
 
 			/*configure MOCAP*/
@@ -189,7 +214,7 @@ namespace mc_handover
 			{
 				startCapture = true;
 				
-				name = {"simData"};
+				name = {"simData2"};
 
 				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
 				std::ifstream file(fn);
@@ -204,17 +229,18 @@ namespace mc_handover
 					pts.push_back(pt);
 				}
 
-				// 0.61140	-0.32642	0.46167 // robotefMarker
 				pos = Eigen::MatrixXd(3, pts.size()/3);
 
 				for(size_t i = 0; i < pts.size(); i += 3)
 				{
-					pos(0, i/3) = -(pts[i]-0.61140);
-					pos(1, i/3) = -(pts[i+1]+0.32642);
-					pos(2, i/3) = (pts[i+2]); //+0.46167
+					pos(0, i/3) = (pts[i]);
+					pos(1, i/3) = (pts[i+1]);
+					pos(2, i/3) = (pts[i+2]);
 				}
 				// plotPos(pos, pos.size()/3);
 
+				// initRobotEfMarker << 0.61140, -0.32642, 0.46167 // simData
+				initRobotEfMarker << -0.3681, 0.60182, 0.5287; // simData2
 			}
 
 		}// start
@@ -226,17 +252,14 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+			/* set com pose */
+			target = initialCom + move;
+			comTask->com(target);
+
+
 			/*hand positions*/
 			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
 			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
-
-
-
-			// object = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
-			// cout << "object pos " << object.translation().transpose()<<endl;
-			
-
-
 
 
 			/*Get non-stop MOCAP Frame*/
@@ -266,7 +289,6 @@ namespace mc_handover
 			}
 
 
-
 			/* start only when ithFrame == 1 */
 			if(startCapture)
 			{
@@ -284,8 +306,9 @@ namespace mc_handover
 					FrameofData.BodyData[body].Markers[markerR][2]; // Z
 				}
 				else /*for simulation*/
-				{	
-					objectBodyMarker << pos.col(i);
+				{
+					
+					objectBodyMarker << pos.col(i)-initRobotEfMarker;
 					robotBodyMarker << ltHand.translation(); //leftEfmarkerPos same as leftEf
 
 					// cout << "pos " << pos.col(i).transpose()<<endl;
@@ -293,7 +316,10 @@ namespace mc_handover
 
 					if(i==pos.size()/3)
 					{
-						LOG_WARNING("iter over, restarting again")
+						LOG_WARNING("iter over")
+						output("Repeat");
+						return true;
+						// startCapture = false;
 						// i =0;
 					}
 				}
@@ -314,21 +340,8 @@ namespace mc_handover
 					posObjMarkerA(2, i) = objectBodyMarker(2); // Z
 					
 
-
-					/*when to start handover motion*/
-
-					// if( (posObjMarkerA.col(i) - posLeftEfMarker.col(i)).norm() <0.5 )
-					// {
-					// 	startPrediction = true;
-					// 	cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
-					// }
 					
-					startPrediction = true;
-
-
-
-					
-					if( (i%t_observe == 0) && (startPrediction) )
+					if( (i%t_observe == 0) && (prediction) )
 					{
 
 						/*get robot ef marker current pose*/
@@ -360,8 +373,6 @@ namespace mc_handover
 							newPosObjMarkerA(1,j-1) = ObjMarkerA_X_efL.translation()(1);
 							newPosObjMarkerA(2,j-1) = ObjMarkerA_X_efL.translation()(2);
 							
-
-							guiPos = newPosObjMarkerA.col(j);
 
 
 							/*get obj marker initials*/
@@ -397,7 +408,6 @@ namespace mc_handover
 						// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
 
 
-
 						/*predict position in straight line after t_predict time*/
 						//avgVelObjMarkerA //get<1>(actualPosObjMarkerA) //(constant)
 						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), t_predict);
@@ -405,64 +415,59 @@ namespace mc_handover
 						/*get predicted way points between left ef and obj*/
 						wp_efL_objMarkerA=ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, t_predict);
 						wp = get<0>(wp_efL_objMarkerA);
-						collected = true;
-						
-
-						// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl;
-						
-						// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
-						// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
-
-						// cout << "wp " << wp.col(0).transpose() << endl
-						// cout << "wp.cols() " << wp.cols() << endl;
-						// cout << "wp.rows() " << wp.rows() << endl;
+						collected = true;					
 					} //t_observe
 					
 
-					if(collected)
-					{
-						// LOG_WARNING("new object pos updated ")
-						// cout << i << endl;
 
-						Eigen::Vector3d initPos = 
-						ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
+					if( collected )//&& prediction)
+					{
+
+						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
 						
 						// ctl.posTaskL->position(initPos);
 
-						if(removePrevTask)
-						{	
-							removePrevTask = false;
-							// ctl.solver().removeTask(ctl.efTaskL);
-							// ctl.solver().removeTask(ctl.efTaskR);
-							ctl.solver().addTask(ctl.posTaskL);
-							ctl.solver().addTask(ctl.posTaskR);
-						}
+						ctl.solver().addTask(ctl.posTaskL);
+						ctl.solver().addTask(ctl.posTaskR);
 
 						initRefPos << -wp(0,0), -wp(1,0), wp(2,0);
 
 						for(int it=0; it<wp.cols(); it++)
 						{
 
-							/* PAY ATTENTION ON HERE */
+							/* PAY ATTENTION HERE */
 							refPos << -wp(0,it), -wp(1,it), wp(2,it);// -ve X,Y
 							// cout << "wp " << wp.col(it).transpose()<<endl;
 
 							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
 							refAcc << Eigen::MatrixXd::Zero(3,1);
 
-							auto gothere = refPos + initPos -initRefPos;
+							gothere = refPos + initPos -initRefPos;
 							// cout << "gothere " << gothere.transpose()<<endl;
 
-							if(
-								(gothere(0))<= 0.7 && (gothere(1))<= 0.6 && (gothere(2))<=1.5 &&
-								(gothere(0))>= 0.2 && (gothere(1))>= 0.25 && (gothere(2))>=0.9
-								) 
-							{
-								ctl.posTaskL->position(gothere);
-								ctl.posTaskL->refVel(refVel);
-								ctl.posTaskL->refAccel(refAcc);
-								// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
 
+							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
+
+							/*robot constraint*/ /*when to start handover motion*/
+							if(	(gothere(0))<= 0.7 && (gothere(1))<= 0.6 && (gothere(2))<=1.5 &&
+								(gothere(0))>= 0.2 && (gothere(1))>= 0.25 && (gothere(2))>=0.9 ) 
+							{
+								
+								/*control gripper*/
+								// cout << "(gothere - curLEfPos).norm() " << (gothere - curLEfPos).norm() << endl;
+								if( (gothere - curLEfPos).norm() >0.2 )
+								{
+									auto  gripperL = ctl.grippers["l_gripper"].get();
+									gripperL->setTargetQ({openGrippers});
+								}
+								else
+								{
+									auto  gripperL = ctl.grippers["l_gripper"].get();
+									gripperL->setTargetQ({closeGrippers});									
+								}
+
+
+								/*control head*/
 								if(gothere(1) >.45) //y
 								{
 									ctl.set_joint_pos("HEAD_JOINT0",  0.8); //+ve to move head left	
@@ -480,12 +485,32 @@ namespace mc_handover
 								{
 									ctl.set_joint_pos("HEAD_JOINT1",  -0.4); //+ve to move head down		
 								}
-								
+
+
+								/*move end effector*/
+								ctl.posTaskL->position(gothere);
+								ctl.posTaskL->refVel(refVel);
+								ctl.posTaskL->refAccel(refAcc);
+								// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
+
+
+
+								/*force control & halt prediction approach handover*/
+								if(1) 
+								{
+									//handover happpened?
+									// prediction = false;
+									// output("Repeat");
+									// return true;
+								}
+								//when should prediction be started again?
+
+
 							}
 						}
 
 						collected = false;
-					}
+					} // collected
 
 					i = i + 1;
 				}// check for non zero frame
@@ -495,6 +520,24 @@ namespace mc_handover
 			// output("OK");
 			return false;
 		}// run
+
+
+		void StartMocapStep::teardown(mc_control::fsm::Controller & controller)
+		{
+			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
+
+			ctl.solver().removeTask(comTask);
+			ctl.solver().removeTask(ctl.posTaskL);
+			ctl.solver().removeTask(ctl.posTaskR);
+
+			ctl.gui()->removeElement({"Handover","com"}, "Move Com Pos");
+			ctl.gui()->removeElement({"Handover","wrench"},"publish_current_wrench");
+			ctl.gui()->removeElement({"Handover","wrench"}, "Threshold");
+			ctl.gui()->removeElement({"Handover", "move object"}, "Position");
+			ctl.gui()->removeElement({"Handover", "object marker log"}, "log_data");
+
+		}
+
 
 	} // namespace states
 
@@ -523,3 +566,37 @@ namespace mc_handover
 	// cout <<"error " << M_X_ObjMarkerA.translation()- ObjMarkerA_X_efL.translation()<<endl;
 	// cout << endl << endl;
 
+
+
+	// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl;
+
+	// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
+	// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
+
+	// cout << "wp " << wp.col(0).transpose() << endl
+	// cout << "wp.cols() " << wp.cols() << endl;
+	// cout << "wp.rows() " << wp.rows() << endl;
+
+
+	// /*when to start handover motion*/
+	// // cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
+	// if( (posObjMarkerA.col(i) - posLeftEfMarker.col(i)).norm() <1.0 )
+	// {
+	// 	prediction = true;
+
+	// 	auto  gripperL = ctl.grippers["l_gripper"].get();
+	// 	gripperL->setTargetQ({openGrippers});
+
+	// 	/*force control here*/
+	// }
+	// else
+	// {
+	// 	auto  gripperL = ctl.grippers["l_gripper"].get();
+	// 	// gripperL->setTargetQ({closeGrippers});
+	// }
+
+
+	// cout << "obj pos " << ctl.robots().robot(2).posW().translation().transpose() << endl;
+
+// cout << "open gripper "<< gripperL->curPosition()[0] <<endl; //0.8
+// cout << "close gripper "<< gripperL->curPosition()[0] <<endl; //0.8

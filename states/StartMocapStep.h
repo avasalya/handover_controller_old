@@ -37,7 +37,7 @@ namespace mc_handover
 
 			bool run(mc_control::fsm::Controller&) override;
 
-			void teardown(mc_control::fsm::Controller&) override {}
+			void teardown(mc_control::fsm::Controller&) override;
 
 
 			void plotPos(Eigen::MatrixXd m, int d);
@@ -85,13 +85,14 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
 
-
 			sva::PTransformd ltHand;
 			sva::PTransformd rtHand;
 			sva::PTransformd object;
 
+			double closeGrippers = 0.0;
+			double openGrippers = 1.0;
 
-			Eigen::Vector3d guiPos;
+			Eigen::Vector3d initRobotEfMarker;
 
 			std::vector<std::string> activeJointsLeftArm =
 			{
@@ -108,7 +109,12 @@ namespace mc_handover
 
 			private:
 
-				double closeGrippers;
+				Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
+				std::vector<bool> handsWrenchDir;
+				Eigen::Vector3d move, target;
+				Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
+
+				std::shared_ptr<mc_tasks::CoMTask> comTask;
 
 				double pt;
 				Eigen::MatrixXd pos;
@@ -117,14 +123,17 @@ namespace mc_handover
 
 				bool Flag_CORTEX{false}; // default True for MOCAP
 
-				bool startPrediction{false}; // default false
 
 				bool startCapture{false};
 
 				bool collected{false};
-				bool removePrevTask{true};
 
-				Eigen::Vector3d refPos, refVel, refAcc, initRefPos;
+				bool prediction{true}; // default true
+				// bool stopPrediction{false};
+
+				// bool removePrevTask{true};
+
+				Eigen::Vector3d refPos, refVel, refAcc, initRefPos, gothere, initPos;
 
 				sBodyDefs* pBodyDefs{NULL};
 				sFrameOfData* getCurFrame{NULL};
