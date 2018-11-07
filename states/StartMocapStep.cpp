@@ -166,8 +166,8 @@ namespace mc_handover
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
-				retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
-				// retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
+				// retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
+				retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
 
 				if (retval != RC_Okay)
 				{
@@ -243,6 +243,7 @@ namespace mc_handover
 				initRobotEfMarker << -0.3681, 0.60182, 0.5287; // simData2
 			}
 
+			ctl.runOnce = true;
 		}// start
 
 
@@ -252,9 +253,14 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			/* set com pose */
+			/*set com pose*/
 			target = initialCom + move;
 			comTask->com(target);
+
+
+			/*Force sensor*/
+			auto leftTh = thresh.head(6);
+			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
 
 			/*hand positions*/
@@ -309,7 +315,8 @@ namespace mc_handover
 				{
 					
 					objectBodyMarker << pos.col(i)-initRobotEfMarker;
-					robotBodyMarker << ltHand.translation(); //leftEfmarkerPos same as leftEf
+					robotBodyMarker << ltHand.translation();// +initRobotEfMarker; //leftEfmarkerPos same as leftEf
+
 
 					// cout << "pos " << pos.col(i).transpose()<<endl;
 					// cout << "robotBodyMarker\n" << robotBodyMarker.transpose() << endl;
@@ -415,36 +422,34 @@ namespace mc_handover
 						/*get predicted way points between left ef and obj*/
 						wp_efL_objMarkerA=ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, t_predict);
 						wp = get<0>(wp_efL_objMarkerA);
-						collected = true;					
+						collected = true;
 					} //t_observe
 					
 
 
 					if( collected )//&& prediction)
 					{
-
 						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
-						
-						// ctl.posTaskL->position(initPos);
 
 						ctl.solver().addTask(ctl.posTaskL);
 						ctl.solver().addTask(ctl.posTaskR);
 
-						initRefPos << -wp(0,0), -wp(1,0), wp(2,0);
+
+						/* ***************** PAY ATTENTION HERE ***************** */
+						initRefPos << -wp(0,0), wp(1,0), wp(2,0);
+
 
 						for(int it=0; it<wp.cols(); it++)
 						{
-
-							/* PAY ATTENTION HERE */
-							refPos << -wp(0,it), -wp(1,it), wp(2,it);// -ve X,Y
+							/* ***************** PAY ATTENTION HERE ***************** */
+							refPos << -wp(0,it), wp(1,it), wp(2,it);// -ve X,Y
 							// cout << "wp " << wp.col(it).transpose()<<endl;
-
-							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
-							refAcc << Eigen::MatrixXd::Zero(3,1);
 
 							gothere = refPos + initPos -initRefPos;
 							// cout << "gothere " << gothere.transpose()<<endl;
 
+							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
+							refAcc << Eigen::MatrixXd::Zero(3,1);
 
 							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
 
@@ -487,6 +492,7 @@ namespace mc_handover
 								}
 
 
+
 								/*move end effector*/
 								ctl.posTaskL->position(gothere);
 								ctl.posTaskL->refVel(refVel);
@@ -495,14 +501,45 @@ namespace mc_handover
 
 
 
-								/*force control & halt prediction approach handover*/
-								if(1) 
+								auto close_grippers = [&]()
 								{
-									//handover happpened?
-									// prediction = false;
-									// output("Repeat");
-									// return true;
+									ctl.publishWrench();
+									auto gripper = ctl.grippers["l_gripper"].get();
+									gripper->setTargetQ({0.0});
+									
+									output("Repeat");
+									ctl.runOnce = false;
+									prediction = false;
+								};
+
+
+								/*force control & halt prediction approach handover*/
+								auto compareLogic = [&](const char * axis_name, int idx)
+								{
+									if(fabs(leftForce[idx]) > leftTh[idx+3])
+									{
+										close_grippers();
+										return true;
+									}
+									/*check force direction to open and restart prediction*/
+								};
+
+								if(ctl.runOnce)
+								{
+									return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
 								}
+								else
+								{
+									return true;
+								}
+
+
+
+								//*************** handover happpened? *****************
+								// prediction = false;
+								// output("Repeat");
+								// return true;
+							
 								//when should prediction be started again?
 
 
@@ -533,8 +570,8 @@ namespace mc_handover
 			ctl.gui()->removeElement({"Handover","com"}, "Move Com Pos");
 			ctl.gui()->removeElement({"Handover","wrench"},"publish_current_wrench");
 			ctl.gui()->removeElement({"Handover","wrench"}, "Threshold");
-			ctl.gui()->removeElement({"Handover", "move object"}, "Position");
 			ctl.gui()->removeElement({"Handover", "object marker log"}, "log_data");
+			// ctl.gui()->removeElement({"Handover", "move object"}, "Position");
 
 		}
 

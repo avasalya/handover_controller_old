@@ -121,7 +121,7 @@ namespace mc_handover
 				std::vector<double> pts;
 				std::string name;
 
-				bool Flag_CORTEX{false}; // default True for MOCAP
+				bool Flag_CORTEX{true}; // default True for MOCAP
 
 
 				bool startCapture{false};
