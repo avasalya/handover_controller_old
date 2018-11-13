@@ -45,14 +45,16 @@ namespace mc_handover
 
 
 			int body{0};
-			int markerO{2};
-			int markerR{3};
 
-			int robotBody{0};
-			int robotMarkerNo{0};
 
-			int objBody{1};
-			int objMarkerNo{0};
+			int wristMarkerR{2};
+			int fingerMarkerR{3};
+
+			int markerO{4};
+
+			int knuckleMarkerS{5};
+			int wristMarkerS{6};
+
 
 			int fps{200};
 
@@ -60,14 +62,19 @@ namespace mc_handover
 			int t_predict{100};//1sec
 
 			/*mocap*/
-			Eigen::Vector3d robotBodyMarker, objectBodyMarker;
+			Eigen::Vector3d robotWristMarker, robotFingerMarker;
+			Eigen::Vector3d objectBodyMarker;
+			Eigen::Vector3d subjWristMarker, subjKnuckleMarker;
+
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d initPosObjMarkerA, ithPosObjMarkerA, avgVelObjMarkerA, predictPos;
 
-			// Eigen::MatrixXd dummyPredictPos	 = Eigen::MatrixXd::Zero(3,5);
 			Eigen::MatrixXd posLeftEfMarker  = Eigen::MatrixXd::Zero(3,60000);
+			Eigen::MatrixXd posLeftFingerMarker  = Eigen::MatrixXd::Zero(3,60000);
 			Eigen::MatrixXd posObjMarkerA    = Eigen::MatrixXd::Zero(3,60000);
-			
+			Eigen::MatrixXd posSubjWristMarker = Eigen::MatrixXd::Zero(3,60000);
+			Eigen::MatrixXd posSubjKnuckleMarker = Eigen::MatrixXd::Zero(3,60000);
+
 			Eigen::MatrixXd newPosObjMarkerA = Eigen::MatrixXd::Zero(3,t_observe);
 
 			Eigen::MatrixXd curVelObjMarkerA, wp;//, curPosObjMarkerA;
@@ -84,6 +91,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
+			sva::PTransformd ObjMarkerA_X_efL;
 
 			sva::PTransformd ltHand;
 			sva::PTransformd rtHand;
@@ -157,3 +165,113 @@ namespace mc_handover
 } // namespace mc_handover
 
 EXPORT_SINGLE_STATE("StartMocapStep", mc_handover::states::StartMocapStep)
+
+
+
+/*comments*/
+	
+	// ObjMarkerA_X_efL = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
+
+	// cout << "ObjMarkerA_X_efL "<< ObjMarkerA_X_efL.translation().transpose() << endl;
+	// cout <<"error " << M_X_ObjMarkerA.translation()- ObjMarkerA_X_efL.translation()<<endl;
+	// cout << endl << endl;
+
+
+
+	// // or
+	// ObjMarkerA_X_efL = R_X_efL.inv()*M_X_efLMarker.inv()*R_X_efL*M_X_ObjMarkerA;
+
+	// cout << "ObjMarkerA_X_efL2 "<< ObjMarkerA_X_efL.translation().transpose() << endl;
+	// cout <<"error " << M_X_ObjMarkerA.translation()- ObjMarkerA_X_efL.translation()<<endl;
+	// cout << endl << endl;
+
+
+
+	// cout << "predictPos " <<"\nFROM " << ithPosObjMarkerA.transpose() << "\nTO "<< predictPos.transpose() << endl;
+
+	// cout << "wp " << get<0>(wp_efL_objMarkerA).transpose() << endl<< endl;
+	// cout << "slope " << get<1>(wp_efL_objMarkerA).transpose() << endl<< endl;
+
+	// cout << "wp " << wp.col(0).transpose() << endl
+	// cout << "wp.cols() " << wp.cols() << endl;
+	// cout << "wp.rows() " << wp.rows() << endl;
+
+
+	// /*when to start handover motion*/
+	// // cout <<"norm " << (posObjMarkerA.col(i)- posLeftEfMarker.col(i)).norm() << endl;
+	// if( (posObjMarkerA.col(i) - posLeftEfMarker.col(i)).norm() <1.0 )
+	// {
+	// 	prediction = true;
+
+	// 	auto  gripperL = ctl.grippers["l_gripper"].get();
+	// 	gripperL->setTargetQ({openGrippers});
+
+	// 	/*force control here*/
+	// }
+	// else
+	// {
+	// 	auto  gripperL = ctl.grippers["l_gripper"].get();
+	// 	// gripperL->setTargetQ({closeGrippers});
+	// }
+
+
+	// cout << "obj pos " << ctl.robots().robot(2).posW().translation().transpose() << endl;
+
+	// cout << "open gripper "<< gripperL->curPosition()[0] <<endl; //0.8
+	// cout << "close gripper "<< gripperL->curPosition()[0] <<endl; //0.8
+
+
+
+
+	// if( (i%t_observe == 0) && (prediction) )
+	// {
+
+	// 	/*get robot ef marker current pose*/
+
+	// 	// cout << "curPosLeftEfMarker " << curPosLeftEfMarker.transpose() << endl;
+
+
+	// 	/*get robot ef current pose*/
+	// 	// cout << "curPosLeftEf\n" << curPosLeftEf.transpose() << endl;
+	// 	//sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf); 
+
+
+	// 	/*object marker pose w.r.t to robot EF frame*/
+	// 	for(int j=1;j<=t_observe; j++)
+	// 	{
+	// 		// cout << "M_X_ObjMarkerA.trans() \n" << M_X_ObjMarkerA.translation().transpose() << endl;
+
+
+	// 		/*get obj marker initials*/
+	// 		if(j==1)
+	// 		{
+	// 			// cout << " initPosObjMarkerA " << initPosObjMarkerA.transpose() << endl;
+	// 		}
+	// 		if(j==t_observe)
+	// 		{
+	// 			// cout << " ithPosObjMarkerA " << ithPosObjMarkerA.transpose() << endl; 
+	// 		}
+	// 	}
+	// 	// cout << " newPosObjMarkerA " << newPosObjMarkerA.transpose() <<endl<< endl;
+	// 	// helpFun->plotPos(newPosObjMarkerA, t_observe);
+
+
+	// 	/*get average velocity of previous 1sec obj motion*/
+	// 	// helpFun->plotVel(curVelObjMarkerA, t_observe);
+	// 	// cout << "curVelObjMarkerA " << curVelObjMarkerA.transpose() <<endl<<endl;
+
+
+	// 	// cout << "avgVelObjMarkerA " << avgVelObjMarkerA.transpose() << endl<<endl;
+
+
+	// 	/*get way points between obj inital motion*/ // get constant
+	// 	// cout<< "pos   " << get<0>(actualPosObjMarkerA).transpose()<< endl<< endl;
+	// 	// cout<< "slope " << get<1>(actualPosObjMarkerA).transpose()<< endl<< endl;
+	// 	// cout<< "const " << get<2>(actualPosObjMarkerA).transpose()<< endl<< endl;
+
+
+	// 	/*predict position in straight line after t_predict time*/
+	// 	//avgVelObjMarkerA //get<1>(actualPosObjMarkerA) //(constant)
+
+	// 	/*get predicted way points between left ef and obj*/
+	// } //t_observe
