@@ -88,7 +88,7 @@ namespace mc_handover
 		{
 			
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-			
+
 			/*initialization*/
 			{
 				/*close grippers for safety*/
@@ -106,8 +106,8 @@ namespace mc_handover
 				
 
 				/*position Task*/
-				ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-				ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+				ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+				// ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
 				// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
 
 
@@ -116,9 +116,9 @@ namespace mc_handover
 					
 					mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {  
 						std::cout << "left hand wrench:: Torques, Forces " <<
-				ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+						ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
 						std::cout << "right hand wrench:: Torques, Forces " <<
-				ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+						ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
 					}),
 
 					mc_rtc::gui::ArrayInput("Threshold",
@@ -134,14 +134,15 @@ namespace mc_handover
 				/*move object using cursor or simData*/
 				ctl.gui()->addElement({"Handover","move object"},
 					mc_rtc::gui::Transform("Position", 
-						[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-						[this,&ctl](const sva::PTransformd & pos) { 
+							[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+							[this,&ctl](const sva::PTransformd & pos) { 
 							ctl.robots().robot(2).posW(pos);
 							ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 							ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
-						}),
+						})
 					// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker;}));
+					// mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({objectBodyMarker}); return objectBodyMarker;})
+					);
 
 
 				/*com Task*/
@@ -160,6 +161,34 @@ namespace mc_handover
 				initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
 				comTask->com(initialCom);
 				ctl.solver().addTask(comTask);
+
+
+				/*JUST FOR CREATING MOCAP TEMPLATE*/
+				ctl.solver().addTask(ctl.posTaskL);
+
+				ctl.gui()->addElement({"MOCAP", "temp"},
+					mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.0,0.4,0.9});
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.0}); } ),
+					mc_rtc::gui::Button( "pos1", [&ctl](){ ctl.posTaskL->position({0.5,0.3,1.1});
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.5}); } ),
+					mc_rtc::gui::Button( "pos2", [&ctl](){ ctl.posTaskL->position({0.3,0.5,0.9});
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.5});  } ),
+					mc_rtc::gui::Button( "pos3", [&ctl](){ ctl.posTaskL->position({0.6,0.2,1.2}); 
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.5}); } ),
+					mc_rtc::gui::Button( "pos4", [&ctl](){ ctl.posTaskL->position({0.3,0.3,1.3}); 
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.5}); } ),
+					mc_rtc::gui::Button( "pos5", [&ctl](){ ctl.posTaskL->position({0.55,0.4,1.0}); 
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.5}); } ),
+					mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.3,0.45,0.9}); 
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({0.5}); } ) );
+
 			}// initialization
 
 
@@ -169,8 +198,8 @@ namespace mc_handover
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
-				// retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
-				retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
+				retval = Cortex_Initialize("10.1.1.200", "10.1.1.190");
+				// retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); //for robot local PC
 
 				if (retval != RC_Okay)
 				{
@@ -245,6 +274,7 @@ namespace mc_handover
 				// initRobotEfMarker << 0.61140, -0.32642, 0.46167 // simData
 				initRobotEfMarker << -0.3681, 0.60182, 0.5287; // simData2
 			}
+
 		}// start
 
 
@@ -265,8 +295,8 @@ namespace mc_handover
 
 
 			/*hand positions*/
-			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")];
-			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")];
+			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
+			// cout << "ltHand "<< ltHand.translation().transpose() << endl;
 
 
 			/*Get non-stop MOCAP Frame*/
@@ -302,40 +332,34 @@ namespace mc_handover
 				/*get object marker pos*/
 				if(Flag_CORTEX)
 				{
-					robotWristMarker <<
-					FrameofData.BodyData[body].Markers[wristMarkerR][0], // X
-					FrameofData.BodyData[body].Markers[wristMarkerR][1], // Y
-					FrameofData.BodyData[body].Markers[wristMarkerR][2]; // Z
+					auto BodyDefs = Cortex_GetBodyDefs();
+					auto pBody = &pBodyDefs->BodyDefs[body];
+					
 
-					robotFingerMarker <<
-					FrameofData.BodyData[body].Markers[fingerMarkerR][0], // X
-					FrameofData.BodyData[body].Markers[fingerMarkerR][1], // Y
-					FrameofData.BodyData[body].Markers[fingerMarkerR][2]; // Z
+					cout <<"total markers " << pBody->nMarkers<< endl;
+					cout << "check marker " << FrameofData.BodyData[body].Markers[wristMarkerR]<<endl;
 
+					for(int m=0; m<pBody->nMarkers; m++)
+					{
+						Markers[m] << 
+						FrameofData.BodyData[body].Markers[m][0], // X
+						FrameofData.BodyData[body].Markers[m][1], // Y
+						FrameofData.BodyData[body].Markers[m][2]; // Z
+					}
 
-					objectBodyMarker <<
-					FrameofData.BodyData[body].Markers[markerO][0], // X
-					FrameofData.BodyData[body].Markers[markerO][1], // Y
-					FrameofData.BodyData[body].Markers[markerO][2]; // Z
+					robotWristMarker << Markers[wristMarkerR];
+					cout << "check marker again " << robotWristMarker.transpose()<<endl;
 
-
-					subjKnuckleMarker <<
-					FrameofData.BodyData[body].Markers[knuckleMarkerS][0], // X
-					FrameofData.BodyData[body].Markers[knuckleMarkerS][1], // Y
-					FrameofData.BodyData[body].Markers[knuckleMarkerS][2]; // Z
-
-					subjWristMarker <<
-					FrameofData.BodyData[body].Markers[wristMarkerS][0], // X
-					FrameofData.BodyData[body].Markers[wristMarkerS][1], // Y
-					FrameofData.BodyData[body].Markers[wristMarkerS][2]; // Z
+					robotFingerMarker << Markers[fingerMarkerR];
+					objectBodyMarker << Markers[markerObj];
+					subjKnuckleMarker << Markers[knuckleMarkerS];
+					subjWristMarker << Markers[wristMarkerS];
 				}
 				else /*for simulation*/
 				{
-					
 					objectBodyMarker << pos.col(i)-initRobotEfMarker;
 					robotWristMarker << initRobotEfMarker;
 					robotWristMarker << ltHand.translation();// +initRobotEfMarker; //leftEfmarkerPos same as leftEf
-
 
 					// cout << "pos " << pos.col(i).transpose()<<endl;
 					// cout << "robotWristMarker\n" << robotWristMarker.transpose() << endl;
@@ -343,8 +367,8 @@ namespace mc_handover
 					if(i==pos.size()/3)
 					{
 						LOG_WARNING("iter over")
-						output("Repeat");
-						return true;
+						// output("Repeat");
+						// return true;
 						// startCapture = false;
 						// i =0;
 					}
@@ -353,40 +377,51 @@ namespace mc_handover
 
 
 				/* check for non zero frame only and store them */ 
-				if( (robotWristMarker(0) != 0 && objectBodyMarker(0) != 0 ) 
-					&& (robotWristMarker(0) < 100 && objectBodyMarker(0) < 100)
-					&& (subjWristMarker(0) < 100 && subjWristMarker(0) < 100) )
+
+				// if( (robotWristMarker(0) != 0 && robotWristMarker(0) < 100 ) 
+				// &&  (objectBodyMarker(0) != 0 && objectBodyMarker(0) < 100)
+				// &&  (subjWristMarker(0)  != 0 && subjWristMarker(0) < 100) )
+
+				if( (Markers[wristMarkerR](0)	!= 0 && Markers[wristMarkerR](0)	< 100 ) 
+				&&  (Markers[markerObj](0)		!= 0 && Markers[markerObj](0)		< 100 )
+				&&  (Markers[wristMarkerS](0)	!= 0 && Markers[wristMarkerS](0)	< 100) )
 				{
+					posLeftEfMarker.col(i) << Markers[wristMarkerR];
+					posLeftFingerMarker.col(i) << Markers[fingerMarkerR];
 
-					posLeftEfMarker(0, i) = robotWristMarker(0); // X
-					posLeftEfMarker(1, i) = robotWristMarker(1); // Y
-					posLeftEfMarker(2, i) = robotWristMarker(2); // Z
+					posObjMarkerA.col(i) << Markers[markerObj];					
 
-					posLeftFingerMarker(0,i) = robotFingerMarker(0); // X
-					posLeftFingerMarker(1,i) = robotFingerMarker(1); // X
-					posLeftFingerMarker(2,i) = robotFingerMarker(2); // X
+					posSubjWristMarker.col(i) << Markers[wristMarkerS];
+					posSubjKnuckleMarker.col(i) << Markers[knuckleMarkerS];
 
 
-					posObjMarkerA(0, i) = objectBodyMarker(0); // X
-					posObjMarkerA(1, i) = objectBodyMarker(1); // Y
-					posObjMarkerA(2, i) = objectBodyMarker(2); // Z
+
+					// posLeftEfMarker(0,i) = robotWristMarker(0); // X
+					// posLeftEfMarker(1,i) = robotWristMarker(1); // Y
+					// posLeftEfMarker(2,i) = robotWristMarker(2); // Z
+
+					// posLeftFingerMarker(0,i) = robotFingerMarker(0); // X
+					// posLeftFingerMarker(1,i) = robotFingerMarker(1); // X
+					// posLeftFingerMarker(2,i) = robotFingerMarker(2); // X
+
+
+					// posObjMarkerA(0,i) = objectBodyMarker(0); // X
+					// posObjMarkerA(1,i) = objectBodyMarker(1); // Y
+					// posObjMarkerA(2,i) = objectBodyMarker(2); // Z
 					
 
-					posSubjWristMarker(0, i) = subjWristMarker(0); // X
-					posSubjWristMarker(1, i) = subjWristMarker(1); // Y
-					posSubjWristMarker(2, i) = subjWristMarker(2); // Z
+					// posSubjWristMarker(0,i) = subjWristMarker(0); // X
+					// posSubjWristMarker(1,i) = subjWristMarker(1); // Y
+					// posSubjWristMarker(2,i) = subjWristMarker(2); // Z
 
-					posSubjKnuckleMarker(0, i) = subjKnuckleMarker(0); // X
-					posSubjKnuckleMarker(1, i) = subjKnuckleMarker(1); // Y
-					posSubjKnuckleMarker(2, i) = subjKnuckleMarker(2); // Z
+					// posSubjKnuckleMarker(0,i) = subjKnuckleMarker(0); // X
+					// posSubjKnuckleMarker(1,i) = subjKnuckleMarker(1); // Y
+					// posSubjKnuckleMarker(2,i) = subjKnuckleMarker(2); // Z
 
 
-					// cout <<"robotWristMarker " << robotWristMarker.transpose()<< endl<<endl;
-					
-					// cout <<"objectBodyMarker " << objectBodyMarker.transpose()<< endl<<endl;
-					
+					// cout <<"robotWristMarker " << robotWristMarker.transpose()<< endl<<endl;					
+					// cout <<"objectBodyMarker " << objectBodyMarker.transpose()<< endl<<endl;					
 					// cout <<"robotFingerMarker " << robotFingerMarker.transpose()<< endl<<endl;
-
 					// cout <<"Wrist-finger Markers " << (robotWristMarker-robotFingerMarker).transpose()<< endl<<endl;
 
 
@@ -442,18 +477,19 @@ namespace mc_handover
 					} //t_observe
 					
 
+					/*gripper control*/
 					auto close_gripperL = [&]()
 					{
-						// ctl.publishWrench();
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.0});
+						// // ctl.publishWrench();
+						// auto gripper = ctl.grippers["l_gripper"].get();
+						// gripper->setTargetQ({0.0});
 					};
 
 					auto open_gripperL = [&]()
 					{
-						// ctl.publishWrench();
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5});
+						// // ctl.publishWrench();
+						// auto gripper = ctl.grippers["l_gripper"].get();
+						// gripper->setTargetQ({0.5});
 					};
 
 
@@ -461,10 +497,11 @@ namespace mc_handover
 					auto compareForce = [&](const char * axis_name, int idx)
 					{
 						/*dont use fabs & check force direction to open and restart prediction*/
-						if(fabs(leftForce[idx]) > leftTh[idx+3])
+						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && gripperOpenTrue )
 						{
 							open_gripperL();
-							cout << "force detected, opening gripper" <<endl;
+							// gripperOpenTrue = false;
+							// cout << "force detected, opening gripper" <<endl;
 							// prediction = false;
 							return false; //true
 						}
@@ -475,17 +512,23 @@ namespace mc_handover
 					auto compareRelPos = [&]()
 					{
 
-						cout << "object & S_knuckle " << (objectBodyMarker-subjKnuckleMarker).norm() << endl;
-						cout << "object & R_wrist " << (objectBodyMarker-robotWristMarker).norm() << endl;
-						// (objectBodyMarker-subjWristMarker).norm() ||
-						// (objectBodyMarker-robotFingerMarker).norm() ||
+						// cout << "object & S_knuckle " << (objectBodyMarker-subjKnuckleMarker).norm() << endl;
+						// cout << "object & R_wrist " << (objectBodyMarker-robotWristMarker).norm() << endl;
+
+						/* ************************ CAL AREA HERE ************************ */
+						
 						if( (objectBodyMarker-subjKnuckleMarker).norm() > (objectBodyMarker-robotWristMarker).norm() )
 						{
-							close_gripperL();
-							cout << "object is inside gripper, closing gripper" <<endl;
+							if(gripperCloseTrue)
+							{
+								gripperOpenTrue = true;
+								gripperCloseTrue = false;
+								close_gripperL();
+								// cout << "object is inside gripper, closing gripper" <<endl;
+							}
+							
 							return compareForce("x-axis", 0) || compareForce("y-axis", 1) || compareForce("z-axis", 2);
 							// prediction =false;
-							return true;
 						}
 						// else //start prediction again?
 						// {
@@ -498,16 +541,16 @@ namespace mc_handover
 					};
 
 
-
-
-
 					if( collected )//&& prediction)
 					{
-						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
+						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
-						ctl.solver().addTask(ctl.posTaskL);
-						ctl.solver().addTask(ctl.posTaskR);
-
+						if(taskAdded)
+						{
+							taskAdded = false;
+							// ctl.solver().addTask(ctl.posTaskL); //ENABLE LATER
+							// ctl.solver().addTask(ctl.posTaskR);
+						}
 
 						/* ***************** ATTENTION HERE ***************** */
 						initRefPos << wp(0,0), wp(1,0), wp(2,0);
@@ -525,7 +568,7 @@ namespace mc_handover
 							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
 							refAcc << Eigen::MatrixXd::Zero(3,1);
 
-							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].translation();
+							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
 							/*robot constraint*/
 							if(	(gothere(0))<= 0.7 && (gothere(1))<= 0.6 && (gothere(2))<=1.5 &&
@@ -535,16 +578,19 @@ namespace mc_handover
 								// cout << "(gothere - curLEfPos).norm() " << (gothere - curLEfPos).norm() << endl;
 								if( (gothere - curLEfPos).norm() <0.02 )
 								{
-									auto  gripperL = ctl.grippers["l_gripper"].get();
-									gripperL->setTargetQ({openGrippers});
-
+									gripperOpenTrue = false;
+									open_gripperL();
+									
 									compareRelPos();
-								}								
-								else
-								{
-									auto  gripperL = ctl.grippers["l_gripper"].get();
-									gripperL->setTargetQ({closeGrippers});
 								}
+								// else
+								// {
+								// 	if(gripperCloseTrue && gripperOpenTrue)
+								// 	{
+								// 		gripperCloseTrue = false;
+								// 		close_gripperL();
+								// 	}
+								// }
 
 
 								/*control head*/
@@ -555,21 +601,20 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
-								/*move end effector*/
-								ctl.posTaskL->position(gothere);
-								ctl.posTaskL->refVel(refVel);
-								ctl.posTaskL->refAccel(refAcc);
-								// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
+								/*move end effector*/ //EANBLE LATER
+
+								// ctl.posTaskL->position(gothere);
+								// ctl.posTaskL->refVel(refVel);
+								// ctl.posTaskL->refAccel(refAcc);
+								// // cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
 
 
 							}
 						}
-
 						collected = false;
 					} // collected
-
 					i = i + 1;
-		
+
 				}// check for non zero frame
 
 			} // startCapture
@@ -585,7 +630,7 @@ namespace mc_handover
 
 			ctl.solver().removeTask(comTask);
 			ctl.solver().removeTask(ctl.posTaskL);
-			ctl.solver().removeTask(ctl.posTaskR);
+			// ctl.solver().removeTask(ctl.posTaskR);
 
 			ctl.gui()->removeElement({"Handover","com"}, "Move Com Pos");
 			ctl.gui()->removeElement({"Handover","wrench"},"publish_current_wrench");

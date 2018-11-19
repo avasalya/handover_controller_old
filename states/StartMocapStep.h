@@ -44,13 +44,16 @@ namespace mc_handover
 			bool plotSize{true};
 
 
+			/*mocap*/
 			int body{0};
+			std::vector<Eigen::Vector3d> Markers;
+			std::vector<Eigen::MatrixXd> markersPos;
 
 
 			int wristMarkerR{2};
 			int fingerMarkerR{3};
 
-			int markerO{4};
+			int markerObj{4};
 
 			int knuckleMarkerS{5};
 			int wristMarkerS{6};
@@ -61,10 +64,11 @@ namespace mc_handover
 			int t_observe{20}; //100ms
 			int t_predict{100};//1sec
 
-			/*mocap*/
 			Eigen::Vector3d robotWristMarker, robotFingerMarker;
 			Eigen::Vector3d objectBodyMarker;
 			Eigen::Vector3d subjWristMarker, subjKnuckleMarker;
+
+
 
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d initPosObjMarkerA, ithPosObjMarkerA, avgVelObjMarkerA, predictPos;
@@ -93,9 +97,7 @@ namespace mc_handover
 
 			sva::PTransformd ObjMarkerA_X_efL;
 
-			sva::PTransformd ltHand;
-			sva::PTransformd rtHand;
-			sva::PTransformd object;
+			sva::PTransformd ltHand;			
 
 			double closeGrippers = 0.0;
 			double openGrippers = 1.0;
@@ -129,17 +131,19 @@ namespace mc_handover
 				std::vector<double> pts;
 				std::string name;
 
-				bool Flag_CORTEX{true}; // default True for MOCAP
-
+				bool Flag_CORTEX{false}; // default True for MOCAP
 
 				bool startCapture{false};
 
 				bool collected{false};
 
+				bool taskAdded{true};
+
 				bool prediction{true}; // default true
 				// bool stopPrediction{false};
 
-				// bool removePrevTask{true};
+				bool gripperOpenTrue{true};
+				bool gripperCloseTrue{true};
 
 				Eigen::Vector3d refPos, refVel, refAcc, initRefPos, gothere, initPos;
 
@@ -170,6 +174,35 @@ EXPORT_SINGLE_STATE("StartMocapStep", mc_handover::states::StartMocapStep)
 
 /*comments*/
 	
+
+	// 	robotWristMarker <<
+	// FrameofData.BodyData[body].Markers[wristMarkerR][0], // X
+	// FrameofData.BodyData[body].Markers[wristMarkerR][1], // Y
+	// FrameofData.BodyData[body].Markers[wristMarkerR][2]; // Z
+
+	// robotFingerMarker <<
+	// FrameofData.BodyData[body].Markers[fingerMarkerR][0], // X
+	// FrameofData.BodyData[body].Markers[fingerMarkerR][1], // Y
+	// FrameofData.BodyData[body].Markers[fingerMarkerR][2]; // Z
+
+
+	// objectBodyMarker <<
+	// FrameofData.BodyData[body].Markers[markerO][0], // X
+	// FrameofData.BodyData[body].Markers[markerO][1], // Y
+	// FrameofData.BodyData[body].Markers[markerO][2]; // Z
+
+
+	// subjKnuckleMarker <<
+	// FrameofData.BodyData[body].Markers[knuckleMarkerS][0], // X
+	// FrameofData.BodyData[body].Markers[knuckleMarkerS][1], // Y
+	// FrameofData.BodyData[body].Markers[knuckleMarkerS][2]; // Z
+
+	// subjWristMarker <<
+	// FrameofData.BodyData[body].Markers[wristMarkerS][0], // X
+	// FrameofData.BodyData[body].Markers[wristMarkerS][1], // Y
+	// FrameofData.BodyData[body].Markers[wristMarkerS][2]; // Z
+
+
 	// ObjMarkerA_X_efL = R_X_efL.inv()*M_X_R.inv()*M_X_ObjMarkerA;
 
 	// cout << "ObjMarkerA_X_efL "<< ObjMarkerA_X_efL.translation().transpose() << endl;
