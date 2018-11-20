@@ -20,7 +20,6 @@ namespace mc_handover
 			handsWrenchDir = config("handsWrenchDir");
 		}
 
-		
 
 		void MyErrorMsgHandler(int iLevel, const char *szMsg)
 		{
@@ -39,54 +38,8 @@ namespace mc_handover
 		}
 
 
-
-		void StartMocapStep::plotPos(Eigen::MatrixXd m, int d)
-		{
-			if(plotSize)
-			{
-				plotSize = false;
-				plt::figure_size(1200, 780);
-			}
-
-			std::vector<double> x, y, z, tp;
-			for(int j=1;j<d; j++)
-			{ 
-				x.push_back(m(0,j));
-				y.push_back(m(1,j));
-				z.push_back(m(2,j));
-				tp.push_back(j);
-				if(j%(d/50)==0)
-				{
-				// cout <<"x y z   " << x.at(j-1) << "  " << y.at(j-1) << "  " << z.at(j-1) << endl;
-
-					plt::clf();
-
-					// plt::subplot(2,1,1);
-					// plt::plot(x,y,"r--");
-					// plt::plot(x,z,"g--");
-					// plt::plot(y,z,"b--");
-					// plt::ylim(-2,2);
-					// plt::xlim(-2,2);
-
-					// plt::subplot(2,1,2);
-					plt::plot(tp,x,"r--");
-					plt::plot(tp,y,"g--");
-					plt::plot(tp,z,"b--");
-					plt::ylim(-2,2);
-					plt::xlim(0,3000);
-
-					// plt::legend();
-
-					plt::pause(1e-10);
-				}
-			}
-		}
-
-
-
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
-			
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
 			/*initialization*/
@@ -134,8 +87,8 @@ namespace mc_handover
 				/*move object using cursor or simData*/
 				ctl.gui()->addElement({"Handover","move object"},
 					mc_rtc::gui::Transform("Position", 
-							[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-							[this,&ctl](const sva::PTransformd & pos) { 
+						[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+						[this,&ctl](const sva::PTransformd & pos) { 
 							ctl.robots().robot(2).posW(pos);
 							ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 							ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
@@ -167,7 +120,7 @@ namespace mc_handover
 				ctl.solver().addTask(ctl.posTaskL);
 
 				ctl.gui()->addElement({"MOCAP", "temp"},
-					mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.0,0.4,0.9});
+					mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.06,0.37,0.72});
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({0.0}); } ),
 					mc_rtc::gui::Button( "pos1", [&ctl](){ ctl.posTaskL->position({0.5,0.3,1.1});
@@ -185,10 +138,9 @@ namespace mc_handover
 					mc_rtc::gui::Button( "pos5", [&ctl](){ ctl.posTaskL->position({0.55,0.4,1.0}); 
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({0.5}); } ),
-					mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.3,0.45,0.9}); 
+					mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.35,0.2,1.1}); 
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({0.5}); } ) );
-
 			}// initialization
 
 
@@ -230,7 +182,7 @@ namespace mc_handover
 					for(int iBody=0; iBody<totalBodies; iBody++)
 					{
 						bodyMarkers.push_back(pBodyDefs->BodyDefs[iBody].nMarkers);
-						sBodyDef* pBody = &pBodyDefs->BodyDefs[iBody];
+						pBody = &pBodyDefs->BodyDefs[iBody];
 						cout << "number of markers defined in body " << iBody+1 << " (\"" << pBody->szName << "\") : " << bodyMarkers.at(iBody) << endl;    
 
 						for (int iMarker=0 ; iMarker<pBody->nMarkers; iMarker++)
@@ -241,6 +193,14 @@ namespace mc_handover
 				}
 				printf("\n*** start live mode ***\n");
 				Cortex_Request("LiveMode", &pResponse, &nBytes);
+
+
+				/*allocate memory for mocap markers*/
+				markersPos.resize(pBody->nMarkers);
+				for(int m=0; m<pBody->nMarkers; m++)
+				{
+					markersPos[m] = Eigen::MatrixXd::Zero(3,60000);
+				}
 			}
 			else /*simData*/
 			{
@@ -274,7 +234,6 @@ namespace mc_handover
 				// initRobotEfMarker << 0.61140, -0.32642, 0.46167 // simData
 				initRobotEfMarker << -0.3681, 0.60182, 0.5287; // simData2
 			}
-
 		}// start
 
 
@@ -331,35 +290,25 @@ namespace mc_handover
 			{
 				/*get object marker pos*/
 				if(Flag_CORTEX)
-				{
-					auto BodyDefs = Cortex_GetBodyDefs();
-					auto pBody = &pBodyDefs->BodyDefs[body];
-					
-
-					cout <<"total markers " << pBody->nMarkers<< endl;
-					cout << "check marker " << FrameofData.BodyData[body].Markers[wristMarkerR]<<endl;
+				{					
+					cout << "check marker pos " << FrameofData.BodyData[body].Markers[wristMarkerR]<<endl;
 
 					for(int m=0; m<pBody->nMarkers; m++)
 					{
-						Markers[m] << 
+						Markers[m] <<
 						FrameofData.BodyData[body].Markers[m][0], // X
 						FrameofData.BodyData[body].Markers[m][1], // Y
 						FrameofData.BodyData[body].Markers[m][2]; // Z
 					}
 
-					robotWristMarker << Markers[wristMarkerR];
-					cout << "check marker again " << robotWristMarker.transpose()<<endl;
+					cout << "check marker pos again " << Markers[wristMarkerR].transpose()<<endl;
 
-					robotFingerMarker << Markers[fingerMarkerR];
-					objectBodyMarker << Markers[markerObj];
-					subjKnuckleMarker << Markers[knuckleMarkerS];
-					subjWristMarker << Markers[wristMarkerS];
 				}
 				else /*for simulation*/
 				{
-					objectBodyMarker << pos.col(i)-initRobotEfMarker;
-					robotWristMarker << initRobotEfMarker;
-					robotWristMarker << ltHand.translation();// +initRobotEfMarker; //leftEfmarkerPos same as leftEf
+					// objectBodyMarker << pos.col(i)-initRobotEfMarker;
+					// robotWristMarker << initRobotEfMarker;
+					// robotWristMarker << ltHand.translation();// +initRobotEfMarker; //leftEfmarkerPos same as leftEf
 
 					// cout << "pos " << pos.col(i).transpose()<<endl;
 					// cout << "robotWristMarker\n" << robotWristMarker.transpose() << endl;
@@ -378,244 +327,211 @@ namespace mc_handover
 
 				/* check for non zero frame only and store them */ 
 
-				// if( (robotWristMarker(0) != 0 && robotWristMarker(0) < 100 ) 
-				// &&  (objectBodyMarker(0) != 0 && objectBodyMarker(0) < 100)
-				// &&  (subjWristMarker(0)  != 0 && subjWristMarker(0) < 100) )
+				// if( 	Markers[wristMarkerR](0)!= 0 && Markers[wristMarkerR](0)< 100
+				// 	&&  Markers[markerObj](0)!= 0 && Markers[markerObj](0)< 100
+				// 	&&  Markers[wristMarkerS](0)!= 0 && Markers[wristMarkerS](0)< 100
+				// 	)
+				// {
 
-				if( (Markers[wristMarkerR](0)	!= 0 && Markers[wristMarkerR](0)	< 100 ) 
-				&&  (Markers[markerObj](0)		!= 0 && Markers[markerObj](0)		< 100 )
-				&&  (Markers[wristMarkerS](0)	!= 0 && Markers[wristMarkerS](0)	< 100) )
-				{
-					posLeftEfMarker.col(i) << Markers[wristMarkerR];
-					posLeftFingerMarker.col(i) << Markers[fingerMarkerR];
+				// 	markersPos[wristMarkerR].col(i) << Markers[wristMarkerR];
+				// 	markersPos[fingerMarkerR].col(i) << Markers[fingerMarkerR];
 
-					posObjMarkerA.col(i) << Markers[markerObj];					
+				// 	markersPos[markerObj].col(i)<< Markers[markerObj];
 
-					posSubjWristMarker.col(i) << Markers[wristMarkerS];
-					posSubjKnuckleMarker.col(i) << Markers[knuckleMarkerS];
-
-
-
-					// posLeftEfMarker(0,i) = robotWristMarker(0); // X
-					// posLeftEfMarker(1,i) = robotWristMarker(1); // Y
-					// posLeftEfMarker(2,i) = robotWristMarker(2); // Z
-
-					// posLeftFingerMarker(0,i) = robotFingerMarker(0); // X
-					// posLeftFingerMarker(1,i) = robotFingerMarker(1); // X
-					// posLeftFingerMarker(2,i) = robotFingerMarker(2); // X
-
-
-					// posObjMarkerA(0,i) = objectBodyMarker(0); // X
-					// posObjMarkerA(1,i) = objectBodyMarker(1); // Y
-					// posObjMarkerA(2,i) = objectBodyMarker(2); // Z
-					
-
-					// posSubjWristMarker(0,i) = subjWristMarker(0); // X
-					// posSubjWristMarker(1,i) = subjWristMarker(1); // Y
-					// posSubjWristMarker(2,i) = subjWristMarker(2); // Z
-
-					// posSubjKnuckleMarker(0,i) = subjKnuckleMarker(0); // X
-					// posSubjKnuckleMarker(1,i) = subjKnuckleMarker(1); // Y
-					// posSubjKnuckleMarker(2,i) = subjKnuckleMarker(2); // Z
-
-
-					// cout <<"robotWristMarker " << robotWristMarker.transpose()<< endl<<endl;					
-					// cout <<"objectBodyMarker " << objectBodyMarker.transpose()<< endl<<endl;					
-					// cout <<"robotFingerMarker " << robotFingerMarker.transpose()<< endl<<endl;
-					// cout <<"Wrist-finger Markers " << (robotWristMarker-robotFingerMarker).transpose()<< endl<<endl;
-
+				// 	markersPos[wristMarkerS].col(i)<<Markers[wristMarkerS];
+				// 	markersPos[knuckleMarkerS].col(i)<<Markers[knuckleMarkerS];
 
 					
-					if( (i%t_observe == 0) && (prediction) )
-					{
-						/*get robot ef marker current pose*/
-						curPosLeftEfMarker << posLeftEfMarker.col((i-t_observe)+1);//1.162, -0.268, 1.074;
-						sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
+				// 	if( (i%t_observe == 0) && (prediction) )
+				// 	{
+				// 		/*get robot ef marker current pose*/
+				// 		curPosLeftEfMarker << markersPos[fingerMarkerR].col((i-t_observe)+1);//1.162, -0.268, 1.074;
+				// 		sva::PTransformd M_X_efLMarker(curRotLeftEfMarker, curPosLeftEfMarker);
 
-						/*get robot ef current pose*/
-						curRotLeftEf = ltHand.rotation();
-						curPosLeftEf = ltHand.translation();
-						sva::PTransformd R_X_efL(curPosLeftEf);
+				// 		/*get robot ef current pose*/
+				// 		curRotLeftEf = ltHand.rotation();
+				// 		curPosLeftEf = ltHand.translation();
+				// 		sva::PTransformd R_X_efL(curPosLeftEf);
 
-						/*object marker pose w.r.t to robot EF frame*/
-						for(int j=1;j<=t_observe; j++)
-						{
-							sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, posObjMarkerA.middleCols((i-t_observe)+j,i));
-							ObjMarkerA_X_efL = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
+				// 		/*object marker pose w.r.t to robot EF frame*/
+				// 		for(int j=1;j<=t_observe; j++)
+				// 		{
+				// 			sva::PTransformd M_X_ObjMarkerA(rotObjMarkerA, markersPos[markerObj].middleCols((i-t_observe)+j,i));
+				// 			ObjMarkerA_X_efL = R_X_efL.inv()*M_X_ObjMarkerA*M_X_efLMarker.inv()*R_X_efL;
 
-							newPosObjMarkerA(0,j-1) = ObjMarkerA_X_efL.translation()(0);
-							newPosObjMarkerA(1,j-1) = ObjMarkerA_X_efL.translation()(1);
-							newPosObjMarkerA(2,j-1) = ObjMarkerA_X_efL.translation()(2);
+				// 			newPosObjMarkerA(0,j-1) = ObjMarkerA_X_efL.translation()(0);
+				// 			newPosObjMarkerA(1,j-1) = ObjMarkerA_X_efL.translation()(1);
+				// 			newPosObjMarkerA(2,j-1) = ObjMarkerA_X_efL.translation()(2);
 							
-							/*get obj marker initials*/
-							if(j==1)
-							{
-								initPosObjMarkerA = newPosObjMarkerA.col(j-1);
-							}
-							if(j==t_observe)
-							{
-								ithPosObjMarkerA  = newPosObjMarkerA.col(t_observe-1);
-							}
-						}
+				// 			/*get obj marker initials*/
+				// 			if(j==1)
+				// 			{
+				// 				initPosObjMarkerA = newPosObjMarkerA.col(j-1);
+				// 			}
+				// 			if(j==t_observe)
+				// 			{
+				// 				ithPosObjMarkerA  = newPosObjMarkerA.col(t_observe-1);
+				// 			}
+				// 		}
 
 
-						/*get average velocity of previous *t_observe* sec obj motion*/
-						curVelObjMarkerA  = ctl.handoverTraj->diff(newPosObjMarkerA)*fps;//ignore diff > XXXX
+				// 		/*get average velocity of previous *t_observe* sec obj motion*/
+				// 		curVelObjMarkerA  = ctl.handoverTraj->diff(newPosObjMarkerA)*fps;//ignore diff > XXXX
 
-						avgVelObjMarkerA  << ctl.handoverTraj->takeAverage(curVelObjMarkerA);
+				// 		avgVelObjMarkerA  << ctl.handoverTraj->takeAverage(curVelObjMarkerA);
 
-						/*get way points between obj inital motion*/ // get constant
-						auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, t_observe);
+				// 		/*get way points between obj inital motion*/ // get constant
+				// 		auto actualPosObjMarkerA = ctl.handoverTraj->constVelocity(initPosObjMarkerA, ithPosObjMarkerA, t_observe);
 
-						/*predict position in straight line after t_predict time*/
-						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), t_predict);
+				// 		/*predict position in straight line after t_predict time*/
+				// 		predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObjMarkerA, get<2>(actualPosObjMarkerA), t_predict);
 
-						/*get predicted way points between left ef and obj*/
-						wp_efL_objMarkerA=ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, t_predict);
-						wp = get<0>(wp_efL_objMarkerA);
-						collected = true;
-					} //t_observe
+				// 		/*get predicted way points between left ef and obj*/
+				// 		wp_efL_objMarkerA=ctl.handoverTraj->constVelocity(ithPosObjMarkerA, predictPos, t_predict);
+				// 		wp = get<0>(wp_efL_objMarkerA);
+				// 		collected = true;
+				// 	} //t_observe
 					
 
-					/*gripper control*/
-					auto close_gripperL = [&]()
-					{
-						// // ctl.publishWrench();
-						// auto gripper = ctl.grippers["l_gripper"].get();
-						// gripper->setTargetQ({0.0});
-					};
+				// 	/*gripper control*/
+				// 	auto close_gripperL = [&]()
+				// 	{
+				// 		// // ctl.publishWrench();
+				// 		// auto gripper = ctl.grippers["l_gripper"].get();
+				// 		// gripper->setTargetQ({0.0});
+				// 	};
 
-					auto open_gripperL = [&]()
-					{
-						// // ctl.publishWrench();
-						// auto gripper = ctl.grippers["l_gripper"].get();
-						// gripper->setTargetQ({0.5});
-					};
-
-
-					/*force control*/
-					auto compareForce = [&](const char * axis_name, int idx)
-					{
-						/*dont use fabs & check force direction to open and restart prediction*/
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && gripperOpenTrue )
-						{
-							open_gripperL();
-							// gripperOpenTrue = false;
-							// cout << "force detected, opening gripper" <<endl;
-							// prediction = false;
-							return false; //true
-						}
-					};
+				// 	auto open_gripperL = [&]()
+				// 	{
+				// 		// // ctl.publishWrench();
+				// 		// auto gripper = ctl.grippers["l_gripper"].get();
+				// 		// gripper->setTargetQ({0.5});
+				// 	};
 
 
-					/*grasp object (close gripper)*/
-					auto compareRelPos = [&]()
-					{
+				// 	/*force control*/
+				// 	auto compareForce = [&](const char * axis_name, int idx)
+				// 	{
+				// 		/*dont use fabs & check force direction to open and restart prediction*/
+				// 		if( (fabs(leftForce[idx]) > leftTh[idx+3]) && gripperOpenTrue )
+				// 		{
+				// 			open_gripperL();
+				// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand")
+				// 			// gripperOpenTrue = false;
+				// 			// cout << "force detected, opening gripper" <<endl;
+				// 			// prediction = false;
+				// 			return false; //true
+				// 		}
+				// 	};
 
-						// cout << "object & S_knuckle " << (objectBodyMarker-subjKnuckleMarker).norm() << endl;
-						// cout << "object & R_wrist " << (objectBodyMarker-robotWristMarker).norm() << endl;
 
-						/* ************************ CAL AREA HERE ************************ */
+				// 	/*grasp object (close gripper)*/
+				// 	auto compareRelPos = [&]()
+				// 	{
+
+				// 		// cout << "object & S_knuckle " << (objectBodyMarker-subjKnuckleMarker).norm() << endl;
+				// 		// cout << "object & R_wrist " << (objectBodyMarker-robotWristMarker).norm() << endl;
+
+				// 		/* ************************ CAL AREA HERE ************************ */
 						
-						if( (objectBodyMarker-subjKnuckleMarker).norm() > (objectBodyMarker-robotWristMarker).norm() )
-						{
-							if(gripperCloseTrue)
-							{
-								gripperOpenTrue = true;
-								gripperCloseTrue = false;
-								close_gripperL();
-								// cout << "object is inside gripper, closing gripper" <<endl;
-							}
+				// 		if( (Markers[markerObj]-Markers[knuckleMarkerS]).norm() > (Markers[markerObj]- Markers[wristMarkerR]).norm() )
+				// 		{
+				// 			if(gripperCloseTrue)
+				// 			{
+				// 				gripperOpenTrue = true;
+				// 				gripperCloseTrue = false;
+				// 				close_gripperL();
+				// 				// cout << "object is inside gripper, closing gripper" <<endl;
+				// 			}
 							
-							return compareForce("x-axis", 0) || compareForce("y-axis", 1) || compareForce("z-axis", 2);
-							// prediction =false;
-						}
-						// else //start prediction again?
-						// {
-						// 	open_gripperL();
-						// 	cout << "compare rel pos --opening gripper" <<endl;
-						// 	prediction = true;
-						// 	ctl.runOnce = true;
-						// 	return false;
-						// }
-					};
+				// 			return compareForce("x-axis", 0) || compareForce("y-axis", 1) || compareForce("z-axis", 2);
+				// 			// prediction =false;
+				// 		}
+				// 		// else //start prediction again?
+				// 		// {
+				// 		// 	open_gripperL();
+				// 		// 	cout << "compare rel pos --opening gripper" <<endl;
+				// 		// 	prediction = true;
+				// 		// 	ctl.runOnce = true;
+				// 		// 	return false;
+				// 		// }
+				// 	};
 
 
-					if( collected )//&& prediction)
-					{
-						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
+				// 	if( collected )//&& prediction)
+				// 	{
+				// 		initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
-						if(taskAdded)
-						{
-							taskAdded = false;
-							// ctl.solver().addTask(ctl.posTaskL); //ENABLE LATER
-							// ctl.solver().addTask(ctl.posTaskR);
-						}
+				// 		if(taskAdded)
+				// 		{
+				// 			taskAdded = false;
+				// 			// ctl.solver().addTask(ctl.posTaskL); //ENABLE LATER
+				// 			// ctl.solver().addTask(ctl.posTaskR);
+				// 		}
 
-						/* ***************** ATTENTION HERE ***************** */
-						initRefPos << wp(0,0), wp(1,0), wp(2,0);
+				// 		/* ***************** ATTENTION HERE ***************** */
+				// 		initRefPos << wp(0,0), wp(1,0), wp(2,0);
 
 
-						for(int it=0; it<wp.cols(); it++)
-						{
-							/* ***************** ATTENTION HERE ***************** */
-							refPos << wp(0,it), wp(1,it), wp(2,it);
-							// cout << "wp " << wp.col(it).transpose()<<endl;
+				// 		for(int it=0; it<wp.cols(); it++)
+				// 		{
+				// 			/* ***************** ATTENTION HERE ***************** */
+				// 			refPos << wp(0,it), wp(1,it), wp(2,it);
+				// 			// cout << "wp " << wp.col(it).transpose()<<endl;
 
-							gothere = refPos + initPos -initRefPos;
-							// cout << "gothere " << gothere.transpose()<<endl;
+				// 			gothere = refPos + initPos -initRefPos;
+				// 			// cout << "gothere " << gothere.transpose()<<endl;
 
-							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
-							refAcc << Eigen::MatrixXd::Zero(3,1);
+				// 			refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObjMarkerA;
+				// 			refAcc << Eigen::MatrixXd::Zero(3,1);
 
-							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
+				// 			auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
-							/*robot constraint*/
-							if(	(gothere(0))<= 0.7 && (gothere(1))<= 0.6 && (gothere(2))<=1.5 &&
-								(gothere(0))>= 0.2 && (gothere(1))>= 0.25 && (gothere(2))>=0.9 ) 
-							{
-								/*control gripper*/
-								// cout << "(gothere - curLEfPos).norm() " << (gothere - curLEfPos).norm() << endl;
-								if( (gothere - curLEfPos).norm() <0.02 )
-								{
-									gripperOpenTrue = false;
-									open_gripperL();
+				// 			/*robot constraint*/
+				// 			if(	(gothere(0))<= 0.7 && (gothere(1))<= 0.6 && (gothere(2))<=1.5 &&
+				// 				(gothere(0))>= 0.2 && (gothere(1))>= 0.25 && (gothere(2))>=0.9 ) 
+				// 			{
+				// 				/*control gripper*/
+				// 				// cout << "(gothere - curLEfPos).norm() " << (gothere - curLEfPos).norm() << endl;
+				// 				if( (gothere - curLEfPos).norm() <0.02 )
+				// 				{
+				// 					gripperOpenTrue = false;
+				// 					open_gripperL();
 									
-									compareRelPos();
-								}
-								// else
-								// {
-								// 	if(gripperCloseTrue && gripperOpenTrue)
-								// 	{
-								// 		gripperCloseTrue = false;
-								// 		close_gripperL();
-								// 	}
-								// }
+				// 					compareRelPos();
+				// 				}
+				// 				// else
+				// 				// {
+				// 				// 	if(gripperCloseTrue && gripperOpenTrue)
+				// 				// 	{
+				// 				// 		gripperCloseTrue = false;
+				// 				// 		close_gripperL();
+				// 				// 	}
+				// 				// }
 
 
-								/*control head*/
-								if(gothere(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-								else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
+				// 				/*control head*/
+				// 				if(gothere(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
+				// 				else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
 
-								if(gothere(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
-								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
-
-
-								/*move end effector*/ //EANBLE LATER
-
-								// ctl.posTaskL->position(gothere);
-								// ctl.posTaskL->refVel(refVel);
-								// ctl.posTaskL->refAccel(refAcc);
-								// // cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
+				// 				if(gothere(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
+				// 				else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
-							}
-						}
-						collected = false;
-					} // collected
-					i = i + 1;
+				// 				/*move end effector*/ //EANBLE LATER
 
-				}// check for non zero frame
+				// 				// ctl.posTaskL->position(gothere);
+				// 				// ctl.posTaskL->refVel(refVel);
+				// 				// ctl.posTaskL->refAccel(refAcc);
+				// 				// // cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
+
+
+				// 			}
+				// 		}
+				// 		collected = false;
+				// 	} // collected
+				// 	i = i + 1;
+				// }// check for non zero frame
 
 			} // startCapture
 

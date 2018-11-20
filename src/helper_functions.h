@@ -7,8 +7,8 @@
 #include <Eigen/SVD>
 #include <Eigen/Dense>
 
-#include "matplotlibcpp.h"
-namespace plt = matplotlibcpp;
+// #include "matplotlibcpp.h"
+// namespace plt = matplotlibcpp;
 
 using namespace std;
 using namespace Eigen;

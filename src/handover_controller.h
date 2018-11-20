@@ -41,8 +41,8 @@
 #include "handover_trajectories.h"
 
 #include "helper_functions.h"
-#include "matplotlibcpp.h"
-namespace plt = matplotlibcpp;
+// #include "matplotlibcpp.h"
+// namespace plt = matplotlibcpp;
 
 using namespace std;
 using namespace Eigen;

@@ -6,318 +6,318 @@
 
 namespace mc_handover
 {
-    //////////////
-    //
-    // Handover Controller constructor
-    //
-    //////////////
-    HandoverController::HandoverController(std::shared_ptr<mc_rbdyn::RobotModule> robot_module,
-      double dt, 
-      const mc_rtc::Configuration & config) 
-      :mc_control::fsm::Controller(
-        robot_module,
-        dt,
-        config)
-    {
-    
-        qpsolver->addConstraintSet(selfCollisionConstraint);
-    
-        selfCollisionConstraint.reset();
-        selfCollisionConstraint.addCollisions(solver(), {
-          mc_rbdyn::Collision("LARM_LINK3", "BODY", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK4", "BODY", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK5", "BODY", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK3", "BODY", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK4", "BODY", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK5", "BODY", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK3", "CHEST_LINK0", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK4", "CHEST_LINK0", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK5", "CHEST_LINK0", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK4", "CHEST_LINK1", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK3", "CHEST_LINK0", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK4", "CHEST_LINK0", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK0", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK4", "CHEST_LINK1", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.),
-          mc_rbdyn::Collision("RARM_LINK5", "RLEG_LINK2", 0.05,0.01, 0.),
-          mc_rbdyn::Collision("RARM_LINK6", "RLEG_LINK2", 0.05,0.01, 0.),
-          mc_rbdyn::Collision("RARM_LINK7", "RLEG_LINK2", 0.05,0.01, 0.),
-          mc_rbdyn::Collision("LARM_LINK5", "LLEG_LINK2", 0.05,0.01, 0.),
-          mc_rbdyn::Collision("LARM_LINK6", "LLEG_LINK2", 0.05,0.01, 0.),
-          mc_rbdyn::Collision("LARM_LINK7", "LLEG_LINK2", 0.05,0.01, 0.),
+		//////////////
+		//
+		// Handover Controller constructor
+		//
+		//////////////
+	HandoverController::HandoverController(std::shared_ptr<mc_rbdyn::RobotModule> robot_module,
+		double dt, 
+		const mc_rtc::Configuration & config) 
+	:mc_control::fsm::Controller(
+		robot_module,
+		dt,
+		config)
+	{
+		
+		qpsolver->addConstraintSet(selfCollisionConstraint);
+		
+		selfCollisionConstraint.reset();
+		selfCollisionConstraint.addCollisions(solver(), {
+			mc_rbdyn::Collision("LARM_LINK3", "BODY", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK4", "BODY", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK5", "BODY", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK3", "BODY", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK4", "BODY", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK5", "BODY", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK3", "CHEST_LINK0", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK4", "CHEST_LINK0", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK5", "CHEST_LINK0", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK4", "CHEST_LINK1", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK3", "CHEST_LINK0", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK4", "CHEST_LINK0", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK0", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK4", "CHEST_LINK1", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("LARM_LINK5", "CHEST_LINK1", 0.1, 0.05, 0.),
+			mc_rbdyn::Collision("RARM_LINK5", "RLEG_LINK2", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("RARM_LINK6", "RLEG_LINK2", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("RARM_LINK7", "RLEG_LINK2", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("LARM_LINK5", "LLEG_LINK2", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("LARM_LINK6", "LLEG_LINK2", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("LARM_LINK7", "LLEG_LINK2", 0.05,0.01, 0.),
 
-        });
+		});
 
-        LOG_SUCCESS("mc_handover_controller init done")
-    }
-
-
-
-    //////////////
-    //
-    // Handover Controller reset
-    //
-    //////////////
-    void HandoverController::reset(const ControllerResetData & reset_data)
-    {   
-        mc_control::fsm::Controller::reset(reset_data);
-
-        auto q = reset_data.q;
-        MCController::reset({q});
-
-        /* gripper control */
-        gui()->addElement({"Handover", "Grippers"},
-          
-
-          mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 
-            std::cout << "at right gripper opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
-          
-          mc_rtc::gui::Button("close_Right_Gripper",[this]() { std::string msg = "closeGripperR"; read_msg(msg); 
-            std::cout << "at right gripper closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;          
-          }),
-          
-          mc_rtc::gui::Button("open_Left_Gripper",[this]() { std::string msg = "openGripperL"; read_msg(msg); 
-            std::cout << "at left gripper opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
-          
-          mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg); 
-            std::cout << "at left gripper closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
-          
-          mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
-            read_msg(msg); 
-            std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-            std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          }),
-
-          mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
-            std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-            std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-          })
-
-        );
-    }
+		LOG_SUCCESS("mc_handover_controller init done")
+	}
 
 
 
-    //////////////
-    //
-    // Handover Controller run
-    //
-    //////////////
-    bool HandoverController::run()
-    {
-      bool ret = mc_control::fsm::Controller::run();
+		//////////////
+		//
+		// Handover Controller reset
+		//
+		//////////////
+	void HandoverController::reset(const ControllerResetData & reset_data)
+	{   
+		mc_control::fsm::Controller::reset(reset_data);
 
-      if(ret)
-      {
-        /* Force Sensor*/
-          wrenches["LeftHandForceSensor"] = 
-                    this->robot().forceSensor("LeftHandForceSensor").removeGravity(this->robot());
-          wrenches["RightHandForceSensor"] =
-                    this->robot().forceSensor("RightHandForceSensor").removeGravity(this->robot());
-      }
-      return ret;
-    }
+		auto q = reset_data.q;
+		MCController::reset({q});
 
+				/* gripper control */
+		gui()->addElement({"Handover", "Grippers"},
+			
 
+			mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 
+						std::cout << "at right gripper opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+		}),
+			
+			mc_rtc::gui::Button("close_Right_Gripper",[this]() { std::string msg = "closeGripperR"; read_msg(msg); 
+						std::cout << "at right gripper closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;          
+		}),
+			
+			mc_rtc::gui::Button("open_Left_Gripper",[this]() { std::string msg = "openGripperL"; read_msg(msg); 
+						std::cout << "at left gripper opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+		}),
+			
+			mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg); 
+						std::cout << "at left gripper closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+		}),
+			
+			mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
+				read_msg(msg); 
+						std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+						std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+			}),
 
+			mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
+						std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+						std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+		})
 
-    //////////////
-    //
-    // Handover Controller printWrench
-    //
-    //////////////
-    bool HandoverController::publishWrench()
-    {
-      cout << "left hand wrenches " << wrenches.at("LeftHandForceSensor") <<  endl;
-      cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
-
-      runOnce = false;
-      // this will make initial_COM to set on previous given pos
-      return true;  // always return true, to repeat state
-    }
-
-
-    //////////////
-    //
-    // Handover Controller read_msg
-    //
-    //////////////
-    bool  HandoverController::read_msg(std::string & msg)
-    {
-      std::stringstream ss;
-      std::string token;
-
-      ss << msg;
-      ss >> token;
-
-      if(token == "step1")
-      {
-
-        MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
-        Eigen::Vector3d initPosR, initPosL;
-        sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
-
-        initPosR <<  0.30, -0.35, 0.3;
-        relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-        solver().addTask(relEfTaskR);
-
-
-        initPosL <<  0.30, 0.35, 0.3;
-        relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-        solver().addTask(relEfTaskL);
-   
-        return true;
-      }
+			);
+	}
 
 
 
-      if(token == "step2")
-      { 
-        //set ef pose 
-        Eigen::Vector3d tL( 0.7, 0.35, .3 );
-        Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
-        sva::PTransformd dtrL(getCurRotL, tL);
-        relEfTaskL->set_ef_pose(dtrL);
+		//////////////
+		//
+		// Handover Controller run
+		//
+		//////////////
+	bool HandoverController::run()
+	{
+		bool ret = mc_control::fsm::Controller::run();
 
-
-        Eigen::Vector3d tR( 0.7, -0.35, .3 );
-        Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
-        sva::PTransformd dtrR(getCurRotR, tR);
-        relEfTaskR->set_ef_pose(dtrR);
-
-        return true;
-      }
-
-
-
-      if(token == "robots")
-      { 
-        std::string robotName =  this->robot().name();
-
-        cout << robotName <<  endl;
-
-        return true;
-      }
+		if(ret)
+		{
+				/* Force Sensor*/
+			wrenches["LeftHandForceSensor"] =
+					this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
+			wrenches["RightHandForceSensor"] =
+					this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
+		}
+		return ret;
+	}
 
 
 
-      if(token == "surfaces")
-      { 
-        surf =  this->robot().surfaces();
 
-        for(auto elem : surf)
-        {
-          std::cout << elem.first << " " << elem.second << endl;
-        }
-        return true;
-      }
+		//////////////
+		//
+		// Handover Controller printWrench
+		//
+		//////////////
+	bool HandoverController::publishWrench()
+	{
+		cout << "left hand wrenches " << wrenches.at("LeftHandForceSensor") <<  endl;
+		cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
 
-      // gripper control actions //
-
-      if(token == "openGripperR")
-      {
-        auto gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({openG});
-      
-        return true;
-      }
-      if(token == "closeGripperR")
-      {
-        auto gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({closeG});
-        return true;
-      }
+		runOnce = false;
+			// this will make initial_COM to set on previous given pos
+			return true;  // always return true, to repeat state
+		}
 
 
+		//////////////
+		//
+		// Handover Controller read_msg
+		//
+		//////////////
+		bool  HandoverController::read_msg(std::string & msg)
+		{
+			std::stringstream ss;
+			std::string token;
 
-      if(token == "openGripperL")
-      {
-        auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({openG});
-        return true;
-      }
-      if(token == "closeGripperL")
-      {
-        auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({closeG});
-        return true;
-      }
+			ss << msg;
+			ss >> token;
 
+			if(token == "step1")
+			{
 
+				MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+				Eigen::Vector3d initPosR, initPosL;
+				sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-      if(token == "openGrippers")
-      {
-        auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({openG});
-        gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({openG});
-        return true;
-      }
-      if(token == "closeGrippers")
-      {
-        auto gripper = grippers["l_gripper"].get();
-        gripper->setTargetQ({closeG});
-        gripper = grippers["r_gripper"].get();
-        gripper->setTargetQ({closeG});
-        return true;
-      }
-
-      
-      // get LARM JOINTs //
-      std::vector<double>  get_LArm_Joints(8);
-      if(token == "getRtPose")
-      {
-        for (int i = 0; i<8; ++i)
-        {
-          std::stringstream ss;
-          ss << "RARM_JOINT" << i;
-          std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
-        }
-        std::cout<<std::endl;
-        return true;
-      }
-
-      // get RARM JOINTs //
-      std::vector<double>  get_RArm_Joints(8);
-      if(token == "getLtPose")
-      {
-        for (int i = 0; i<8; ++i)
-        {
-          std::stringstream ss;
-          ss << "LARM_JOINT" << i;
-          std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
-        }
-        std::cout<<std::endl;
-        return true;
-      }
-    
-      LOG_WARNING("Cannot handle " << msg)
-      return mc_control::fsm::Controller::read_msg(msg);
-
-    }
+				initPosR <<  0.30, -0.35, 0.3;
+				relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+				solver().addTask(relEfTaskR);
 
 
-    //////////////
-    //
-    // Handover Controller read_write_msg
-    //
-    //////////////    
-    bool HandoverController::read_write_msg(std::string & msg, std::string & out)
-    {
-      // out = msg;
-      // return true;
-      return mc_control::fsm::Controller::read_write_msg(msg, out);
-    }
+				initPosL <<  0.30, 0.35, 0.3;
+				relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+				solver().addTask(relEfTaskL);
+				
+				return true;
+			}
 
-   
-   // HandoverController::~HandoverController()
-   // {
-   //    /* reset tasks here */
-   // }
+
+
+			if(token == "step2")
+			{ 
+				//set ef pose 
+				Eigen::Vector3d tL( 0.7, 0.35, .3 );
+				Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
+				sva::PTransformd dtrL(getCurRotL, tL);
+				relEfTaskL->set_ef_pose(dtrL);
+
+
+				Eigen::Vector3d tR( 0.7, -0.35, .3 );
+				Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
+				sva::PTransformd dtrR(getCurRotR, tR);
+				relEfTaskR->set_ef_pose(dtrR);
+
+				return true;
+			}
+
+
+
+			if(token == "robots")
+			{ 
+				std::string robotName =  this->robot().name();
+
+				cout << robotName <<  endl;
+
+				return true;
+			}
+
+
+
+			if(token == "surfaces")
+			{ 
+				surf =  this->robot().surfaces();
+
+				for(auto elem : surf)
+				{
+					std::cout << elem.first << " " << elem.second << endl;
+				}
+				return true;
+			}
+
+			// gripper control actions //
+
+			if(token == "openGripperR")
+			{
+				auto gripper = grippers["r_gripper"].get();
+				gripper->setTargetQ({openG});
+				
+				return true;
+			}
+			if(token == "closeGripperR")
+			{
+				auto gripper = grippers["r_gripper"].get();
+				gripper->setTargetQ({closeG});
+				return true;
+			}
+
+
+
+			if(token == "openGripperL")
+			{
+				auto gripper = grippers["l_gripper"].get();
+				gripper->setTargetQ({openG});
+				return true;
+			}
+			if(token == "closeGripperL")
+			{
+				auto gripper = grippers["l_gripper"].get();
+				gripper->setTargetQ({closeG});
+				return true;
+			}
+
+
+
+			if(token == "openGrippers")
+			{
+				auto gripper = grippers["l_gripper"].get();
+				gripper->setTargetQ({openG});
+				gripper = grippers["r_gripper"].get();
+				gripper->setTargetQ({openG});
+				return true;
+			}
+			if(token == "closeGrippers")
+			{
+				auto gripper = grippers["l_gripper"].get();
+				gripper->setTargetQ({closeG});
+				gripper = grippers["r_gripper"].get();
+				gripper->setTargetQ({closeG});
+				return true;
+			}
+
+			
+			// get LARM JOINTs //
+			std::vector<double>  get_LArm_Joints(8);
+			if(token == "getRtPose")
+			{
+				for (int i = 0; i<8; ++i)
+				{
+					std::stringstream ss;
+					ss << "RARM_JOINT" << i;
+					std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
+				}
+				std::cout<<std::endl;
+				return true;
+			}
+
+			// get RARM JOINTs //
+			std::vector<double>  get_RArm_Joints(8);
+			if(token == "getLtPose")
+			{
+				for (int i = 0; i<8; ++i)
+				{
+					std::stringstream ss;
+					ss << "LARM_JOINT" << i;
+					std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
+				}
+				std::cout<<std::endl;
+				return true;
+			}
+			
+			LOG_WARNING("Cannot handle " << msg)
+			return mc_control::fsm::Controller::read_msg(msg);
+
+		}
+
+
+		//////////////
+		//
+		// Handover Controller read_write_msg
+		//
+		//////////////    
+		bool HandoverController::read_write_msg(std::string & msg, std::string & out)
+		{
+			// out = msg;
+			// return true;
+			return mc_control::fsm::Controller::read_write_msg(msg, out);
+		}
+
+		
+	 // HandoverController::~HandoverController()
+	 // {
+	 //    /* reset tasks here */
+	 // }
 
 } //namespace mc_control
 
