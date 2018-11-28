@@ -36,7 +36,14 @@ configure_file(etc/mc_rtc.conf ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/etc/mc_rtc.conf
         DESTINATION ${CMAKE_INSTALL_PREFIX}/etc)
 
-install(FILES etc/Handover.conf
+set(AROBASE "@")
+execute_process(COMMAND rospack find handover_urdf
+	            RESULT_VARIABLE HANDOVER_URDF_FOUND
+	            OUTPUT_VARIABLE HANDOVER_URDF_PATH
+	            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+configure_file(etc/Handover.in.conf ${CMAKE_CURRENT_BINARY_DIR}/etc/Handover.conf)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/etc/Handover.conf
     DESTINATION ${MC_RTC_LIBDIR}/mc_controller/etc/)
 
 setup_project_finalize()

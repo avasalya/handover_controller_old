@@ -63,6 +63,11 @@ namespace mc_handover
 	{   
 		mc_control::fsm::Controller::reset(reset_data);
 
+
+		/*getHostInfo*/
+		getHostInfo();
+
+
 		auto q = reset_data.q;
 		MCController::reset({q});
 
@@ -115,13 +120,45 @@ namespace mc_handover
 		{
 				/* Force Sensor*/
 			wrenches["LeftHandForceSensor"] =
-					this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
+			this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
 			wrenches["RightHandForceSensor"] =
-					this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
+			this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
 		}
 		return ret;
 	}
 
+
+
+		//////////////
+		//
+		// getHostInfo
+		//
+		//////////////
+	bool HandoverController::getHostInfo()
+	{
+		char username[LOGIN_NAME_MAX];
+		char hostname[HOST_NAME_MAX];
+		int result;
+
+		result = gethostname(hostname, HOST_NAME_MAX);
+		if (result)
+		{	perror("gethostname");	return EXIT_FAILURE;	}
+
+		result = getlogin_r(username, LOGIN_NAME_MAX);		
+		if (result)
+		{	perror("getlogin_r");	return EXIT_FAILURE;	}	
+		
+		if( strcmp(username, "hrp2user")==0 && strcmp(hostname, "hrp2012c")==0 )
+		{	Flag_ROBOT = true;	}
+		else if ( strcmp(username, "avasalya")==0 && strcmp(hostname, "vasalya-xps15")==0 )
+		{	Flag_ROBOT = false;	}
+
+		result = printf("Hello %s, you are logged in to %s.\n", username, hostname);
+		if (result < 0)
+		{	perror("printf");	return EXIT_FAILURE;	}
+		
+		return EXIT_SUCCESS;
+	}
 
 
 

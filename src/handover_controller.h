@@ -3,6 +3,11 @@
 #include <iostream>
 #include <fstream>
 
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <mc_control/mc_controller.h>
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/api.h>
@@ -95,6 +100,10 @@ namespace mc_handover
 
 
 		bool publishWrench();
+
+		bool getHostInfo();
+		bool Flag_ROBOT{false}; // default True for robot
+		
 		bool runOnce = true;
 
 	private:
