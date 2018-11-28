@@ -45,7 +45,7 @@ namespace mc_handover
 			int  s{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{false}; // default True for MOCAP
+			bool Flag_CORTEX{true}; // default True for MOCAP
 
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::MatrixXd> markersPos;

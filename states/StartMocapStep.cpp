@@ -229,6 +229,7 @@ namespace mc_handover
 					}
 				}
 			}
+
 			/*allocate memory for mocap markers*/
 			Markers.resize(maxMarkers);
 			markersPos.resize(maxMarkers);
@@ -311,12 +312,11 @@ namespace mc_handover
 
 
 				/* check for non zero frame only and store them */ 
-				if( 	Markers[wristR](0)!= 0 && Markers[wristR](0)< 100
+				if(	Markers[wristR](0)!= 0 && Markers[wristR](0)< 100
 					&&  Markers[object](0)!= 0 && Markers[object](0)< 100
 					&&  Markers[wristS](0)!= 0 && Markers[wristS](0)< 100
 					)
 				{
-					
 					for(int m=0; m<maxMarkers; m++)
 						{	markersPos[m].col(i) << Markers[m];	}
 
@@ -403,7 +403,7 @@ namespace mc_handover
 					{
 						closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.0});						
+						gripper->setTargetQ({0.0});
 					};
 
 
@@ -425,7 +425,7 @@ namespace mc_handover
 							open_gripperL();
 							ctl.publishWrench();
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand")
-						}						
+						}
 						return false;
 					};
 
@@ -510,7 +510,7 @@ namespace mc_handover
 					i = i + 1;
 				}// check for non zero frame
 
-			s= s + 1;
+				s = s + 1;
 			} // startCapture
 
 			// output("OK");
