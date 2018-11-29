@@ -1,7 +1,5 @@
 /*------------------------------TO DOs----------------------------------------------
 --- if(wp_efL_obj-predictPos).eval().norm()> xxx -- pick another closet point on line
---- when to start handover motion
---- when should prediction be started again?
 ----------------------------------------------------------------------------------*/
 
 #include "StartMocapStep.h"
@@ -41,124 +39,123 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			/*initialization*/
-			{
-				/*close grippers for safety*/
-				auto  gripperL = ctl.grippers["l_gripper"].get();
-				auto  gripperR = ctl.grippers["r_gripper"].get();
-				gripperL->setTargetQ({closeGrippers});
-				gripperR->setTargetQ({closeGrippers});
+			/*close grippers for safety*/
+			auto  gripperL = ctl.grippers["l_gripper"].get();
+			auto  gripperR = ctl.grippers["r_gripper"].get();
+			gripperL->setTargetQ({closeGrippers});
+			gripperR->setTargetQ({closeGrippers});
 
 
-				/*chest task*/
-				chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-				chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-				ctl.solver().addTask(chestPosTask);
-				ctl.solver().addTask(chestOriTask);
+			/*chest task*/
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			ctl.solver().addTask(chestPosTask);
+			ctl.solver().addTask(chestOriTask);
+			
+
+			/*EfL pos/ori Tasks*/
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
+			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK7",ctl.robots(), 0, 3.0, 1e4);
+
+
+			/*publish wrench*/
+			ctl.gui()->addElement({"Handover", "wrench"},
 				
+				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {  
+					std::cout << "left hand wrench:: Torques, Forces " <<
+					ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+					std::cout << "right hand wrench:: Torques, Forces " <<
+					ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+				}),
 
-				/*position Task*/
-				ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-				// ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK6", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-				// cout << "posTaskL" << ctl.posTaskL->position().transpose()<<endl;
-
-
-				/*publish wrench*/
-				ctl.gui()->addElement({"Handover", "wrench"},
-					
-					mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {  
-						std::cout << "left hand wrench:: Torques, Forces " <<
-						ctl.wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-						std::cout << "right hand wrench:: Torques, Forces " <<
-						ctl.wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+				mc_rtc::gui::ArrayInput("Threshold",
+					{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
+					[this]() { return thresh; },
+					[this](const Eigen::VectorXd & t)
+					{
+						LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
+						thresh = t;
 					}),
 
-					mc_rtc::gui::ArrayInput("Threshold",
-						{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
-						[this]() { return thresh; },
-						[this](const Eigen::VectorXd & t)
-						{
-							LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
-							thresh = t;
-						}),
-
-					mc_rtc::gui::ArrayInput("Base Threshold",
-						{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
-						[this]() { return baseTh; },
-						[this](const Eigen::VectorXd & bt)
-						{
-							LOG_INFO("Changed Base threshold to:\nLeft: " << bt.head(6).transpose() << "\nRight: " << bt.tail(6).transpose() << "\n")
-							baseTh = bt;
-						}));
+				mc_rtc::gui::ArrayInput("Base Threshold",
+					{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
+					[this]() { return baseTh; },
+					[this](const Eigen::VectorXd & bt)
+					{
+						LOG_INFO("Changed Base threshold to:\nLeft: " << bt.head(6).transpose() << "\nRight: " << bt.tail(6).transpose() << "\n")
+						baseTh = bt;
+					}));
 
 
-				/*move object using cursor or simData*/
-				ctl.gui()->addElement({"Handover","move object"},
-					mc_rtc::gui::Transform("Position", 
-						[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-						[this,&ctl](const sva::PTransformd & pos) { 
-							ctl.robots().robot(2).posW(pos);
-							ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
-							ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
-						})
-					, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[object]}); return Markers[object];})
-					);
+			/*move object using cursor or simData*/
+			ctl.gui()->addElement({"Handover","move object"},
+				mc_rtc::gui::Transform("Position", 
+					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+					[this,&ctl](const sva::PTransformd & pos) { 
+						ctl.robots().robot(2).posW(pos);
+						ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+						ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+					})
+				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[object]}); return Markers[object];})
+				);
 
 
-				/*com Task*/
-				ctl.gui()->addElement({"Handover", "com"},
+			/*com Task*/
+			ctl.gui()->addElement({"Handover", "com"},
 
-					mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
-						[this]() { return move; },
-						[this](const Eigen::Vector3d v) { move = v;
-							cout << " com pos set to:\n" << initialCom + move << endl;})
-					);
+				mc_rtc::gui::ArrayInput("Move Com Pos", {"x", "y", "z"},
+					[this]() { return move; },
+					[this](const Eigen::Vector3d v) { move = v;
+						cout << " com pos set to:\n" << initialCom + move << endl;})
+				);
 
-				comTask = std::make_shared<mc_tasks::CoMTask>
-				(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);//10, 1e3
-				// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
+			comTask = std::make_shared<mc_tasks::CoMTask>
+			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);//10, 1e3
+			// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
 
-				initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
-				comTask->com(initialCom);
-				ctl.solver().addTask(comTask);
+			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
+			comTask->com(initialCom);
+			ctl.solver().addTask(comTask);
 
 
-				// /*change prediction settings*/
-				// ctl.gui()->addElement({"Handover", "tuner"},
-				// 	mc_rtc::gui::ArrayInput("prediction tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
-				// // cout << "to " << to <<endl;
+			// /*change prediction settings*/
+			// ctl.gui()->addElement({"Handover", "tuner"},
+			// 	mc_rtc::gui::ArrayInput("prediction tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
+			// // cout << "to " << to <<endl;
 
-				/*JUST FOR CREATING MOCAP TEMPLATE*/
-				ctl.solver().addTask(ctl.posTaskL);
+			/*JUST FOR CREATING MOCAP TEMPLATE*/
+			ctl.solver().addTask(ctl.posTaskL);
 
-				ctl.gui()->addElement({"MOCAP", "temp"},
-					mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.06,0.37,0.72});
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.0}); } ),
-					mc_rtc::gui::Button( "pos1", [&ctl](){ ctl.posTaskL->position({0.5,0.3,1.1});
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5}); } ),
-					mc_rtc::gui::Button( "pos2", [&ctl](){ ctl.posTaskL->position({0.3,0.5,0.9});
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5});  } ),
-					mc_rtc::gui::Button( "pos3", [&ctl](){ ctl.posTaskL->position({0.6,0.2,1.2}); 
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5}); } ),
-					mc_rtc::gui::Button( "pos4", [&ctl](){ ctl.posTaskL->position({0.3,0.3,1.3}); 
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5}); } ),
-					mc_rtc::gui::Button( "pos5", [&ctl](){ ctl.posTaskL->position({0.55,0.4,1.0}); 
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5}); } ),
-					mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.35,0.2,1.1}); 
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5}); } ) );
-			}
+			ctl.gui()->addElement({"MOCAP", "temp"},
+				mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.06,0.37,0.72});
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.0}); } ),
+				mc_rtc::gui::Button( "pos1", [&ctl](){ ctl.posTaskL->position({0.5,0.3,1.1});
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos2", [&ctl](){ ctl.posTaskL->position({0.3,0.5,0.9});
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5});  } ),
+				mc_rtc::gui::Button( "pos3", [&ctl](){ ctl.posTaskL->position({0.6,0.2,1.2}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos4", [&ctl](){ ctl.posTaskL->position({0.3,0.3,1.3}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos5", [&ctl](){ ctl.posTaskL->position({0.55,0.4,1.0}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.35,0.2,1.1}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ) );
 
 
 			/*inital motion*/
 			ctl.posTaskL->position({0.3,0.3,1.1});
+
+			/*maintain initial orientation*/
+			initOriLEf = ctl.oriTaskL->orientation();
 
 
 			/*configure MOCAP*/
@@ -382,8 +379,13 @@ namespace mc_handover
 						/*get predicted way points between left ef and obj*/
 						wp_efL_obj=ctl.handoverTraj->constVelocity(ithPosObj, predictPos, t_predict);
 						wp = get<0>(wp_efL_obj);
+						
+						initRefPos << wp(0,0), wp(1,0), wp(2,0);
 
+						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
+						
 						collected = true;
+						it = t_predict/t_observe;
 					} //t_observe
 
 
@@ -410,6 +412,7 @@ namespace mc_handover
 
 					// auto CD_proj_PQ = (CD.dot(PQ)*PQ)/PQ.squaredNorm();
 					// auto AB_proj_PQ = (AB.dot(PQ)*PQ)/PQ.squaredNorm();
+					
 
 
 
@@ -466,13 +469,14 @@ namespace mc_handover
 					};
 
 
-					if( collected )//&& prediction)
-					{
-						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
-						
-						initRefPos << wp(0,0), wp(1,0), wp(2,0);
+					
+					/************only here for 4 control loops -- should skip wp points?? *********/
 
-						for(int it=0; it<wp.cols(); it++)
+
+
+					if( collected )
+					{
+						if(it<=wp.cols()-1) //for(int it=0; it<wp.cols(); it++)
 						{
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 							// cout << "wp " << wp.col(it).transpose()<<endl;
@@ -499,6 +503,7 @@ namespace mc_handover
 
 
 								/*move end effector*/
+								ctl.oriTaskL->orientation(initOriLEf);
 								ctl.posTaskL->position(handoverPos);
 								ctl.posTaskL->refVel(refVel);
 								ctl.posTaskL->refAccel(refAcc);
@@ -508,28 +513,30 @@ namespace mc_handover
 								/*control gripper*/
 								// if(s%1000==0)
 								// 	{	cout << "(handoverPos - curLEfPos).norm() " << (handoverPos - curLEfPos).norm() << endl;	}
-
-
 								if( (handoverPos - curLEfPos).norm() <0.02 )
 								{
 									if(openGripper)
-									{
-										open_gripperL();
-									}
+										{	open_gripperL();	}
 									compObjRelPos();
 								}
 							}
+							// cout << "it "<<it<<endl;
+							it+= t_predict/t_observe;
 						}
-						collected = false;
+						else if(it==wp.cols())
+						{
+							// cout << "collected == false " <<endl;
+							collected = false;
+						}
 					} // collected
 
+
 					/*iterator*/
-					i = i + 1;
+					i+= 1;
 				}// check for non zero frame
-
-				s = s + 1;			
+				/*iterator for sim data*/
+				s+= 1;
 			} // startCapture
-
 			// output("OK");
 			return false;
 		}// run

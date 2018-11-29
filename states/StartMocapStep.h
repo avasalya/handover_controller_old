@@ -35,6 +35,7 @@ namespace mc_handover
 			int fps{200};
 			int t_observe{20}; //100ms
 			int t_predict{200};//1sec
+			int it;
 
 			// Eigen::VectorXi tuner = Eigen::VectorXd::Zero(2);
 
@@ -46,7 +47,7 @@ namespace mc_handover
 			int  s{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{true}; // default True for MOCAP
+			bool Flag_CORTEX{false}; // default True for MOCAP
 
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::MatrixXd> markersPos;
@@ -70,6 +71,7 @@ namespace mc_handover
 			Eigen::Matrix3d curRotLeftEfMarker;
 			Eigen::Matrix3d curRotLeftEf;
 			Eigen::Matrix3d rotObj;
+			Eigen::Matrix3d initOriLEf;
 
 			Eigen::MatrixXd curVelObj, wp;
 			Eigen::MatrixXd newPosObj = Eigen::MatrixXd::Zero(3,t_observe);
@@ -82,7 +84,6 @@ namespace mc_handover
 
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
-
 
 			double closeGrippers = 0.0;
 			double openGrippers = 1.0;
@@ -119,6 +120,7 @@ namespace mc_handover
 			std::vector<int> bodyMarkers;
 
 			void *pResponse;
+
 			int nBytes;
 			int retval = RC_Okay;
 			int totalBodies;
