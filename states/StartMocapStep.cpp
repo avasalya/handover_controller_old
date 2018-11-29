@@ -101,8 +101,8 @@ namespace mc_handover
 							ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 							ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 						})
-					// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-					// mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[object]}); return Markers[object];})
+					, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+					mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[object]}); return Markers[object];})
 					);
 
 
@@ -123,6 +123,11 @@ namespace mc_handover
 				comTask->com(initialCom);
 				ctl.solver().addTask(comTask);
 
+
+				// /*change prediction settings*/
+				// ctl.gui()->addElement({"Handover", "tuner"},
+				// 	mc_rtc::gui::ArrayInput("prediction tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
+				// // cout << "to " << to <<endl;
 
 				/*JUST FOR CREATING MOCAP TEMPLATE*/
 				ctl.solver().addTask(ctl.posTaskL);
@@ -150,6 +155,10 @@ namespace mc_handover
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({0.5}); } ) );
 			}
+
+
+			/*inital motion*/
+			ctl.posTaskL->position({0.3,0.3,1.1});
 
 
 			/*configure MOCAP*/
@@ -286,10 +295,18 @@ namespace mc_handover
 			}
 
 
+			// t_observe = int(tuner(0));
+			// t_predict = int(tuner(1));
+
 
 			/* start only when ithFrame == 1 */
 			if(startCapture)
 			{
+				// if(s%1000==0)
+				// {
+				// 	cout <<"t_observe " << t_observe <<endl;
+				// }
+
 				/*get markers position FrameByFrame*/
 				if(Flag_CORTEX)
 				{
@@ -304,9 +321,7 @@ namespace mc_handover
 				else /*simulation*/
 				{
 					for(int m=0; m<maxMarkers; m++)
-					{
-						Markers[m] = pos[m].col(s);
-					}
+						{	Markers[m] = pos[m].col(s);	}
 				}
 
 
@@ -433,18 +448,16 @@ namespace mc_handover
 					/*grasp object (close gripper)*/
 					auto compObjRelPos = [&]()
 					{
-						if( (area_ABC > area_ACO) || (area_ABD > area_ACO) )
+						if( (closeGripper==false) && ( (area_ABC > area_ACO) || (area_ABD > area_ACO) ) )
 						{
-							if(!closeGripper)
-							{
-								close_gripperL();
-								cout << "object is inside gripper, closing gripper" <<endl;
-							}
+							close_gripperL();
+							cout << "object is inside gripper, closing gripper" <<endl;
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
 						/*check when gripper is closed w/o obj-- false positive case*/
-						else if( (closeGripper) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
+						else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
 						{
+							closeGripper = false;
 							openGripper = true;
 							open_gripperL();
 							cout << "gripper was closed -- false positive" <<endl;
@@ -467,7 +480,8 @@ namespace mc_handover
 							handoverPos = refPos + initPos -initRefPos;
 							// cout << "handoverPos " << handoverPos.transpose()<<endl;
 
-							refVel << Eigen::MatrixXd::Zero(3,1); //avgVelObj;
+							refVel << Eigen::MatrixXd::Zero(3,1);
+							// refVel << avgVelObj;
 							refAcc << Eigen::MatrixXd::Zero(3,1);
 
 							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
@@ -492,7 +506,10 @@ namespace mc_handover
 
 
 								/*control gripper*/
-								// cout << "(handoverPos - curLEfPos).norm() " << (handoverPos - curLEfPos).norm() << endl;
+								// if(s%1000==0)
+								// 	{	cout << "(handoverPos - curLEfPos).norm() " << (handoverPos - curLEfPos).norm() << endl;	}
+
+
 								if( (handoverPos - curLEfPos).norm() <0.02 )
 								{
 									if(openGripper)
@@ -510,7 +527,7 @@ namespace mc_handover
 					i = i + 1;
 				}// check for non zero frame
 
-				s = s + 1;
+				s = s + 1;			
 			} // startCapture
 
 			// output("OK");

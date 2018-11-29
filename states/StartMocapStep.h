@@ -34,8 +34,9 @@ namespace mc_handover
 
 			int fps{200};
 			int t_observe{20}; //100ms
-			int t_predict{100};//1sec
+			int t_predict{200};//1sec
 
+			// Eigen::VectorXi tuner = Eigen::VectorXd::Zero(2);
 
 			/*mocap_simulaton*/
 			double pt;
@@ -53,7 +54,7 @@ namespace mc_handover
 			int maxMarkers{12};
 
 			int body{0}, headR{0}, chestR{1};
-			int elbowR{2}, wristR{3};			
+			int elbowR{2}, wristR{3};
 			int gripperLA{4}, gripperLB{5}, gripperLC{6}, gripperLD{7};
 
 			int object{8};
