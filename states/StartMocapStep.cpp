@@ -119,9 +119,9 @@ namespace mc_handover
 			ctl.solver().addTask(comTask);
 
 
-			// /*change prediction settings*/
+			// /*change prediction_ settings*/
 			// ctl.gui()->addElement({"Handover", "tuner"},
-			// 	mc_rtc::gui::ArrayInput("prediction tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
+			// 	mc_rtc::gui::ArrayInput("prediction_ tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
 			// // cout << "to " << to <<endl;
 
 			/*JUST FOR CREATING MOCAP TEMPLATE*/
@@ -356,7 +356,6 @@ namespace mc_handover
 							
 							Obj_X_efL = R_X_efL.inv()*M_X_Obj*M_X_efLMarker.inv()*R_X_efL;
 
-							// cout <<"Obj_X_efL.translation() "<<Obj_X_efL.translation().transpose()<<endl;
 							newPosObj.col(j-1) = Obj_X_efL.translation();
 
 							/*get obj marker initials*/
@@ -380,12 +379,12 @@ namespace mc_handover
 						wp_efL_obj=ctl.handoverTraj->constVelocity(ithPosObj, predictPos, t_predict);
 						wp = get<0>(wp_efL_obj);
 						
-						initRefPos << wp(0,0), wp(1,0), wp(2,0);
+						initRefPos << wp(0,0), wp(1,0), wp(2,0); //----> changed from 0th to it = (t_predict/t_observe)?
 
 						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 						
-						collected = true;
 						it = t_predict/t_observe;
+						collected = true;
 					} //t_observe
 
 
@@ -451,6 +450,7 @@ namespace mc_handover
 					/*grasp object (close gripper)*/
 					auto compObjRelPos = [&]()
 					{
+						prediction = false;
 						if( (closeGripper==false) && ( (area_ABC > area_ACO) || (area_ABD > area_ACO) ) )
 						{
 							close_gripperL();
@@ -484,9 +484,9 @@ namespace mc_handover
 							handoverPos = refPos + initPos -initRefPos;
 							// cout << "handoverPos " << handoverPos.transpose()<<endl;
 
-							refVel << Eigen::MatrixXd::Zero(3,1);
 							// refVel << avgVelObj;
-							refAcc << Eigen::MatrixXd::Zero(3,1);
+							// refVel << Eigen::MatrixXd::Zero(3,1);
+							// refAcc << Eigen::MatrixXd::Zero(3,1);
 
 							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
@@ -502,23 +502,35 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
-								/*move end effector*/
-								ctl.oriTaskL->orientation(initOriLEf);
-								ctl.posTaskL->position(handoverPos);
-								ctl.posTaskL->refVel(refVel);
-								ctl.posTaskL->refAccel(refAcc);
-								// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
+								// if(s%1000==0)
+								// 	{	cout << "(handoverPos - curLEfPos).norm() " << (handoverPos - curLEfPos).norm() << endl;	}
 
 
 								/*control gripper*/
-								// if(s%1000==0)
-								// 	{	cout << "(handoverPos - curLEfPos).norm() " << (handoverPos - curLEfPos).norm() << endl;	}
-								if( (handoverPos - curLEfPos).norm() <0.02 )
+								if( (handoverPos - curLEfPos).norm() <0.02 ) // *******should be with knuckle/object pos compare**********
 								{
 									if(openGripper)
-										{	open_gripperL();	}
+									{
+										open_gripperL();
+									}
 									compObjRelPos();
 								}
+								else
+								{
+									prediction = true;
+								}
+								
+
+								/*move end effector*/
+								if(prediction)
+								{
+									ctl.oriTaskL->orientation(initOriLEf);
+									ctl.posTaskL->position(handoverPos);
+									// ctl.posTaskL->refVel(refVel);
+									// ctl.posTaskL->refAccel(refAcc);
+									// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
+								}
+
 							}
 							// cout << "it "<<it<<endl;
 							it+= t_predict/t_observe;
@@ -526,6 +538,7 @@ namespace mc_handover
 						else if(it==wp.cols())
 						{
 							// cout << "collected == false " <<endl;
+							prediction = true;
 							collected = false;
 						}
 					} // collected
