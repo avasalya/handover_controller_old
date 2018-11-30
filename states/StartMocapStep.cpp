@@ -55,7 +55,7 @@ namespace mc_handover
 
 			/*EfL pos/ori Tasks*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK7",ctl.robots(), 0, 3.0, 1e4);
+			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 5.0, 1e5);
 
 
 			/*publish wrench*/
@@ -469,11 +469,6 @@ namespace mc_handover
 					};
 
 
-					
-					/************only here for 4 control loops -- should skip wp points?? *********/
-
-
-
 					if( collected )
 					{
 						if(it<=wp.cols()-1) //for(int it=0; it<wp.cols(); it++)
@@ -484,7 +479,7 @@ namespace mc_handover
 							handoverPos = refPos + initPos -initRefPos;
 							// cout << "handoverPos " << handoverPos.transpose()<<endl;
 
-							// refVel << avgVelObj;
+							refVel << avgVelObj;
 							// refVel << Eigen::MatrixXd::Zero(3,1);
 							// refAcc << Eigen::MatrixXd::Zero(3,1);
 
@@ -526,7 +521,7 @@ namespace mc_handover
 								{
 									ctl.oriTaskL->orientation(initOriLEf);
 									ctl.posTaskL->position(handoverPos);
-									// ctl.posTaskL->refVel(refVel);
+									ctl.posTaskL->refVel(refVel);
 									// ctl.posTaskL->refAccel(refAcc);
 									// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
 								}
