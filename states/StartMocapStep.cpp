@@ -486,8 +486,8 @@ namespace mc_handover
 							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
 							/*robot constraint*/
-							if(	(predictPos(0))<= 0.7 && (predictPos(1))<= 0.6 && (predictPos(2))<=1.5 &&
-								(predictPos(0))>= 0.2 && (predictPos(1))>= 0.25 && (predictPos(2))>=0.9 ) 
+							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
+								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 ) 
 							{
 								/*control head*/
 								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
@@ -500,18 +500,16 @@ namespace mc_handover
 								// *******should be with knuckle/object pos compare**********
 								
 								if(i%t_predict==0)
-								 {
-								 	cout << "norm b/w robot and subj wrists " << ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm()<< endl;
-									
-								// 	cout << " handoverPos and curPosLeftEf " << (handoverPos - curLEfPos).norm() << endl;
-								 }
-
-               
-								/*control gripper*/
-								if( ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm() <1 ) 
 								{
-                  ctl.posTaskL->position(predictPos);
+									cout << "norm b/w robot and subj wrists " << ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm()<< endl;
+									
+									cout << " handoverPos and curPosLeftEf " << (handoverPos - curLEfPos).norm() << endl;
+								}
 
+
+								/*control gripper*/
+								if( (handoverPos - curLEfPos).norm() <0.02 ) 
+								{
 									if(openGripper)
 									{
 										open_gripperL();
@@ -527,8 +525,7 @@ namespace mc_handover
 								/*move end effector*/
 								if(prediction)
 								{
-									// ctl.posTaskL->position(handoverPos);
-                  //   ctl.posTaskL->position(predictPos);
+									ctl.posTaskL->position(handoverPos);
 									// ctl.posTaskL->refVel(refVel);
 									// ctl.posTaskL->refAccel(refAcc);
 									// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
