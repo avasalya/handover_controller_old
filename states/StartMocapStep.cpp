@@ -18,6 +18,7 @@ namespace mc_handover
 		}
 
 
+
 		void MyErrorMsgHandler(int iLevel, const char *szMsg)
 		{
 			const char *szLevel = NULL;
@@ -33,6 +34,7 @@ namespace mc_handover
 			}
 			printf("  %s: %s\n", szLevel, szMsg);
 		}
+
 
 
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
@@ -67,8 +69,8 @@ namespace mc_handover
 
 
 			/*change prediction_ settings*/
-			ctl.gui()->addElement({"Handover", "pred_tuner"},
-				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"}, [this]() { return tuner; }, [this](const Eigen::Vector3d & to){tuner = to;}));
+			ctl.gui()->addElement({"Handover", "tuner"},
+				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"}, [this]() { return tuner; }, [this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 			tuner << 200., 20., 0.;
 
 
@@ -245,7 +247,6 @@ namespace mc_handover
 
 
 
-
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
@@ -317,7 +318,7 @@ namespace mc_handover
 				/* check for non zero frame only and store them */ 
 				if(	Markers[wristR](0)!= 0 && Markers[wristR](0)< 100
 					&&  Markers[object](0)!= 0 && Markers[object](0)< 100
-					&&  Markers[wristS](0)!= 0 && Markers[wristS](0)< 100
+					&&  Markers[knuckleS](0)!= 0 && Markers[knuckleS](0)< 100
 					)
 				{
 					for(int m=0; m<maxMarkers; m++)
@@ -329,6 +330,7 @@ namespace mc_handover
 						/*prediction tuner*/
 						t_predict = (int)tuner(0);
 						t_observe = (int)tuner(1);
+						it = t_predict/t_observe;
 
 						/*get robot ef current pose*/
 						curRotLeftEf = ltHand.rotation();
@@ -346,36 +348,30 @@ namespace mc_handover
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
 						{
-							rotObj = Eigen::Matrix3d::Identity();
-							sva::PTransformd M_X_Obj(rotObj, markersPos[knuckleS].middleCols((i-t_observe)+j,i));
+							rotSubj = Eigen::Matrix3d::Identity();
+							sva::PTransformd M_X_Subj(rotSubj, markersPos[knuckleS].middleCols((i-t_observe)+j,i));
 							
-							Obj_X_efL = R_X_efL.inv()*M_X_Obj*M_X_efLMarker.inv()*R_X_efL;
+							Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
 
-							newPosObj.col(j-1) = Obj_X_efL.translation();
+							newPosSubj.col(j-1) = Subj_X_efL.translation();
 
-							/*get obj marker initials*/
+							/*get Subj marker initials*/
 							if(j==1)
-								{ initPosObj = newPosObj.col(j-1); }
+								{ initPosSubj = newPosSubj.col(j-1); }
 							if(j==t_observe)
-								{ ithPosObj  = newPosObj.col(t_observe-1); }
+								{ ithPosSubj  = newPosSubj.col(t_observe-1); }
 						}
 
-						/*get average velocity of previous *t_observe* sec obj motion*/
-						curVelObj  = ctl.handoverTraj->diff(newPosObj)*fps;//ignore diff > XXXX
-						avgVelObj  << ctl.handoverTraj->takeAverage(curVelObj);
-
-						/*get way points between obj inital motion*/ // get constant
-						auto actualPosObj = ctl.handoverTraj->constVelocity(initPosObj, ithPosObj, t_observe);
+						/*get average velocity of previous *t_observe* sec Subj motion*/
+						curVelSubj  = ctl.handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX
+						avgVelSubj  << ctl.handoverTraj->takeAverage(curVelSubj);
 
 						/*predict position in straight line after t_predict time*/
-						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelObj, get<2>(actualPosObj), t_predict);
+						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelSubj, initPosSubj, t_predict);
 
-						/*get predicted way points between left ef and obj*/
-						wp_efL_obj=ctl.handoverTraj->constVelocity(ithPosObj, predictPos, t_predict);
-						wp = get<0>(wp_efL_obj);
-						
-						it = t_predict/t_observe;
-						cout << "it " << it << endl;
+						/*get predicted way points between left ef and Subj*/
+						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
+						wp = get<0>(wp_efL_Subj);
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
@@ -401,8 +397,7 @@ namespace mc_handover
 					auto area_ACO = 0.5*AC.norm()*AO.norm()*sin(AC_theta_AO);
 					auto area_ACK = 0.5*AC.norm()*AK.norm()*sin(AC_theta_AK);
 
-					PQ = markersPos[wristR].col(i)-markersPos[elbowR].col(i);
-
+					// PQ = markersPos[wristR].col(i)-markersPos[elbowR].col(i);
 					// auto CD_proj_PQ = (CD.dot(PQ)*PQ)/PQ.squaredNorm();
 					// auto AB_proj_PQ = (AB.dot(PQ)*PQ)/PQ.squaredNorm();
 					
@@ -437,13 +432,17 @@ namespace mc_handover
 							ctl.publishWrench();
 							closeGripper = false;
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand")
+							return true;
 						}
-						return false;
+						else
+						{
+							return false;
+						}
 					};
 
 
 					/*grasp object (close gripper)*/
-					auto compObjRelPos = [&]()
+					auto compSubjRelPos = [&]()
 					{
 						prediction = false;
 						if( (closeGripper==false) && ( (area_ABC > area_ACO) || (area_ABD > area_ACO) ) )
@@ -452,21 +451,15 @@ namespace mc_handover
 							cout << "object is inside gripper, closing gripper" <<endl;
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
-						/*check when gripper is closed w/o obj-- false positive case*/
-						// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
-						// {
-						// 	closeGripper = false;
-						// 	openGripper = true;
-						// 	open_gripperL();
-						// 	cout << "gripper was closed -- false positive" <<endl;
-						// }
 						return false;
-					};					
+					};
+
 
 					if( collected )
 					{
 						if( it<wp.cols() )
 						{
+							refPosPrev << wp(0,it), wp(1,it), wp(2,it);
 							it+= t_predict/t_observe;
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 							// cout << "wp " << wp.col(it).transpose()<<endl;
@@ -474,9 +467,21 @@ namespace mc_handover
 							handoverPos = curPosLeftEf + refPos - initRefPos;
 							// cout << "handoverPos " << handoverPos.transpose()<<endl;
 
-							// refVel << avgVelObj;
+							// handoverPosPrev = curPosLeftEf + refPosPrev - initRefPos;
+							// auto wpDiff = handoverPos - handoverPosPrev;
+							// if( abs(refVel(0))<1 && abs(refVel(2))<1 && abs(refVel(2))<1 )
+							// {
+							// 	refVel << wpDiff*fps; // refVel << avgVelSubj;
+							// 	cout << "refVel "<< refVel.transpose()<< endl;
+							// }
+							// else
+							// {
+							// 	refVel << Eigen::MatrixXd::Zero(3,1);
+							// }
+
 							// refVel << Eigen::MatrixXd::Zero(3,1);
 							// refAcc << Eigen::MatrixXd::Zero(3,1);
+
 
 							auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
@@ -492,15 +497,24 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
+								// *******should be with knuckle/object pos compare**********
+								
+								if(i%t_predict==0)
+								{
+									cout << "norm b/w robot and subj wrists " << ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm()<< endl;
+									
+									cout << " handoverPos and curPosLeftEf " << (handoverPos - curLEfPos).norm() << endl;
+								}
+
+
 								/*control gripper*/
 								if( (handoverPos - curLEfPos).norm() <0.02 ) 
-								// *******should be with knuckle/object pos compare**********
 								{
 									if(openGripper)
 									{
 										open_gripperL();
 									}
-									compObjRelPos();
+									compSubjRelPos();
 								}
 								else
 								{
@@ -526,7 +540,6 @@ namespace mc_handover
 							}
 						}
 					} // collected
-
 
 					/*iterator*/
 					i+= 1;
@@ -558,3 +571,13 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
+
+
+/*check when gripper is closed w/o obj-- false positive case*/
+// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
+// {
+// 	closeGripper = false;
+// 	openGripper = true;
+// 	open_gripperL();
+// 	cout << "gripper was closed -- false positive" <<endl;
+// }
