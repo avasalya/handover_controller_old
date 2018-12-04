@@ -330,7 +330,7 @@ namespace mc_handover
 						/*prediction tuner*/
 						t_predict = (int)tuner(0);
 						t_observe = (int)tuner(1);
-						it = t_predict/t_observe;
+						it = 0; //t_predict/t_observe;
 
 						/*get robot ef current pose*/
 						curRotLeftEf = ltHand.rotation();
@@ -457,10 +457,10 @@ namespace mc_handover
 
 					if( collected )
 					{
-						if( it<wp.cols() )
+						if(it<t_observe) //if( it<wp.cols() )
 						{
 							refPosPrev << wp(0,it), wp(1,it), wp(2,it);
-							it+= t_predict/t_observe;
+							it+= 1; //t_predict/t_observe;
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 							// cout << "wp " << wp.col(it).transpose()<<endl;
 
@@ -497,13 +497,11 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
-								// *******should be with knuckle/object pos compare**********
-								
+
 								if(i%t_predict==0)
 								{
 									cout << "norm b/w robot and subj wrists " << ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm()<< endl;
-									
-									cout << " handoverPos and curPosLeftEf " << (handoverPos - curLEfPos).norm() << endl;
+									// cout << " handoverPos and curPosLeftEf " << (handoverPos - curLEfPos).norm() << endl;
 								}
 
 
@@ -532,11 +530,11 @@ namespace mc_handover
 								}
 							}
 
-							if(it==wp.cols())
+							if(it==t_observe) //if(it==wp.cols())
 							{
 								prediction = true;
 								collected = false;
-								it = t_predict/t_observe;
+								it = 0; //t_predict/t_observe;
 							}
 						}
 					} // collected
