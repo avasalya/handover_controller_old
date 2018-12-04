@@ -33,11 +33,10 @@ namespace mc_handover
 
 
 			int fps{200};
-			int t_observe{20}; //100ms
 			int t_predict{200};//1sec
+			int t_observe{20}; //100ms
 			int it;
-
-			// Eigen::VectorXi tuner = Eigen::VectorXd::Zero(2);
+			Eigen::Vector3d tuner;
 
 			/*mocap_simulaton*/
 			double pt;
@@ -47,7 +46,7 @@ namespace mc_handover
 			int  s{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{true}; // default True for MOCAP
+			bool Flag_CORTEX{false}; // default True for MOCAP
 
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::MatrixXd> markersPos;

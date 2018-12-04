@@ -62,9 +62,39 @@ namespace mc_handover
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-
-			Eigen::Quaterniond q = {0.64, -0.01, -0.76, -0.06};//{.70, -0.02, -0.69, -0.14};
+			Eigen::Quaterniond q = {0.64, -0.01, -0.76, -0.06};
 			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+
+
+			/*change prediction_ settings*/
+			ctl.gui()->addElement({"Handover", "pred_tuner"},
+				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"}, [this]() { return tuner; }, [this](const Eigen::Vector3d & to){tuner = to;}));
+			tuner << 200., 20., 0.;
+
+
+			/*Motion FOR CREATING MOCAP TEMPLATE*/
+			ctl.gui()->addElement({"Handover", "MOCAP_template"},
+				mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.06,0.37,0.72});
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.0}); } ),
+				mc_rtc::gui::Button( "pos1", [&ctl](){ ctl.posTaskL->position({0.5,0.3,1.1});
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos2", [&ctl](){ ctl.posTaskL->position({0.3,0.5,0.9});
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5});  } ),
+				mc_rtc::gui::Button( "pos3", [&ctl](){ ctl.posTaskL->position({0.6,0.2,1.2}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos4", [&ctl](){ ctl.posTaskL->position({0.3,0.3,1.3}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos5", [&ctl](){ ctl.posTaskL->position({0.55,0.4,1.0}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ),
+				mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.35,0.2,1.1}); 
+					auto gripper = ctl.grippers["l_gripper"].get();
+					gripper->setTargetQ({0.5}); } ) );
 
 
 			/*publish wrench*/
@@ -126,37 +156,6 @@ namespace mc_handover
 			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
 			comTask->com(initialCom);
 			ctl.solver().addTask(comTask);
-
-
-			// /*change prediction_ settings*/
-			// ctl.gui()->addElement({"Handover", "tuner"},
-			// 	mc_rtc::gui::ArrayInput("prediction_ tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
-			// // cout << "to " << to <<endl;
-
-			/*Motion FOR CREATING MOCAP TEMPLATE*/
-
-			ctl.gui()->addElement({"MOCAP", "temp"},
-				mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.06,0.37,0.72});
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.0}); } ),
-				mc_rtc::gui::Button( "pos1", [&ctl](){ ctl.posTaskL->position({0.5,0.3,1.1});
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5}); } ),
-				mc_rtc::gui::Button( "pos2", [&ctl](){ ctl.posTaskL->position({0.3,0.5,0.9});
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5});  } ),
-				mc_rtc::gui::Button( "pos3", [&ctl](){ ctl.posTaskL->position({0.6,0.2,1.2}); 
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5}); } ),
-				mc_rtc::gui::Button( "pos4", [&ctl](){ ctl.posTaskL->position({0.3,0.3,1.3}); 
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5}); } ),
-				mc_rtc::gui::Button( "pos5", [&ctl](){ ctl.posTaskL->position({0.55,0.4,1.0}); 
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5}); } ),
-				mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.35,0.2,1.1}); 
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5}); } ) );
 
 
 			/*configure MOCAP*/
@@ -327,6 +326,10 @@ namespace mc_handover
 
 					if( (i%t_observe == 0) && (prediction) )
 					{
+						/*prediction tuner*/
+						t_predict = (int)tuner(0);
+						t_observe = (int)tuner(1);
+
 						/*get robot ef current pose*/
 						curRotLeftEf = ltHand.rotation();
 						curPosLeftEf = ltHand.translation();
@@ -372,6 +375,7 @@ namespace mc_handover
 						wp = get<0>(wp_efL_obj);
 						
 						it = t_predict/t_observe;
+						cout << "it " << it << endl;
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
@@ -507,9 +511,7 @@ namespace mc_handover
 								/*move end effector*/
 								if(prediction)
 								{
-									// ctl.oriTaskL->orientation(initOriLeftEf);
-									// ctl.oriTaskL->orientation(sva::RotY(-(M_PI/180)*90));
-									ctl.posTaskL->position(handoverPos);									
+									ctl.posTaskL->position(handoverPos);
 									// ctl.posTaskL->refVel(refVel);
 									// ctl.posTaskL->refAccel(refAcc);
 									// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
