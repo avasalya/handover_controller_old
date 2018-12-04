@@ -65,17 +65,16 @@ namespace mc_handover
 
 			Eigen::Vector3d AB, CD, AC, AD, AO, AK, PQ;
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
-			Eigen::Vector3d initPosObj, ithPosObj, avgVelObj, predictPos;			
+			Eigen::Vector3d initPosObj, ithPosObj, avgVelObj, predictPos;
 
 			/*Eigen::Matrix3d::Identity();*/
 			Eigen::Matrix3d curRotLeftEfMarker;
 			Eigen::Matrix3d curRotLeftEf;
+			Eigen::Matrix3d initOriLeftEf;
 			Eigen::Matrix3d rotObj;
-			Eigen::Matrix3d initOriLEf;
 
 			Eigen::MatrixXd curVelObj, wp;
 			Eigen::MatrixXd newPosObj = Eigen::MatrixXd::Zero(3,t_observe);
-			// Eigen::MatrixXd vecGripperL12;
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_obj;
 
@@ -100,10 +99,9 @@ namespace mc_handover
 
 			Eigen::Vector3d move, target;
 			Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
-			Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos, initPos;
+			Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos;
 
-			/*mocap*/			
-
+			/*mocap*/
 			bool startCapture{false};
 			bool collected{false};
 			bool prediction{true}; // default true

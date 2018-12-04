@@ -51,11 +51,20 @@ namespace mc_handover
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
-			
 
-			/*EfL pos/ori Tasks*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), ctl.robots().robotIndex(), 5.0, 1000);
-			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 5.0, 1e5);
+
+			/*EfL pos Task*/
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
+			ctl.solver().addTask(ctl.posTaskL);
+			ctl.posTaskL->position({0.3,0.3,1.1});
+
+
+			/*EfL ori Task*/
+			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
+			ctl.solver().addTask(ctl.oriTaskL);
+
+			Eigen::Quaterniond q = {0.64, -0.01, -0.76, -0.06};//{.70, -0.02, -0.69, -0.14};
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*publish wrench*/
@@ -124,8 +133,7 @@ namespace mc_handover
 			// 	mc_rtc::gui::ArrayInput("prediction_ tuner", {"t_observe", "t_predict"}, [this]() { return tuner; }, [this](const Eigen::VectorXd & to){ tuner = to;}));
 			// // cout << "to " << to <<endl;
 
-			/*JUST FOR CREATING MOCAP TEMPLATE*/
-			ctl.solver().addTask(ctl.posTaskL);
+			/*Motion FOR CREATING MOCAP TEMPLATE*/
 
 			ctl.gui()->addElement({"MOCAP", "temp"},
 				mc_rtc::gui::Button( "init", [&ctl](){ ctl.posTaskL->position({0.06,0.37,0.72});
@@ -149,13 +157,6 @@ namespace mc_handover
 				mc_rtc::gui::Button( "pos6", [&ctl](){ ctl.posTaskL->position({0.35,0.2,1.1}); 
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({0.5}); } ) );
-
-
-			/*inital motion*/
-			ctl.posTaskL->position({0.3,0.3,1.1});
-
-			/*maintain initial orientation*/
-			initOriLEf = ctl.oriTaskL->orientation();
 
 
 			/*configure MOCAP*/
@@ -250,19 +251,19 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+			/*hand pose*/
+			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
+
+
 			/*set com pose*/
 			target = initialCom + move;
 			comTask->com(target);
+
 
 			/*Force sensor*/
 			auto leftTh = thresh.head(6);
 			// auto baseLeftTh = baseTh.head(6);
 			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
-
-
-			/*hand positions*/
-			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
-			// cout << "ltHand "<< ltHand.translation().transpose() << endl;
 
 
 			/*Get non-stop MOCAP Frame*/
@@ -292,18 +293,9 @@ namespace mc_handover
 			}
 
 
-			// t_observe = int(tuner(0));
-			// t_predict = int(tuner(1));
-
-
 			/* start only when ithFrame == 1 */
 			if(startCapture)
 			{
-				// if(s%1000==0)
-				// {
-				// 	cout <<"t_observe " << t_observe <<endl;
-				// }
-
 				/*get markers position FrameByFrame*/
 				if(Flag_CORTEX)
 				{
@@ -379,11 +371,9 @@ namespace mc_handover
 						wp_efL_obj=ctl.handoverTraj->constVelocity(ithPosObj, predictPos, t_predict);
 						wp = get<0>(wp_efL_obj);
 						
-						initRefPos << wp(0,0), wp(1,0), wp(2,0); //----> changed from 0th to it = (t_predict/t_observe)?
-
-						initPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
-						
 						it = t_predict/t_observe;
+						initRefPos << wp(0,it), wp(1,it), wp(2,it);
+
 						collected = true;
 					} //t_observe
 
@@ -441,6 +431,7 @@ namespace mc_handover
 							openGripper = true;
 							open_gripperL();
 							ctl.publishWrench();
+							closeGripper = false;
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand")
 						}
 						return false;
@@ -458,28 +449,28 @@ namespace mc_handover
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
 						/*check when gripper is closed w/o obj-- false positive case*/
-						else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
-						{
-							closeGripper = false;
-							openGripper = true;
-							open_gripperL();
-							cout << "gripper was closed -- false positive" <<endl;
-						}
+						// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
+						// {
+						// 	closeGripper = false;
+						// 	openGripper = true;
+						// 	open_gripperL();
+						// 	cout << "gripper was closed -- false positive" <<endl;
+						// }
 						return false;
-					};
-
+					};					
 
 					if( collected )
 					{
-						if(it<=wp.cols()-1) //for(int it=0; it<wp.cols(); it++)
+						if( it<wp.cols() )
 						{
+							it+= t_predict/t_observe;
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 							// cout << "wp " << wp.col(it).transpose()<<endl;
 
-							handoverPos = refPos + initPos -initRefPos;
+							handoverPos = curPosLeftEf + refPos - initRefPos;
 							// cout << "handoverPos " << handoverPos.transpose()<<endl;
 
-							refVel << avgVelObj;
+							// refVel << avgVelObj;
 							// refVel << Eigen::MatrixXd::Zero(3,1);
 							// refAcc << Eigen::MatrixXd::Zero(3,1);
 
@@ -497,12 +488,9 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
-								// if(s%1000==0)
-								// 	{	cout << "(handoverPos - curLEfPos).norm() " << (handoverPos - curLEfPos).norm() << endl;	}
-
-
 								/*control gripper*/
-								if( (handoverPos - curLEfPos).norm() <0.02 ) // *******should be with knuckle/object pos compare**********
+								if( (handoverPos - curLEfPos).norm() <0.02 ) 
+								// *******should be with knuckle/object pos compare**********
 								{
 									if(openGripper)
 									{
@@ -519,22 +507,21 @@ namespace mc_handover
 								/*move end effector*/
 								if(prediction)
 								{
-									ctl.oriTaskL->orientation(initOriLEf);
-									ctl.posTaskL->position(handoverPos);
-									ctl.posTaskL->refVel(refVel);
+									// ctl.oriTaskL->orientation(initOriLeftEf);
+									// ctl.oriTaskL->orientation(sva::RotY(-(M_PI/180)*90));
+									ctl.posTaskL->position(handoverPos);									
+									// ctl.posTaskL->refVel(refVel);
 									// ctl.posTaskL->refAccel(refAcc);
 									// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
 								}
-
 							}
-							// cout << "it "<<it<<endl;
-							it+= t_predict/t_observe;
-						}
-						else if(it==wp.cols())
-						{
-							// cout << "collected == false " <<endl;
-							prediction = true;
-							collected = false;
+
+							if(it==wp.cols())
+							{
+								prediction = true;
+								collected = false;
+								it = t_predict/t_observe;
+							}
 						}
 					} // collected
 
@@ -556,6 +543,7 @@ namespace mc_handover
 
 			ctl.solver().removeTask(comTask);
 			ctl.solver().removeTask(ctl.posTaskL);
+			ctl.solver().removeTask(ctl.oriTaskL);
 			// ctl.solver().removeTask(ctl.posTaskR);
 
 			ctl.gui()->removeElement({"Handover","com"}, "Move Com Pos");
