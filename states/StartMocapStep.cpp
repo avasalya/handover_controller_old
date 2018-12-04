@@ -444,7 +444,7 @@ namespace mc_handover
 					/*grasp object (close gripper)*/
 					auto compSubjRelPos = [&]()
 					{
-						prediction = false;
+						// prediction = false;
 						if( (closeGripper==false) && ( (area_ABC > area_ACO) || (area_ABD > area_ACO) ) )
 						{
 							close_gripperL();
@@ -465,7 +465,7 @@ namespace mc_handover
 							// cout << "wp " << wp.col(it).transpose()<<endl;
 
 							handoverPos = curPosLeftEf + refPos - initRefPos;
-							// cout << "handoverPos " << handoverPos.transpose()<<endl;
+							 cout << "handoverPos " << handoverPos.transpose()<<endl;
 
 							// handoverPosPrev = curPosLeftEf + refPosPrev - initRefPos;
 							// auto wpDiff = handoverPos - handoverPosPrev;
@@ -497,16 +497,18 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
+							     cout << "handoverPos inside " << handoverPos.transpose()<<endl;
+									ctl.posTaskL->position(handoverPos);
 
-								if(i%t_predict==0)
-								{
-									cout << "norm b/w robot and subj wrists " << ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm()<< endl;
+								//if(i%t_predict==0)
+								//{
+							  	//cout << "norm b/w robot and subj wrists " << ( markersPos[knuckleS].col(i) - markersPos[wristR].col(i) ).norm()<< endl;
 									// cout << " handoverPos and curPosLeftEf " << (handoverPos - curLEfPos).norm() << endl;
-								}
+								//}
 
 
 								/*control gripper*/
-								if( (handoverPos - curLEfPos).norm() <0.02 ) 
+								if( ( markersPos[knuckleS].col(i)- markersPos[wristR].col(i) ).norm() <1.0 ) 
 								{
 									if(openGripper)
 									{
@@ -523,7 +525,7 @@ namespace mc_handover
 								/*move end effector*/
 								if(prediction)
 								{
-									ctl.posTaskL->position(handoverPos);
+									//ctl.posTaskL->position(handoverPos);
 									// ctl.posTaskL->refVel(refVel);
 									// ctl.posTaskL->refAccel(refAcc);
 									// cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
@@ -534,6 +536,7 @@ namespace mc_handover
 							{
 								prediction = true;
 								collected = false;
+                 cout <<"collected "<<endl;
 								it = 0; //t_predict/t_observe;
 							}
 						}
