@@ -62,17 +62,17 @@ namespace mc_handover
 
 
 			/*EfL ori Task*/
-			// ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
-			// ctl.solver().addTask(ctl.oriTaskL);
-			// q = {0.64, -0.01, -0.76, -0.06};
-			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
+			ctl.solver().addTask(ctl.oriTaskL);
+			q = {0.64, -0.01, -0.76, -0.06};
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*change prediction_ settings*/
 			ctl.gui()->addElement({"Handover", "tuner"},
 				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"}, [this]() { return tuner; }, [this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
-			tuner << 200., 20., 0.; 
+			tuner << 400., 20., 0.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
 			newPosSubj = Eigen::MatrixXd::Zero(3,t_observe);
