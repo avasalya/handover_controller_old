@@ -33,8 +33,8 @@ namespace mc_handover
 
 
 			int fps{200};
-			int t_predict{200};//1sec
-			int t_observe{20}; //100ms
+			int t_predict;
+			int t_observe;
 			int it;
 			Eigen::Vector3d tuner;
 
@@ -71,8 +71,7 @@ namespace mc_handover
 			Eigen::Matrix3d curRotLeftEf;
 			Eigen::Matrix3d rotSubj;
 
-			Eigen::MatrixXd curVelSubj, wp;
-			Eigen::MatrixXd newPosSubj = Eigen::MatrixXd::Zero(3,t_observe);
+			Eigen::MatrixXd curVelSubj, wp, newPosSubj;
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
