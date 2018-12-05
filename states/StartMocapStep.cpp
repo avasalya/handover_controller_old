@@ -488,24 +488,32 @@ namespace mc_handover
 
 					if( collected )
 					{
-						initRefPos << wp(0,0), wp(1,0), wp(2,0);
+
+
 						auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
+							//refPos << wp(0,it), wp(1,it), wp(2,it);
+							handoverPos = curLEfPos + predictPos;
+							refVel << 0.05, 0.05, 0.05;//Eigen::MatrixXd::Zero(3,1);
+						//initRefPos << wp(0,0), wp(1,0), wp(2,0);
+						
+//auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
 
-						for(int it=0; it<wp.cols(); it++)// if( it<wp.cols() ) //if(it<t_observe) //
-						{
+						//for(int it=0; it<wp.cols(); it++)// if( it<wp.cols() ) //if(it<t_observe) //
+					//	{
 							// it+= t_predict/t_observe;
-							refPos << wp(0,it), wp(1,it), wp(2,it);
+						//auto curLEfPos = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")].translation();
+							//refPos << wp(0,it), wp(1,it), wp(2,it);
+							//handoverPos = curLEfPos + refPos - initRefPos;
+							//refVel << 0.05, 0.05, 0.05;//Eigen::MatrixXd::Zero(3,1);
+						//	refAcc << Eigen::MatrixXd::Zero(3,1);
 
-							handoverPos = curLEfPos + refPos - initRefPos;
 
-							refVel << Eigen::MatrixXd::Zero(3,1);
-							refAcc << Eigen::MatrixXd::Zero(3,1);
-
-
-							handoverPos = refPos + curPosLeftEf - initRefPos;
+							//handoverPos = refPos + curPosLeftEf - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
+							//if(	(handoverPos(2))<= 0.9 && (handoverPos(2))<= 1.5)
+							
+              if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
 								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 ) 
 							{
 								/*control head*/
@@ -516,9 +524,9 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 
-							 	// cout << "handoverPos " << handoverPos.transpose()-curLEfPos.transpose()<<endl;
+							 	cout << "handoverPos " << handoverPos.transpose()-curLEfPos.transpose()<<endl;
 								ctl.posTaskL->position(handoverPos);
-								// ctl.posTaskL->refVel(refVel);
+								ctl.posTaskL->refVel(refVel);
 								// ctl.posTaskL->refAccel(refAcc);
 
 								//if(i%t_predict==0)
@@ -551,7 +559,7 @@ namespace mc_handover
 								// 	ctl.posTaskL->refAccel(refAcc);
 								// 	cout << "posTaskL pos " << ctl.posTaskL->position().transpose()<<endl;
 								// }
-							}
+						//	}
 
 							// if(it==wp.cols())//if(it==t_observe) 
 							// {
