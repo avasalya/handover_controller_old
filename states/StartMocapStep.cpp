@@ -465,7 +465,7 @@ namespace mc_handover
 
 						auto curLEfPos = ltHand.translation();
 
-						for(int it=0; it<wp.cols(); it++)// if( it<wp.cols() ) //if(it<t_observe) //
+						for(int it=0; it<wp.cols(); it+=10)// if( it<wp.cols() ) //if(it<t_observe) //
 						{
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 							
