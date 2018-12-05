@@ -38,6 +38,11 @@ namespace mc_handover
 			int it;
 			Eigen::Vector3d tuner;
 
+
+			Eigen::Vector3d dummy;
+			Eigen::Quaterniond q;
+			
+
 			/*mocap_simulaton*/
 			double pt;
 			std::vector<Eigen::MatrixXd> pos;
