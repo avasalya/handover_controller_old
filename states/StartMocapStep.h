@@ -46,7 +46,7 @@ namespace mc_handover
 			int  s{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{true}; // default True for MOCAP
+			bool Flag_CORTEX{false}; // default True for MOCAP
 
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::MatrixXd> markersPos;
@@ -64,7 +64,7 @@ namespace mc_handover
 
 			Eigen::Vector3d AB, CD, AC, AD, AO, AK, PQ;
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
-			Eigen::Vector3d initPosSubj, ithPosSubj, avgVelSubj, predictPos;
+			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
 			Eigen::Quaterniond q;
 
