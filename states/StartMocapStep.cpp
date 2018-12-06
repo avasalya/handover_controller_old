@@ -401,7 +401,7 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						it = (int)t_predict/t_observe;
+						it = 40+(int)t_predict/t_observe;
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
@@ -413,7 +413,7 @@ namespace mc_handover
 					/*feed Ef pose*/
 					if( collected )
 					{
-						it+= (int)t_predict/t_observe;
+						it+= 40+(int)t_predict/t_observe;
 						
 						auto curLEfPos = ltHand.translation();
 
