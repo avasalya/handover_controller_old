@@ -38,11 +38,6 @@ namespace mc_handover
 			int it;
 			Eigen::Vector3d tuner;
 
-
-			Eigen::Vector3d dummy;
-			Eigen::Quaterniond q;
-			
-
 			/*mocap_simulaton*/
 			double pt;
 			std::vector<Eigen::MatrixXd> pos;
@@ -70,6 +65,8 @@ namespace mc_handover
 			Eigen::Vector3d AB, CD, AC, AD, AO, AK, PQ;
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d initPosSubj, ithPosSubj, avgVelSubj, predictPos;
+
+			Eigen::Quaterniond q;
 
 			/*Eigen::Matrix3d::Identity();*/
 			Eigen::Matrix3d curRotLeftEfMarker;
@@ -106,7 +103,6 @@ namespace mc_handover
 			/*mocap*/
 			bool startCapture{false};
 			bool collected{false};
-			bool prediction{true}; // default true
 
 			bool openGripper{true};
 			bool closeGripper{false};

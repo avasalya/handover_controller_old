@@ -75,7 +75,7 @@ namespace mc_handover
 			tuner << 400., 20., 0.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
-			newPosSubj = Eigen::MatrixXd::Zero(3,t_observe);
+			newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
@@ -156,7 +156,7 @@ namespace mc_handover
 				);
 
 			comTask = std::make_shared<mc_tasks::CoMTask>
-			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);//10, 1e3
+			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);
 			// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
 
 			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
@@ -318,7 +318,6 @@ namespace mc_handover
 				}
 
 
-
 				/* check for non zero frame only and store them */ 
 				if(	Markers[wristR](0)!= 0 && Markers[wristR](0)< 100
 					&&  Markers[object](0)!= 0 && Markers[object](0)< 100
@@ -329,7 +328,31 @@ namespace mc_handover
 						{	markersPos[m].col(i) << Markers[m];	}
 
 
-					if( (i%t_observe == 0) && (prediction) )
+					/*direction vectors, projections and area*/
+					CD = markersPos[gripperLC].col(i)-markersPos[gripperLD].col(i);
+					AB = markersPos[gripperLB].col(i)-markersPos[gripperLA].col(i);
+					AC = markersPos[gripperLC].col(i)-markersPos[gripperLA].col(i);
+					AD = markersPos[gripperLD].col(i)-markersPos[gripperLA].col(i);
+					AK = markersPos[knuckleS].col(i) -markersPos[gripperLA].col(i);
+					AO = markersPos[object].col(i)	 -markersPos[gripperLA].col(i);
+
+					auto AB_theta_AC = acos( AB.dot(AC)/( AB.norm()*AC.norm() ) );
+					auto AB_theta_AD = acos( AB.dot(AD)/( AB.norm()*AD.norm() ) );
+					auto AC_theta_AO = acos( AC.dot(AO)/( AC.norm()*AO.norm() ) );
+					auto AC_theta_AK = acos( AC.dot(AK)/( AC.norm()*AK.norm() ) );
+
+					auto area_ABC = 0.5*AB.norm()*AC.norm()*sin(AB_theta_AC);
+					auto area_ABD = 0.5*AB.norm()*AD.norm()*sin(AB_theta_AD);
+					auto area_ACO = 0.5*AC.norm()*AO.norm()*sin(AC_theta_AO);
+					auto area_ACK = 0.5*AC.norm()*AK.norm()*sin(AC_theta_AK);
+
+					// PQ = markersPos[wristR].col(i)-markersPos[elbowR].col(i);
+					// auto CD_proj_PQ = (CD.dot(PQ)*PQ)/PQ.squaredNorm();
+					// auto AB_proj_PQ = (AB.dot(PQ)*PQ)/PQ.squaredNorm();
+
+
+					/*prediction control*/
+					if( i%t_observe == 0 )
 					{
 						/*prediction tuner*/
 						t_predict = (int)tuner(0);
@@ -370,39 +393,98 @@ namespace mc_handover
 						avgVelSubj  << ctl.handoverTraj->takeAverage(curVelSubj);
 
 						/*predict position in straight line after t_predict time*/
-						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelSubj, initPosSubj, t_predict);
+						// predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelSubj, initPosSubj, t_predict);
+
+						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
 
 						/*get predicted way points between left ef and Subj*/
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
+						it = (int)t_predict/t_observe;
+						initRefPos << wp(0,it), wp(1,it), wp(2,it);
+
 						collected = true;
 					} //t_observe
 
-					
 
-					/*direction vectors, projections and area*/
-					CD = markersPos[gripperLC].col(i)-markersPos[gripperLD].col(i);
-					AB = markersPos[gripperLB].col(i)-markersPos[gripperLA].col(i);
-					AC = markersPos[gripperLC].col(i)-markersPos[gripperLA].col(i);
-					AD = markersPos[gripperLD].col(i)-markersPos[gripperLA].col(i);
-					AK = markersPos[knuckleS].col(i) -markersPos[gripperLA].col(i);
-					AO = markersPos[object].col(i)	 -markersPos[gripperLA].col(i);
 
-					auto AB_theta_AC = acos( AB.dot(AC)/( AB.norm()*AC.norm() ) );
-					auto AB_theta_AD = acos( AB.dot(AD)/( AB.norm()*AD.norm() ) );
-					auto AC_theta_AO = acos( AC.dot(AO)/( AC.norm()*AO.norm() ) );
-					auto AC_theta_AK = acos( AC.dot(AK)/( AC.norm()*AK.norm() ) );
 
-					auto area_ABC = 0.5*AB.norm()*AC.norm()*sin(AB_theta_AC);
-					auto area_ABD = 0.5*AB.norm()*AD.norm()*sin(AB_theta_AD);
-					auto area_ACO = 0.5*AC.norm()*AO.norm()*sin(AC_theta_AO);
-					auto area_ACK = 0.5*AC.norm()*AK.norm()*sin(AC_theta_AK);
+					// /*feed Ef pose*/
+					// if( collected )
+					// {
+					// 	it+= (int)t_predict/t_observe;
+						
+					// 	auto curLEfPos = ltHand.translation();
 
-					// PQ = markersPos[wristR].col(i)-markersPos[elbowR].col(i);
-					// auto CD_proj_PQ = (CD.dot(PQ)*PQ)/PQ.squaredNorm();
-					// auto AB_proj_PQ = (AB.dot(PQ)*PQ)/PQ.squaredNorm();
+					// 	if(it<=wp.cols())
+					// 	{	
+					// 		refPos << wp(0,it), wp(1,it), wp(2,it);
 
+					// 		handoverPos = curLEfPos + refPos - initRefPos;
+						
+					// 		/*robot constraint*/
+					// 		if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
+					// 			(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 ) 
+					// 		{
+					// 			/*control head*/
+					// 			if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
+					// 			else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
+	
+					// 			if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
+					// 			else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
+	
+					// 			/*handover position*/
+					// 			ctl.posTaskL->position(handoverPos);
+					// 			auto  curPos = ltHand.translation();
+					// 			// cout << "diff "<< handoverPos.transpose()- curPos.transpose()<<endl;
+					// 		}
+					// 		if(it==wp.cols())
+					// 		{
+					// 			collected  = false;
+					// 		}
+					// 	}
+					// } // collected
+
+
+
+
+					/*feed Ef pose*/
+					if( collected )
+					{
+						initRefPos << wp(0,0), wp(1,0), wp(2,0);
+
+						auto curLEfPos = ltHand.translation();
+
+						for(int it=0; it<wp.cols(); it+=10)
+						{
+							refPos << wp(0,it), wp(1,it), wp(2,it);
+							
+							handoverPos = curLEfPos + refPos - initRefPos;
+
+							// refVel << 0.1, 0.1, 0.1;
+							// refAcc << Eigen::MatrixXd::Zero(3,1);
+
+							/*robot constraint*/
+							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
+								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 ) 
+							{
+								/*control head*/
+								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
+								else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
+
+								if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
+								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
+
+
+								/*handover position*/
+								ctl.posTaskL->position(handoverPos);
+								// ctl.posTaskL->refVel(refVel);
+								// ctl.posTaskL->refAccel(refAcc);
+							}
+						}
+						collected  = false;
+					} // collected
 
 
 					/*gripper control*/
@@ -412,7 +494,6 @@ namespace mc_handover
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({0.0});
 					};
-
 
 					auto open_gripperL = [&]()
 					{
@@ -458,60 +539,18 @@ namespace mc_handover
 					};
 
 
+					// /*object grasping control*/
+					// if(i%1000==0)
+					// 	{	cout<<"norm " << ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i) ).norm() <<endl;	}
 
-					if( collected )
-					{
-						initRefPos << wp(0,0), wp(1,0), wp(2,0);
-
-						auto curLEfPos = ltHand.translation();
-
-						for(int it=0; it<wp.cols(); it+=10)// if( it<wp.cols() ) //if(it<t_observe) //
-						{
-							refPos << wp(0,it), wp(1,it), wp(2,it);
-							
-							handoverPos = curLEfPos + refPos - initRefPos;
-
-							refVel << .1, 0.1, 0.1;
-							refAcc << Eigen::MatrixXd::Zero(3,1);
-
-
-							/*robot constraint*/
-							//if(	(handoverPos(2))<= 0.9 && (handoverPos(2))<= 1.5)
-							
-							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
-								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 ) 
-							{
-								/*control head*/
-								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-								else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
-
-								if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
-								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
-
-								// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
-
-								ctl.posTaskL->position(handoverPos);
-								// ctl.posTaskL->refVel(refVel);
-								// ctl.posTaskL->refAccel(refAcc);
-								// cout << "ctl.posTaskL->refVel " << ctl.posTaskL->speed().transpose() <<endl;
-
-
-								if( (handoverPos - curLEfPos).norm() <0.02 )
-								{
-									if(openGripper)
-									{
-										// open_gripperL();
-									}
-									// compObjRelPos();
-								}
-							}
-						}
-						collected  = false;
-					} // collected
-
-
-
-
+					// if( ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i)).norm() <0.2 )
+					// {
+					// 	if(openGripper)
+					// 	{
+					// 		open_gripperL();
+					// 	}
+					// 	compObjRelPos();
+					// }
 
 					/*iterator*/
 					i+= 1;
@@ -543,13 +582,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
-
-
-/*check when gripper is closed w/o obj-- false positive case*/
-// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
-// {
-// 	closeGripper = false;
-// 	openGripper = true;
-// 	open_gripperL();
-// 	cout << "gripper was closed -- false positive" <<endl;
-// }
