@@ -106,10 +106,10 @@ namespace mc_handover
 				// 	[this,&ctl](){ return ctl.robots().robot(0).bodyPosW("LARM_LINK7"); },
 				// 	[this,&ctl](const sva::PTransformd & pos){ctl.posTaskL->position(pos.translation());} ),
 
-				, mc_rtc::gui::ArrayInput("random_pos",
-					{"x", "y", "z"},
-					[this]() {return randPos;},
-					[this, &ctl](const Eigen::Vector3d & t){randPos = t; ctl.posTaskL->position(randPos);} )
+				// , mc_rtc::gui::ArrayInput("random_pos",
+				// 	{"x", "y", "z"},
+				// 	[this]() { return randPos; },
+				// 	[this, &ctl](const Eigen::Vector3d & t){randPos = t; ctl.posTaskL->position(randPos);} )
 				);
 
 
@@ -308,7 +308,7 @@ namespace mc_handover
 
 
 			/* start only when ithFrame == 1 */
-			if(!startCapture)
+			if(startCapture)
 			{
 				/*get markers position FrameByFrame*/
 				if(Flag_CORTEX)
@@ -347,12 +347,14 @@ namespace mc_handover
 					AO = markersPos[object].col(i)	 -markersPos[gripperLA].col(i);
 
 					auto AB_theta_AC = acos( AB.dot(AC)/( AB.norm()*AC.norm() ) );
-					auto AB_theta_AD = acos( AB.dot(AD)/( AB.norm()*AD.norm() ) );
+					// auto AB_theta_AD = acos( AB.dot(AD)/( AB.norm()*AD.norm() ) );
 					auto AC_theta_AO = acos( AC.dot(AO)/( AC.norm()*AO.norm() ) );
+					auto AC_theta_AD = acos( AC.dot(AD)/( AC.norm()*AD.norm() ) );
 					auto AC_theta_AK = acos( AC.dot(AK)/( AC.norm()*AK.norm() ) );
 
 					auto area_ABC = 0.5*AB.norm()*AC.norm()*sin(AB_theta_AC);
-					auto area_ABD = 0.5*AB.norm()*AD.norm()*sin(AB_theta_AD);
+					// auto area_ABD = 0.5*AB.norm()*AD.norm()*sin(AB_theta_AD);
+					auto area_ACD = 0.5*AB.norm()*AC.norm()*sin(AC_theta_AD);
 					auto area_ACO = 0.5*AC.norm()*AO.norm()*sin(AC_theta_AO);
 					auto area_ACK = 0.5*AC.norm()*AK.norm()*sin(AC_theta_AK);
 
@@ -391,7 +393,6 @@ namespace mc_handover
 
 							newPosSubj.col(j-1) = Subj_X_efL.translation();
 
-							/*get Subj marker initials*/
 							if(j==t_observe)
 								{ ithPosSubj  = newPosSubj.col(t_observe-1); }
 						}
@@ -469,35 +470,40 @@ namespace mc_handover
 					auto checkForce = [&](const char * axis_name, int idx)
 					{
 						/**** dont use fabs & check also force direction ****/
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (area_ABC > area_ACK) || (area_ABD > area_ACK) ) )
+						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (area_ABC > area_ACK) || (area_ACD > area_ACK) ) )
 						{
 							openGripper = true;
 							open_gripperL();
+							closeGripper = false;
 							ctl.publishWrench();
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand")
+							return true;
 						}
-						return false;
+						else
+							{ return false; }
 					};
 
 
 					/*grasp object (close gripper)*/
 					auto compObjRelPos = [&]()
 					{
-						if( (closeGripper==false) && ( (area_ABC > area_ACO) || (area_ABD > area_ACO) ) )
+						if( (closeGripper==false) && ( (area_ABC > area_ACO) || (area_ACD > area_ACO) ) )
 						{
 							close_gripperL();
 							cout << "object is inside gripper, closing gripper" <<endl;
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
-						/*check when gripper is closed w/o obj-- false positive case*/
-						else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
-						{
-							closeGripper = false;
-							openGripper = true;
-							open_gripperL();
-							cout << "gripper was closed -- false positive" <<endl;
-						}
-						return false;
+						else
+							{ return false; }
+
+						// /*check when gripper is closed w/o obj-- false positive case*/
+						// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
+						// {
+						// 	closeGripper = false;
+						// 	openGripper = true;
+						// 	open_gripperL();
+						// 	cout << "gripper was closed -- false positive" <<endl;
+						// }
 					};
 
 
@@ -505,13 +511,13 @@ namespace mc_handover
 					// if(i%1000==0)
 						// {	cout<<"norm " << ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i) ).norm() <<endl;	}
 
-					if( ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i)).norm() <0.2 )
+					if( ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i) ).norm() <0.2 )
 					{
 						if(openGripper)
 						{
-							// open_gripperL();
+							open_gripperL();
 						}
-						// compObjRelPos();
+						compObjRelPos();
 					}
 
 					/*iterator*/

@@ -169,8 +169,8 @@ namespace mc_handover
 		//////////////
 	bool HandoverController::publishWrench()
 	{
-		cout << "left hand wrenches " << wrenches.at("LeftHandForceSensor") <<  endl;
-		cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
+		cout << "left hand forces " << wrenches.at("LeftHandForceSensor").force() <<  endl;
+		// cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
 
 		runOnce = false;
 			// this will make initial_COM to set on previous given pos
