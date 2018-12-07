@@ -480,7 +480,13 @@ namespace mc_handover
 							return true;
 						}
 						else
-							{ return false; }
+							{ 
+                if(i%2000==0)
+                {
+                  ctl. publishWrench();
+                  //return false; 
+                }
+             }
 					};
 
 
@@ -491,10 +497,13 @@ namespace mc_handover
 						{
 							close_gripperL();
 							cout << "object is inside gripper, closing gripper" <<endl;
-							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
-						else
-							{ return false; }
+	        //return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+						
+						//ielse
+							//{ return false; }
+
+            	return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 
 						// /*check when gripper is closed w/o obj-- false positive case*/
 						// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
