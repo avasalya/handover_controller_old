@@ -1,7 +1,3 @@
-/*------------------------------TO DOs----------------------------------------------
---- if(wp_efL_obj-predictPos).eval().norm()> xxx -- pick another closet point on line
-----------------------------------------------------------------------------------*/
-
 #include "StartMocapStep.h"
 
 namespace mc_handover
@@ -12,8 +8,8 @@ namespace mc_handover
 
 		void StartMocapStep::configure(const mc_rtc::Configuration & config)
 		{
-			thresh         = config("handsWrenchTh");
-			baseTh         = config("handsWrenchBaseTh");
+			thresh 	= config("handsWrenchTh");
+			baseTh 	= config("handsWrenchBaseTh");
 			handsWrenchDir = config("handsWrenchDir");
 		}
 
@@ -23,15 +19,10 @@ namespace mc_handover
 		{
 			const char *szLevel = NULL;
 
-			if (iLevel == VL_Debug) {
-				szLevel = "Debug";
-			} else if (iLevel == VL_Info) {
-				szLevel = "Info";
-			} else if (iLevel == VL_Warning) {
-				szLevel = "Warning";
-			} else if (iLevel == VL_Error) {
-				szLevel = "Error";
-			}
+			if (iLevel == VL_Debug) { szLevel = "Debug"; }
+			else if (iLevel == VL_Info) { szLevel = "Info"; }
+			else if (iLevel == VL_Warning) { szLevel = "Warning"; }
+			else if (iLevel == VL_Error) { szLevel = "Error"; }
 			printf("  %s: %s\n", szLevel, szMsg);
 		}
 
@@ -65,12 +56,15 @@ namespace mc_handover
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
 			q = {0.64, -0.01, -0.76, -0.06};
+			// q = {-0.42, -0.5, 0.56, 0.49};
 			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*change prediction_ settings*/
 			ctl.gui()->addElement({"Handover", "tuner"},
-				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"}, [this]() { return tuner; }, [this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
+				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"},
+				[this]() { return tuner; }, 
+				[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
 			tuner << 400., 20., 0.; 
 			t_predict = (int)tuner(0);
@@ -143,7 +137,7 @@ namespace mc_handover
 
 
 			/*move object using cursor or simData*/
-			ctl.gui()->addElement({"Handover","move object"},
+			ctl.gui()->addElement({"Handover","move_object"},
 				mc_rtc::gui::Transform("Position", 
 					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
 					[this,&ctl](const sva::PTransformd & pos) { 
@@ -152,7 +146,7 @@ namespace mc_handover
 						ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 					})
 				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[object]}); return Markers[object];})
+				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[knuckleS]}); return Markers[knuckleS];})
 				);
 
 
@@ -201,12 +195,10 @@ namespace mc_handover
 				// get name of bodies being tracked and its set of markers //
 				printf("\n****** Cortex_GetBodyDefs ******\n");
 				pBodyDefs = Cortex_GetBodyDefs();
-				if (pBodyDefs == NULL) 
+				if (pBodyDefs == NULL)
+					{ printf("Failed to get body defs\n"); } 
+				else
 				{
-					printf("Failed to get body defs\n");
-				} 
-				else 
-				{  
 					totalBodies = pBodyDefs->nBodyDefs;
 					cout << "total no of bodies tracked " << totalBodies << endl;
 					for(int iBody=0; iBody<totalBodies; iBody++)
@@ -216,9 +208,7 @@ namespace mc_handover
 						cout << "number of markers defined in body " << iBody+1 << " (\"" << pBody->szName << "\") : " << bodyMarkers.at(iBody) << endl;    
 
 						for (int iMarker=0 ; iMarker<pBody->nMarkers; iMarker++)
-						{
-							cout << iMarker << " " << pBody->szMarkerNames[iMarker] << endl;
-						}
+							{ cout << iMarker << " " << pBody->szMarkerNames[iMarker] << endl; }
 					}
 				}
 				printf("\n*** start live mode ***\n");
@@ -226,7 +216,7 @@ namespace mc_handover
 			}
 			else /*simulation*/
 			{
-				startCapture = true;
+				startCapture = false; //true for sim
 				
 				name = {"simData3"};
 				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
@@ -256,7 +246,7 @@ namespace mc_handover
 			Markers.resize(maxMarkers);
 			markersPos.resize(maxMarkers);
 			for(int m=0; m<maxMarkers; m++)
-				{	markersPos[m] = Eigen::MatrixXd::Zero(3,60000);	}
+				{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000);	}
 		}// start
 
 
@@ -290,15 +280,9 @@ namespace mc_handover
 				del+=FrameofData.fDelay;
 
 				if(ithFrame == 0 || ithFrame == 1)
-				{ 
-					startCapture = true;
-					// int firstFrame = ithFrame;
-					// cout << "firstFrame " << firstFrame << endl;
-				}
+					{ startCapture = true; }
 				else if(ithFrame <0)
 				{ 
-					// int nthFrame = ithFrame;
-					// cout << "nthFrame "<< nthFrame << endl;
 					Cortex_Request("Pause", &pResponse, &nBytes);
 					Cortex_Exit();
 					output("OK");
@@ -324,7 +308,7 @@ namespace mc_handover
 				else /*simulation*/
 				{
 					for(int m=0; m<maxMarkers; m++)
-						{	Markers[m] = pos[m].col(s);	}
+						{ Markers[m] = pos[m].col(s); }
 				}
 
 
@@ -363,25 +347,43 @@ namespace mc_handover
 					// auto AB_proj_PQ = (AB.dot(PQ)*PQ)/PQ.squaredNorm();
 
 
+					/*get robot ef current pose*/
+					curRotLeftEf = ltHand.rotation();
+					curPosLeftEf = ltHand.translation();
+					sva::PTransformd R_X_efL(curPosLeftEf);
+					
+					/*get robot ef marker(s) current pose*/
+					auto efGripperPos =
+					( markersPos[gripperLA].col((i-t_observe)+1) + markersPos[gripperLB].col((i-t_observe)+1) +
+						markersPos[gripperLC].col((i-t_observe)+1) + markersPos[gripperLD].col((i-t_observe)+1) )/4;
+
+					curPosLeftEfMarker << efGripperPos;
+					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+
+					sva::PTransformd R_X_M = R_X_efL.inv()*M_X_efLMarker;
+
+					sva::PTransformd R_X_KnuckleS = R_X_M.inv()*markersPos[knuckleS].col(i);
+
+
 					/*prediction control*/
-					if( i%t_observe == 0 )
+					if( (i%t_observe == 0) && prediction )
 					{
 						/*prediction tuner*/
 						t_predict = (int)tuner(0);
 						t_observe = (int)tuner(1);
 
-						/*get robot ef current pose*/
-						curRotLeftEf = ltHand.rotation();
-						curPosLeftEf = ltHand.translation();
-						sva::PTransformd R_X_efL(curPosLeftEf);
+						// /*get robot ef current pose*/
+						// curRotLeftEf = ltHand.rotation();
+						// curPosLeftEf = ltHand.translation();
+						// sva::PTransformd R_X_efL(curPosLeftEf);
 
-						/*get robot ef marker(s) current pose*/
-						auto efGripperPos =
-						( markersPos[gripperLA].col((i-t_observe)+1) + markersPos[gripperLB].col((i-t_observe)+1) +
-							markersPos[gripperLC].col((i-t_observe)+1) + markersPos[gripperLD].col((i-t_observe)+1) )/4;
+						// /*get robot ef marker(s) current pose*/
+						// auto efGripperPos =
+						// ( markersPos[gripperLA].col((i-t_observe)+1) + markersPos[gripperLB].col((i-t_observe)+1) +
+						// 	markersPos[gripperLC].col((i-t_observe)+1) + markersPos[gripperLD].col((i-t_observe)+1) )/4;
 
-						curPosLeftEfMarker << efGripperPos;
-						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+						// curPosLeftEfMarker << efGripperPos;
+						// sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
@@ -412,7 +414,7 @@ namespace mc_handover
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
-					} //t_observe
+					}//t_observe
 
 
 					/*feed Ef pose*/
@@ -443,11 +445,9 @@ namespace mc_handover
 								ctl.posTaskL->position(handoverPos);
 							}
 							if(it==wp.cols())
-							{
-								collected  = false;
-							}
+								{ collected  = false; }
 						}
-					} // collected
+					}// collected
 
 
 					/*gripper control*/
@@ -479,14 +479,6 @@ namespace mc_handover
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand")
 							return true;
 						}
-						else
-							{ 
-                if(i%2000==0)
-                {
-                  ctl. publishWrench();
-                  //return false; 
-                }
-             }
 					};
 
 
@@ -498,43 +490,29 @@ namespace mc_handover
 							close_gripperL();
 							cout << "object is inside gripper, closing gripper" <<endl;
 						}
-	        //return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
-						
-						//ielse
-							//{ return false; }
-
-            	return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
-
-						// /*check when gripper is closed w/o obj-- false positive case*/
-						// else if( (closeGripper==true) && ( (area_ABC < area_ACO) || (area_ABD < area_ACO) ) )
-						// {
-						// 	closeGripper = false;
-						// 	openGripper = true;
-						// 	open_gripperL();
-						// 	cout << "gripper was closed -- false positive" <<endl;
-						// }
+						return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 					};
 
-
-					/*object grasping control*/
-					// if(i%1000==0)
-						// {	cout<<"norm " << ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i) ).norm() <<endl;	}
-
+					
+					/*handover control*/
 					if( ( markersPos[wristR].col(i)-markersPos[knuckleS].col(i) ).norm() <0.2 )
 					{
 						if(openGripper)
-						{
-							open_gripperL();
-						}
+							{ open_gripperL(); }
+						prediction = false;
 						compObjRelPos();
 					}
+					else
+						{prediction = true;}
 
 					/*iterator*/
 					i+= 1;
 				}// check for non zero frame
+
 				/*iterator for sim data*/
 				s+= 1;
-			} // startCapture
+			}// startCapture
+
 			// output("OK");
 			return false;
 		}// run
@@ -547,15 +525,19 @@ namespace mc_handover
 			ctl.solver().removeTask(comTask);
 			ctl.solver().removeTask(ctl.posTaskL);
 			ctl.solver().removeTask(ctl.oriTaskL);
-			// ctl.solver().removeTask(ctl.posTaskR);
 
-			ctl.gui()->removeElement({"Handover","com"}, "Move Com Pos");
-			ctl.gui()->removeElement({"Handover","wrench"},"publish_current_wrench");
-			ctl.gui()->removeElement({"Handover","wrench"}, "Threshold");
-			ctl.gui()->removeElement({"Handover", "object marker log"}, "log_data");
-			// ctl.gui()->removeElement({"Handover", "move object"}, "Position");
+			ctl.gui()->removeCategory({"Handover"});
 		}
 
 	} // namespace states
 
 } // namespace mc_handover
+
+/*------------------------------TO DOs----------------------------------------------
+--- fix threshold
+--- stop prediction during handover
+
+--- add different object & orientation
+
+--- record/display pos trail in rviz***
+----------------------------------------------------------------------------------*/
