@@ -391,7 +391,7 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						it = 40+(int)t_predict/t_observe;
+						it = 80;//40+(int)t_predict/t_observe;
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
@@ -399,29 +399,29 @@ namespace mc_handover
 
 
 					
-					// auto curLEfPos = ltHand.translation();
-					// handoverPos = curLEfPos + predictPos;
-
-					// /*robot constraint*/
-					// if(	(handoverPos(0))<= 0.8 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.8 &&
-					// 	(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
-					// {
-					// 	/*control head*/
-					// 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-					// 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
-
-					// 	if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
-					// 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
-
-					// 	/*handover position*/
-					// 	ctl.posTaskL->position(handoverPos);
-					// }
-
+//					 auto curLEfPos = ltHand.translation();
+//					 handoverPos = curLEfPos + predictPos;
+//
+//					 /*robot constraint*/
+//					 if(	(handoverPos(0))<= 0.8 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.8 &&
+//					 	(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
+//				 {
+//					 	/*control head*/
+//					 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
+//					 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
+//
+//					 	if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
+//					 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
+//
+//					 	/*handover position*/
+//					 	ctl.posTaskL->position(handoverPos);
+//					 }
+//
 
 					/*feed Ef pose*/
 					if( collected )
 					{
-						it+= 40+(int)t_predict/t_observe;
+						it+= 80;//40+(int)t_predict/t_observe;
 						
 						auto curLEfPos = ltHand.translation();
 
@@ -432,7 +432,7 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
+							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.8 &&
 								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 && prediction ) 
 							{
 								/*control head*/
