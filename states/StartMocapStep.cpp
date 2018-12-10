@@ -360,7 +360,7 @@ namespace mc_handover
 					sva::PTransformd R_X_efL(curPosLeftEf);
 
 					rotSubj = Eigen::Matrix3d::Identity();
-					sva::PTransformd M_X_Subj(rotSubj, markersPos[knuckleS].col(i)); //.middleCols((i-t_observe)+j,i));
+					sva::PTransformd M_X_Subj(rotSubj, markersPos[knuckleS].col(i));
 
 					/*subj marker(s) pose w.r.t to robot EF frame*/
 					Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
@@ -413,7 +413,7 @@ namespace mc_handover
 
 							/*robot constraint*/
 							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.6 && (handoverPos(2))<=1.5 &&
-								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 ) 
+								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.25 && (handoverPos(2))>=0.9 && prediction ) 
 							{
 								/*control head*/
 								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
