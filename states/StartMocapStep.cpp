@@ -146,7 +146,7 @@ namespace mc_handover
 						ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
 					})
 				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Markers[knuckleS]}); return Markers[knuckleS];})
+				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Subj_X_efL.translation()}); return Subj_X_efL.translation();})
 				);
 
 
@@ -369,11 +369,11 @@ namespace mc_handover
 					{
 						newPosSubj.col(j-1) = Subj_X_efL.translation();
 						if(j==t_observe)
-							{ ithPosSubj  = newPosSubj.col(t_observe-1); j=1; }
+							{ ithPosSubj = newPosSubj.col(t_observe-1); j=1; }
 						j++;
 					}
 
-					/*prediction control*/
+					/*predicted pos*/
 					if( (i%t_observe == 0) && prediction )
 					{
 						/*prediction tuner*/
