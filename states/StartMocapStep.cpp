@@ -347,23 +347,31 @@ namespace mc_handover
 					// auto AB_proj_PQ = (AB.dot(PQ)*PQ)/PQ.squaredNorm();
 
 
+					/*get robot ef marker(s) current pose*/
+					auto efGripperPos =
+					( markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) +
+						markersPos[gripperLC].col(i) + markersPos[gripperLD].col(i) )/4;
+					curPosLeftEfMarker << efGripperPos;
+					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+					
 					/*get robot ef current pose*/
 					curRotLeftEf = ltHand.rotation();
 					curPosLeftEf = ltHand.translation();
 					sva::PTransformd R_X_efL(curPosLeftEf);
+
+					rotSubj = Eigen::Matrix3d::Identity();
+					sva::PTransformd M_X_Subj(rotSubj, markersPos[knuckleS].col(i)); //.middleCols((i-t_observe)+j,i));
+
+					/*subj marker(s) pose w.r.t to robot EF frame*/
+					Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
 					
-					/*get robot ef marker(s) current pose*/
-					auto efGripperPos =
-					( markersPos[gripperLA].col((i-t_observe)+1) + markersPos[gripperLB].col((i-t_observe)+1) +
-						markersPos[gripperLC].col((i-t_observe)+1) + markersPos[gripperLD].col((i-t_observe)+1) )/4;
-
-					curPosLeftEfMarker << efGripperPos;
-					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
-
-					sva::PTransformd R_X_M = R_X_efL.inv()*M_X_efLMarker;
-
-					sva::PTransformd R_X_KnuckleS = R_X_M.inv()*markersPos[knuckleS].col(i);
-
+					if(j<=t_observe)
+					{
+						newPosSubj.col(j-1) = Subj_X_efL.translation();
+						if(j==t_observe)
+							{ ithPosSubj  = newPosSubj.col(t_observe-1); j=1; }
+						j++;
+					}
 
 					/*prediction control*/
 					if( (i%t_observe == 0) && prediction )
@@ -371,33 +379,6 @@ namespace mc_handover
 						/*prediction tuner*/
 						t_predict = (int)tuner(0);
 						t_observe = (int)tuner(1);
-
-						// /*get robot ef current pose*/
-						// curRotLeftEf = ltHand.rotation();
-						// curPosLeftEf = ltHand.translation();
-						// sva::PTransformd R_X_efL(curPosLeftEf);
-
-						// /*get robot ef marker(s) current pose*/
-						// auto efGripperPos =
-						// ( markersPos[gripperLA].col((i-t_observe)+1) + markersPos[gripperLB].col((i-t_observe)+1) +
-						// 	markersPos[gripperLC].col((i-t_observe)+1) + markersPos[gripperLD].col((i-t_observe)+1) )/4;
-
-						// curPosLeftEfMarker << efGripperPos;
-						// sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
-
-						/*subj marker(s) pose w.r.t to robot EF frame*/
-						for(int j=1;j<=t_observe; j++)
-						{
-							rotSubj = Eigen::Matrix3d::Identity();
-							sva::PTransformd M_X_Subj(rotSubj, markersPos[knuckleS].middleCols((i-t_observe)+j,i));
-							
-							Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
-
-							newPosSubj.col(j-1) = Subj_X_efL.translation();
-
-							if(j==t_observe)
-								{ ithPosSubj  = newPosSubj.col(t_observe-1); }
-						}
 
 						/*get average velocity of previous *t_observe* sec Subj motion*/
 						curVelSubj  = ctl.handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX

@@ -43,7 +43,9 @@ namespace mc_handover
 			std::vector<Eigen::MatrixXd> pos;
 			std::vector<double> pts;
 			std::string name;
-			int  s{0};
+			int i{1};
+			int j{1};
+			int s{0};
 
 			/*mocap*/
 			bool Flag_CORTEX{false}; // default True for MOCAP
@@ -121,8 +123,7 @@ namespace mc_handover
 			int nBytes;
 			int retval = RC_Okay;
 			int totalBodies;
-			int i{1};
-			
+
 			double del{0};
 
 			};
