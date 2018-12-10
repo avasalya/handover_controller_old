@@ -398,6 +398,26 @@ namespace mc_handover
 					}//t_observe
 
 
+					
+					// auto curLEfPos = ltHand.translation();
+					// handoverPos = curLEfPos + predictPos;
+
+					// /*robot constraint*/
+					// if(	(handoverPos(0))<= 0.8 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.8 &&
+					// 	(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
+					// {
+					// 	/*control head*/
+					// 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
+					// 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
+
+					// 	if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
+					// 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
+
+					// 	/*handover position*/
+					// 	ctl.posTaskL->position(handoverPos);
+					// }
+
+
 					/*feed Ef pose*/
 					if( collected )
 					{
