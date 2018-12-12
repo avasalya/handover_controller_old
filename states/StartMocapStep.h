@@ -53,22 +53,21 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::MatrixXd> markersPos;
 
-			int maxMarkers{12};
+			int body{0};
 
-			int body{0}, headR{0}, chestR{1};
-			int elbowR{2}, wristR{3};
-			int gripperLA{4}, gripperLB{5}, gripperLC{6}, gripperLD{7};
+			int maxMarkers{9};
 
-			int object{8};
+			int wristRA{0}, wristRB{1};
+			int gripperLA{2}, gripperLB{3};
 
-			int wristS{9}, knuckleS{10}, elbowS{11};
-
-
-			Eigen::Vector3d AB, CD, AC, AD, AO, AK, PQ;
+			int fingerS{4};
+			int knuckleSA{5}, knuckleSB{6};
+			int wristSA{7}, wristSB{8};
+			
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
-			Eigen::Quaterniond q;
+			Eigen::Quaterniond q, q1;
 
 			/*Eigen::Matrix3d::Identity();*/
 			Eigen::Matrix3d curRotLeftEfMarker;

@@ -169,7 +169,7 @@ namespace mc_handover
 		//////////////
 	bool HandoverController::publishWrench()
 	{
-		cout << "left hand forces " << wrenches.at("LeftHandForceSensor").force() <<  endl;
+		cout << "left hand forces " << wrenches.at("LeftHandForceSensor").force().transpose() <<  endl;
 		// cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
 
 		runOnce = false;
