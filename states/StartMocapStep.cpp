@@ -40,8 +40,8 @@ namespace mc_handover
 
 
 			/*chest task*/
-			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e3));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e3));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
 
@@ -66,9 +66,10 @@ namespace mc_handover
 					[this]() { return tuner; }, 
 					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
-			tuner << 400., 20., 0.; 
+			tuner << 400., 20., 80.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
+			it = (int)tuner(2);
 			newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 
 
@@ -310,13 +311,12 @@ namespace mc_handover
 
 
 				/*check for non zero frame only and store them*/
-				// if(	Markers[wristRA](0)> -20 && Markers[wristRA](0)< 20
-				// 	&&  Markers[knuckleSA](0)> -20 && Markers[knuckleSA](0)< 20
-				// 	)
-
+				if(	Markers[wristRA](0)!=0 && Markers[wristRA](0)< 20
+					&&  Markers[knuckleSA](0)!=0 && Markers[knuckleSA](0)< 20
+					)
 				/*check if all markers are identified*/
 				// cout << " un-named markers "<<getCurFrame->nUnidentifiedMarkers<<endl;
-				if(getCurFrame->nUnidentifiedMarkers==0)
+				// if(getCurFrame->nUnidentifiedMarkers==0)
 				{
 					for(int m=0; m<maxMarkers; m++)
 						{ markersPos[m].col(i) << Markers[m]; }
@@ -343,8 +343,8 @@ namespace mc_handover
 
 					/*get robot ef marker(s) current pose*/
 					auto efGripperPos =
-					( markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) +
-						markersPos[wristRA].col(i) + markersPos[wristRB].col(i) )/4;
+						0.5*( markersPos[wristRA].col(i) + markersPos[wristRB].col(i) );
+					// 0.5*( markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) );//+
 					curPosLeftEfMarker << efGripperPos;
 					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
@@ -370,9 +370,10 @@ namespace mc_handover
 					/*predicted pos*/
 					if( (i%t_observe == 0) && prediction )
 					{
-						/*prediction tuner*/
+						/*prediction_ tuner*/
 						t_predict = (int)tuner(0);
 						t_observe = (int)tuner(1);
+						it = (int)tuner(2);
 
 						/*get average velocity of previous *t_observe* sec Subj motion*/
 						curVelSubj  = ctl.handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX
@@ -385,7 +386,6 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						it = 100;//40+(int)t_predict/t_observe;
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
@@ -395,7 +395,7 @@ namespace mc_handover
 					/*feed Ef pose*/
 					if( collected )
 					{
-						it+= 100;//40+(int)t_predict/t_observe;
+						it+= (int)tuner(2);//40+(int)t_predict/t_observe;
 
 						auto curLEfPos = ltHand.translation();
 
@@ -406,14 +406,14 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.6 &&
+							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.5 &&
 								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
 							{
 								/*control head*/
 								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
 								else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
 
-								if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
+								if(handoverPos(2) < 1.0){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 								/*handover position*/
