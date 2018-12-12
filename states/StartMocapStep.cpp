@@ -385,7 +385,7 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						it = 80;//40+(int)t_predict/t_observe;
+						it = 100;//40+(int)t_predict/t_observe;
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
@@ -395,7 +395,7 @@ namespace mc_handover
 					/*feed Ef pose*/
 					if( collected )
 					{
-						it+= 80;//40+(int)t_predict/t_observe;
+						it+= 100;//40+(int)t_predict/t_observe;
 
 						auto curLEfPos = ltHand.translation();
 
@@ -431,7 +431,7 @@ namespace mc_handover
 						closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({0.0});
-						cout << "object is inside gripper, closing gripper" <<endl;
+						//cout << "object is inside gripper, closing gripper" <<endl;
 						return true;
 					};
 
@@ -452,7 +452,7 @@ namespace mc_handover
 							openGripper = true;
 							open_gripperL();
 							closeGripper = false;
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " force " << leftForce[idx] << " reached on left hand")
+							LOG_INFO("Opening grippers, threshold on " << axis_name << " force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
 						else { return false; }
@@ -469,15 +469,15 @@ namespace mc_handover
 
 					/*handover control*/
 					auto  avg1 = (markersPos[gripperLA].col(i)+markersPos[gripperLB].col(i))/2;
-					if(i%500==0) {cout << "avg " << avg1.norm() << endl;}
+					//if(i%500==0) {cout << "avg " << avg1.norm() << endl;}
 					
 					if( ( avg1-markersPos[fingerS].col(i) ).norm() <0.2 )
 					{
-						prediction = false;
+					//	prediction = false;
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
 					}
-					else { prediction = true; }
+					//else { prediction = true; }
 
 					/*iterator*/
 					i+= 1;
