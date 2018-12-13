@@ -66,7 +66,7 @@ namespace mc_handover
 					[this]() { return tuner; }, 
 					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
-			tuner << 400., 20., 80.; 
+			tuner << 600., 20., 30.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
 			it = (int)tuner(2);
@@ -407,7 +407,7 @@ namespace mc_handover
 
 							/*robot constraint*/
 							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.5 &&
-								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
+								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 ) 
 							{
 								/*control head*/
 								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
@@ -445,7 +445,7 @@ namespace mc_handover
 
 
 					/*force control*/ /**** dont use fabs & check also force direction ****/
-					auto checkForce = [&](const char * axis_name, int idx)
+					auto checkForce = [&](const char *axis_name, int idx)
 					{
 						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (area_wAB_lA > area_wAB_S) || (area_wAB_lB > area_wAB_S) ) )
 						{
