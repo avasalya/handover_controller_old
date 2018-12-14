@@ -6,18 +6,14 @@
 
 namespace mc_handover
 {
-		//////////////
-		//
-		// Handover Controller constructor
-		//
-		//////////////
+	//////////////
+	//
+	// Handover Controller constructor
+	//
+	//////////////
 	HandoverController::HandoverController(std::shared_ptr<mc_rbdyn::RobotModule> robot_module,
-		double dt, 
-		const mc_rtc::Configuration & config) 
-	:mc_control::fsm::Controller(
-		robot_module,
-		dt,
-		config)
+		double dt, const mc_rtc::Configuration & config) 
+	:mc_control::fsm::Controller(robot_module, dt, config)
 	{
 		
 		qpsolver->addConstraintSet(selfCollisionConstraint);
@@ -54,13 +50,13 @@ namespace mc_handover
 
 
 
-		//////////////
-		//
-		// Handover Controller reset
-		//
-		//////////////
+	//////////////
+	//
+	// Handover Controller reset
+	//
+	//////////////
 	void HandoverController::reset(const ControllerResetData & reset_data)
-	{   
+	{
 		mc_control::fsm::Controller::reset(reset_data);
 
 
@@ -107,11 +103,11 @@ namespace mc_handover
 
 
 
-		//////////////
-		//
-		// Handover Controller run
-		//
-		//////////////
+	//////////////
+	//
+	// Handover Controller run
+	//
+	//////////////
 	bool HandoverController::run()
 	{
 		bool ret = mc_control::fsm::Controller::run();
@@ -129,11 +125,11 @@ namespace mc_handover
 
 
 
-		//////////////
-		//
-		// getHostInfo
-		//
-		//////////////
+	//////////////
+	//
+	// getHostInfo
+	//
+	//////////////
 	bool HandoverController::getHostInfo()
 	{
 		char username[LOGIN_NAME_MAX];
@@ -142,219 +138,214 @@ namespace mc_handover
 
 		result = gethostname(hostname, HOST_NAME_MAX);
 		if (result)
-		{	perror("gethostname");	return EXIT_FAILURE;	}
+			{	perror("gethostname");	return EXIT_FAILURE;	}
 
 		result = getlogin_r(username, LOGIN_NAME_MAX);		
 		if (result)
-		{	perror("getlogin_r");	return EXIT_FAILURE;	}	
+			{	perror("getlogin_r");	return EXIT_FAILURE;	}	
 		
 		if( strcmp(username, "hrp2user")==0 && strcmp(hostname, "hrp2012c")==0 )
-		{	Flag_ROBOT = true;	}
+			{	Flag_ROBOT = true;	}
 		else if ( strcmp(username, "avasalya")==0 && strcmp(hostname, "vasalya-xps15")==0 )
-		{	Flag_ROBOT = false;	}
+			{	Flag_ROBOT = false;	}
 
 		result = printf("Hello %s, you are logged in to %s.\n", username, hostname);
 		if (result < 0)
-		{	perror("printf");	return EXIT_FAILURE;	}
+			{	perror("printf");	return EXIT_FAILURE;	}
 		
 		return EXIT_SUCCESS;
 	}
 
 
 
-		//////////////
-		//
-		// Handover Controller printWrench
-		//
-		//////////////
+	//////////////
+	//
+	// Handover Controller printWrench
+	//
+	//////////////
 	bool HandoverController::publishWrench()
 	{
 		cout << "left hand forces " << wrenches.at("LeftHandForceSensor").force().transpose() <<  endl;
 		// cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
 
 		runOnce = false;
-			// this will make initial_COM to set on previous given pos
-			return true;  // always return true, to repeat state
+		// this will make initial_COM to set on previous given pos
+		return true;  // always return true, to repeat state
+	}
+
+
+
+	//////////////
+	//
+	// Handover Controller read_msg
+	//
+	//////////////
+	bool  HandoverController::read_msg(std::string & msg)
+	{
+		std::stringstream ss;
+		std::string token;
+
+		ss << msg;
+		ss >> token;
+
+		if(token == "step1")
+		{
+
+			MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+			Eigen::Vector3d initPosR, initPosL;
+			sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+
+			initPosR <<  0.30, -0.35, 0.3;
+			relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+			solver().addTask(relEfTaskR);
+
+
+			initPosL <<  0.30, 0.35, 0.3;
+			relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+			solver().addTask(relEfTaskL);
+			
+			return true;
 		}
 
 
-		//////////////
-		//
-		// Handover Controller read_msg
-		//
-		//////////////
-		bool  HandoverController::read_msg(std::string & msg)
-		{
-			std::stringstream ss;
-			std::string token;
 
-			ss << msg;
-			ss >> token;
-
-			if(token == "step1")
-			{
-
-				MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
-				Eigen::Vector3d initPosR, initPosL;
-				sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
-
-				initPosR <<  0.30, -0.35, 0.3;
-				relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-				solver().addTask(relEfTaskR);
+		if(token == "step2")
+		{ 
+			//set ef pose 
+			Eigen::Vector3d tL( 0.7, 0.35, .3 );
+			Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
+			sva::PTransformd dtrL(getCurRotL, tL);
+			relEfTaskL->set_ef_pose(dtrL);
 
 
-				initPosL <<  0.30, 0.35, 0.3;
-				relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-				solver().addTask(relEfTaskL);
-				
-				return true;
-			}
+			Eigen::Vector3d tR( 0.7, -0.35, .3 );
+			Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
+			sva::PTransformd dtrR(getCurRotR, tR);
+			relEfTaskR->set_ef_pose(dtrR);
 
-
-
-			if(token == "step2")
-			{ 
-				//set ef pose 
-				Eigen::Vector3d tL( 0.7, 0.35, .3 );
-				Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
-				sva::PTransformd dtrL(getCurRotL, tL);
-				relEfTaskL->set_ef_pose(dtrL);
-
-
-				Eigen::Vector3d tR( 0.7, -0.35, .3 );
-				Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
-				sva::PTransformd dtrR(getCurRotR, tR);
-				relEfTaskR->set_ef_pose(dtrR);
-
-				return true;
-			}
-
-
-
-			if(token == "robots")
-			{ 
-				std::string robotName =  this->robot().name();
-
-				cout << robotName <<  endl;
-
-				return true;
-			}
-
-
-
-			if(token == "surfaces")
-			{ 
-				surf =  this->robot().surfaces();
-
-				for(auto elem : surf)
-				{
-					std::cout << elem.first << " " << elem.second << endl;
-				}
-				return true;
-			}
-
-			// gripper control actions //
-
-			if(token == "openGripperR")
-			{
-				auto gripper = grippers["r_gripper"].get();
-				gripper->setTargetQ({openG});
-				
-				return true;
-			}
-			if(token == "closeGripperR")
-			{
-				auto gripper = grippers["r_gripper"].get();
-				gripper->setTargetQ({closeG});
-				return true;
-			}
-
-
-
-			if(token == "openGripperL")
-			{
-				auto gripper = grippers["l_gripper"].get();
-				gripper->setTargetQ({openG});
-				return true;
-			}
-			if(token == "closeGripperL")
-			{
-				auto gripper = grippers["l_gripper"].get();
-				gripper->setTargetQ({closeG});
-				return true;
-			}
-
-
-
-			if(token == "openGrippers")
-			{
-				auto gripper = grippers["l_gripper"].get();
-				gripper->setTargetQ({openG});
-				gripper = grippers["r_gripper"].get();
-				gripper->setTargetQ({openG});
-				return true;
-			}
-			if(token == "closeGrippers")
-			{
-				auto gripper = grippers["l_gripper"].get();
-				gripper->setTargetQ({closeG});
-				gripper = grippers["r_gripper"].get();
-				gripper->setTargetQ({closeG});
-				return true;
-			}
-
-			
-			// get LARM JOINTs //
-			std::vector<double>  get_LArm_Joints(8);
-			if(token == "getRtPose")
-			{
-				for (int i = 0; i<8; ++i)
-				{
-					std::stringstream ss;
-					ss << "RARM_JOINT" << i;
-					std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
-				}
-				std::cout<<std::endl;
-				return true;
-			}
-
-			// get RARM JOINTs //
-			std::vector<double>  get_RArm_Joints(8);
-			if(token == "getLtPose")
-			{
-				for (int i = 0; i<8; ++i)
-				{
-					std::stringstream ss;
-					ss << "LARM_JOINT" << i;
-					std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
-				}
-				std::cout<<std::endl;
-				return true;
-			}
-			
-			LOG_WARNING("Cannot handle " << msg)
-			return mc_control::fsm::Controller::read_msg(msg);
-
+			return true;
 		}
 
 
-		//////////////
-		//
-		// Handover Controller read_write_msg
-		//
-		//////////////    
-		bool HandoverController::read_write_msg(std::string & msg, std::string & out)
+
+		if(token == "robots")
+		{ 
+			std::string robotName =  this->robot().name();
+
+			cout << robotName <<  endl;
+
+			return true;
+		}
+
+
+
+		if(token == "surfaces")
+		{ 
+			surf =  this->robot().surfaces();
+
+			for(auto elem : surf)
+			{
+				std::cout << elem.first << " " << elem.second << endl;
+			}
+			return true;
+		}
+
+		// gripper control actions //
+
+		if(token == "openGripperR")
 		{
-			// out = msg;
-			// return true;
-			return mc_control::fsm::Controller::read_write_msg(msg, out);
+			auto gripper = grippers["r_gripper"].get();
+			gripper->setTargetQ({openG});
+			
+			return true;
+		}
+		if(token == "closeGripperR")
+		{
+			auto gripper = grippers["r_gripper"].get();
+			gripper->setTargetQ({closeG});
+			return true;
+		}
+
+
+
+		if(token == "openGripperL")
+		{
+			auto gripper = grippers["l_gripper"].get();
+			gripper->setTargetQ({openG});
+			return true;
+		}
+		if(token == "closeGripperL")
+		{
+			auto gripper = grippers["l_gripper"].get();
+			gripper->setTargetQ({closeG});
+			return true;
+		}
+
+
+
+		if(token == "openGrippers")
+		{
+			auto gripper = grippers["l_gripper"].get();
+			gripper->setTargetQ({openG});
+			gripper = grippers["r_gripper"].get();
+			gripper->setTargetQ({openG});
+			return true;
+		}
+		if(token == "closeGrippers")
+		{
+			auto gripper = grippers["l_gripper"].get();
+			gripper->setTargetQ({closeG});
+			gripper = grippers["r_gripper"].get();
+			gripper->setTargetQ({closeG});
+			return true;
 		}
 
 		
-	 // HandoverController::~HandoverController()
-	 // {
-	 //    /* reset tasks here */
-	 // }
+		// get LARM JOINTs //
+		std::vector<double>  get_LArm_Joints(8);
+		if(token == "getRtPose")
+		{
+			for (int i = 0; i<8; ++i)
+			{
+				std::stringstream ss;
+				ss << "RARM_JOINT" << i;
+				std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
+			}
+			std::cout<<std::endl;
+			return true;
+		}
+
+		// get RARM JOINTs //
+		std::vector<double>  get_RArm_Joints(8);
+		if(token == "getLtPose")
+		{
+			for (int i = 0; i<8; ++i)
+			{
+				std::stringstream ss;
+				ss << "LARM_JOINT" << i;
+				std::cout << robot().mbc().q[robot().jointIndexByName(ss.str())][0] << ", ";
+			}
+			std::cout<<std::endl;
+			return true;
+		}
+		
+		LOG_WARNING("Cannot handle " << msg)
+		return mc_control::fsm::Controller::read_msg(msg);
+	}
+
+
+
+	//////////////
+	//
+	// Handover Controller read_write_msg
+	//
+	//////////////
+	bool HandoverController::read_write_msg(std::string & msg, std::string & out)
+	{
+		// out = msg;
+		// return true;
+		return mc_control::fsm::Controller::read_write_msg(msg, out);
+	}
 
 } //namespace mc_control
 

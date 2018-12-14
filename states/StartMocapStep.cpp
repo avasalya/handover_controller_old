@@ -40,16 +40,16 @@ namespace mc_handover
 
 
 			/*chest task*/
-			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e3));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e3));
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
 
 
 			/*EfL pos Task*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			ctl.posTaskL->position({0.3,0.3,1.1});
+			// ctl.posTaskL->position({0.3,0.3,1.1});
 
 
 			/*EfL ori Task*/
@@ -66,7 +66,7 @@ namespace mc_handover
 					[this]() { return tuner; }, 
 					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
-			tuner << 600., 20., 30.; 
+			tuner << 400., 20., 60.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
 			it = (int)tuner(2);
@@ -314,9 +314,6 @@ namespace mc_handover
 				if(	Markers[wristRA](0)!=0 && Markers[wristRA](0)< 20
 					&&  Markers[knuckleSA](0)!=0 && Markers[knuckleSA](0)< 20
 					)
-				/*check if all markers are identified*/
-				// cout << " un-named markers "<<getCurFrame->nUnidentifiedMarkers<<endl;
-				// if(getCurFrame->nUnidentifiedMarkers==0)
 				{
 					for(int m=0; m<maxMarkers; m++)
 						{ markersPos[m].col(i) << Markers[m]; }
@@ -418,6 +415,7 @@ namespace mc_handover
 
 								/*handover position*/
 								ctl.posTaskL->position(handoverPos);
+								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 							}
 							if(it==wp.cols())
 								{ collected  = false; }
@@ -451,8 +449,7 @@ namespace mc_handover
 						{
 							openGripper = true;
 							open_gripperL();
-							closeGripper = false;
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " force " << fabs(leftForce[idx])<< " reached on left hand")
+							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
 						else { return false; }
@@ -473,12 +470,16 @@ namespace mc_handover
 					
 					if( ( avg1-markersPos[fingerS].col(i) ).norm() <0.2 )
 					{
-					//	prediction = false;
+						// prediction = false;
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
 					}
-					//else { prediction = true; }
-
+					else if( (avg1-markersPos[fingerS].col(i) ).norm() >1 )
+					{
+						closeGripper = false; 
+						// prediction = true;
+					}
+					
 					/*iterator*/
 					i+= 1;
 				}// check for non zero frame
