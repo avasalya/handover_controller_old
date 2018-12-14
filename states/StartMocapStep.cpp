@@ -40,16 +40,16 @@ namespace mc_handover
 
 
 			/*chest task*/
-			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 5.0, 50));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 5.0, 50));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
 
 
 			/*EfL pos Task*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 2.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			// ctl.posTaskL->position({0.3,0.3,1.1});
+			ctl.posTaskL->position({0.3,0.3,1.1});
 
 
 			/*EfL ori Task*/
@@ -415,7 +415,7 @@ namespace mc_handover
 
 								/*handover position*/
 								ctl.posTaskL->position(handoverPos);
-								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+								// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 							}
 							if(it==wp.cols())
 								{ collected  = false; }
@@ -466,8 +466,6 @@ namespace mc_handover
 
 					/*handover control*/
 					auto  avg1 = (markersPos[gripperLA].col(i)+markersPos[gripperLB].col(i))/2;
-					//if(i%500==0) {cout << "avg " << avg1.norm() << endl;}
-					
 					if( ( avg1-markersPos[fingerS].col(i) ).norm() <0.2 )
 					{
 						// prediction = false;
@@ -476,7 +474,8 @@ namespace mc_handover
 					}
 					else if( (avg1-markersPos[fingerS].col(i) ).norm() >1 )
 					{
-						closeGripper = false; 
+						cout << "avg " << avg1.norm() << endl;
+						closeGripper = false;
 						// prediction = true;
 					}
 					
@@ -510,9 +509,12 @@ namespace mc_handover
 
 /*------------------------------TO DOs----------------------------------------------
 --- fix threshold
+
 --- stop prediction during handover
+
 --- add different object & orientation
 
---- record/display pos trail in rviz***
+--- ***record/display pos trail in rviz***
+
 --- change EFl-velocityProfile
 ----------------------------------------------------------------------------------*/
