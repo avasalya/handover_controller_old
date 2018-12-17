@@ -85,7 +85,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
 			double closeGrippers = 0.17;
-			double openGrippers = 1.0;
+			double openGrippers = 0.5;
 
 
 		private:

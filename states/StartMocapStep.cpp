@@ -40,16 +40,16 @@ namespace mc_handover
 
 
 			/*chest task*/
-			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
 
 
 			/*EfL pos Task*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			ctl.posTaskL->position({0.3,0.3,1.1});
+			// ctl.posTaskL->position({0.3,0.3,1.1});
 
 
 			/*EfL ori Task*/
@@ -66,7 +66,7 @@ namespace mc_handover
 					[this]() { return tuner; }, 
 					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
-			tuner << 400., 20., 60.; 
+			tuner << 400., 20., 80.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
 			it = (int)tuner(2);
@@ -78,7 +78,7 @@ namespace mc_handover
 			ctl.gui()->addElement({"Handover", "MOCAP_template"},
 				mc_rtc::gui::Button( "init", [this, &ctl](){ ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.0}); openGripper = true;
+					gripper->setTargetQ({closeGrippers}); openGripper = true;
 					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos1*", [this, &ctl](){ ctl.posTaskL->position({0.2,0.7,1.5});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
@@ -365,7 +365,7 @@ namespace mc_handover
 					}
 
 					/*predicted pos*/
-					if( (i%t_observe == 0) && prediction )
+					if( (i%t_observe == 0) )
 					{
 						/*prediction_ tuner*/
 						t_predict = (int)tuner(0);
@@ -404,7 +404,7 @@ namespace mc_handover
 
 							/*robot constraint*/
 							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.5 &&
-								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 ) 
+								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
 							{
 								/*control head*/
 								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
@@ -428,7 +428,7 @@ namespace mc_handover
 					{
 						closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.0});
+						gripper->setTargetQ({closeGrippers});
 						//cout << "object is inside gripper, closing gripper" <<endl;
 						return true;
 					};
@@ -437,7 +437,7 @@ namespace mc_handover
 					{
 						openGripper = false;
 						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5});
+						gripper->setTargetQ({openGrippers});
 						return true;
 					};
 
@@ -474,7 +474,7 @@ namespace mc_handover
 					}
 					else if( (avg1-markersPos[fingerS].col(i) ).norm() >1 )
 					{
-						cout << "avg " << avg1.norm() << endl;
+						// cout << "avg " << avg1.norm() << endl;
 						closeGripper = false;
 						// prediction = true;
 					}
