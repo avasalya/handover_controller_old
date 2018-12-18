@@ -40,8 +40,8 @@ namespace mc_handover
 
 
 			/*chest task*/
-			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
+			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 5e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 5e2));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
 
