@@ -48,16 +48,16 @@ namespace mc_handover
 
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
-			ctl.solver().addTask(ctl.posTaskL);
+			// ctl.solver().addTask(ctl.posTaskL);
 			// ctl.posTaskL->position({0.3,0.3,1.1});
 
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
-			ctl.solver().addTask(ctl.oriTaskL);
+			// ctl.solver().addTask(ctl.oriTaskL);
 			q = {0.64, -0.01, -0.76, -0.06};
-			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
-			// q = {-0.42, -0.5, 0.56, 0.49}; // for extra orientation
+			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+			// // q = {-0.42, -0.5, 0.56, 0.49}; // for extra orientation
 
 
 			/*change prediction_ settings*/
@@ -414,8 +414,11 @@ namespace mc_handover
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
 								/*handover position*/
+								ctl.solver().addTask(ctl.posTaskL);
 								ctl.posTaskL->position(handoverPos);
-								// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+
+								ctl.solver().addTask(ctl.oriTaskL);
+								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 							}
 							if(it==wp.cols())
 								{ collected  = false; }
