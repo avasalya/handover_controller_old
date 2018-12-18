@@ -41,13 +41,13 @@ namespace mc_handover
 
 			/*chest task*/
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 2.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
 			ctl.solver().addTask(chestOriTask);
 
 
 			/*EfL pos Task*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
+			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
 			// ctl.solver().addTask(ctl.posTaskL);
 			// ctl.posTaskL->position({0.3,0.3,1.1});
 
@@ -340,8 +340,7 @@ namespace mc_handover
 
 					/*get robot ef marker(s) current pose*/
 					auto efGripperPos =
-						0.5*( markersPos[wristRA].col(i) + markersPos[wristRB].col(i) );
-					// 0.5*( markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) );//+
+						0.25*( markersPos[wristRA].col(i) + markersPos[wristRB].col(i) + markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) );
 					curPosLeftEfMarker << efGripperPos;
 					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
