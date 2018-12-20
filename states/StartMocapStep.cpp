@@ -75,7 +75,7 @@ namespace mc_handover
 
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
-			ctl.gui()->addElement({"Handover", "MOCAP_template"},
+			ctl.gui()->addElement({"Handover", "randomPos"},
 				mc_rtc::gui::Button( "init*", [this, &ctl](){ ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({closeGrippers}); openGripper = true;
@@ -244,7 +244,7 @@ namespace mc_handover
 			{
 				startCapture = false; //true for sim
 				
-				name = {"simData_4"};
+				name = {"simData3"};
 				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
 				std::ifstream file(fn);
 
@@ -272,7 +272,7 @@ namespace mc_handover
 			Markers.resize(maxMarkers);
 			markersPos.resize(maxMarkers);
 
-			predictedPositions.resize(2);
+			predictedPositions.resize(1);
 			S_X_efL.resize(t_observe);
 
 			for(int m=0; m<maxMarkers; m++)
@@ -337,7 +337,10 @@ namespace mc_handover
 				else /*simulation*/
 				{
 					for(int m=0; m<maxMarkers; m++)
-						{ Markers[m] = pos[m].col(s); }
+						{ 
+							// Markers[m] = pos[m].col(s);
+							Markers[m] = ctl.robots().robot(2).bodyPosW("base_link").translation();
+						 }
 				}
 
 
@@ -412,6 +415,7 @@ namespace mc_handover
 
 						/*predict position in straight line after t_predict time*/
 						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
+						predictedPositions[0] << predictPos;
 						// cout << "predicted pos " << predictPos.transpose()<<endl;
 
 						/*get predicted way points between left ef and Subj*/
