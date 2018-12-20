@@ -38,49 +38,49 @@ namespace mc_handover
 			gripperL->setTargetQ({closeGrippers});
 			gripperR->setTargetQ({closeGrippers});
 
+			q  = {0.64, -0.01, -0.76, -0.06}; // initial orientation
+			q1 = {0.95, 0.086, -0.25, -0.15}; //for mocap_temp
+			q2 = {-0.42, -0.5, 0.56, 0.49}; // for extra orientation (-90)
+			q3 = {-0.44, 0.47, 0.49, 0.58}; //to get closer to body
 
-			/*chest task*/
+			/*chest pos task*/
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 5e2));
-			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 5e2));
 			ctl.solver().addTask(chestPosTask);
+			// cout<< chestPosTask->position().transpose()<<endl;
+			chestPosTask->position({0.0319998, -1.6089e-08, 1.1222});
+
+
+			/*chest ori task*/
+			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 5e2));
 			ctl.solver().addTask(chestOriTask);
+			// cout<<chestOriTask->orientation()<<endl;
+			chestOriTask->orientation(Eigen::Matrix3d::Identity());
 
 
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
-			// ctl.solver().addTask(ctl.posTaskL);
-			// ctl.posTaskL->position({0.3,0.3,1.1});
+			ctl.solver().addTask(ctl.posTaskL);
+			ctl.posTaskL->position({0.3,0.3,1.1});
+
+			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 2.0, 1e3);
+			ctl.solver().addTask(ctl.posTaskR);
+			// cout << ctl.posTaskR->position().transpose() <<endl;
+			ctl.posTaskR->position({0.0601693, -0.372673, 0.723684});
 
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
-			// ctl.solver().addTask(ctl.oriTaskL);
-			q = {0.64, -0.01, -0.76, -0.06};
-			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
-			// // q = {-0.42, -0.5, 0.56, 0.49}; // for extra orientation
-
-
-			/*change prediction_ settings*/
-			ctl.gui()->addElement({"Handover", "tuner"},
-				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"},
-					[this]() { return tuner; }, 
-					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
-
-			tuner << 400., 20., 80.; 
-			t_predict = (int)tuner(0);
-			t_observe = (int)tuner(1);
-			it = (int)tuner(2);
-			newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
+			ctl.solver().addTask(ctl.oriTaskL);
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
-			q1 = {0.95, 0.086, -0.25, -0.15}; //for mocap_temp
 			ctl.gui()->addElement({"Handover", "MOCAP_template"},
-				mc_rtc::gui::Button( "init", [this, &ctl](){ ctl.posTaskL->position({0.0,0.37,0.72});
+				mc_rtc::gui::Button( "init*", [this, &ctl](){ ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({closeGrippers}); openGripper = true;
 					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos1*", [this, &ctl](){ ctl.posTaskL->position({0.2,0.7,1.5});
+				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.7,1.5});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos2", [this, &ctl](){ ctl.posTaskL->position({0.3,0.6,1.3});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
@@ -148,6 +148,19 @@ namespace mc_handover
 				);
 
 
+			/*change prediction_ settings*/
+			ctl.gui()->addElement({"Handover", "tuner"},
+				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"},
+					[this]() { return tuner; }, 
+					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
+
+			tuner << 400., 20., 80.; 
+			t_predict = (int)tuner(0);
+			t_observe = (int)tuner(1);
+			it = (int)tuner(2);
+			newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
+
+
 			/*com Task*/
 			ctl.gui()->addElement({"Handover", "com"},
 
@@ -164,6 +177,21 @@ namespace mc_handover
 			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
 			comTask->com(initialCom);
 			ctl.solver().addTask(comTask);
+
+
+			/*trajectory trail*/
+			ctl.gui()->addElement({"Handover", "Trajectories"},
+
+				// mc_rtc::gui::Trajectory("obseve subj pos", {{0, 1, 0}, 0.01, mc_rtc::gui::LineStyle::Solid},
+				// 	[this, &ctl]() -> const std::vector<sva::PTransformd>& { return S_X_efL; }),
+
+				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{0,0,1}},
+					[this, &ctl]() -> const std::vector<Eigen::Vector3d>& { return predictedPositions; } ),
+				
+				mc_rtc::gui::Trajectory("traj_l_wrist", {{0,1,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
+					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
+
+				);
 
 
 			/*configure MOCAP*/
@@ -216,7 +244,7 @@ namespace mc_handover
 			{
 				startCapture = false; //true for sim
 				
-				name = {"simData3"};
+				name = {"simData_4"};
 				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
 				std::ifstream file(fn);
 
@@ -243,8 +271,12 @@ namespace mc_handover
 			/*allocate memory for mocap markers*/
 			Markers.resize(maxMarkers);
 			markersPos.resize(maxMarkers);
+
+			predictedPositions.resize(2);
+			S_X_efL.resize(t_observe);
+
 			for(int m=0; m<maxMarkers; m++)
-				{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000);	}
+				{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
 		}// start
 
 
@@ -291,7 +323,6 @@ namespace mc_handover
 			/*start only when ithFrame == 1*/
 			if(startCapture)
 			{
-
 				/*get markers position FrameByFrame*/
 				if(Flag_CORTEX)
 				{
@@ -318,6 +349,7 @@ namespace mc_handover
 					for(int m=0; m<maxMarkers; m++)
 						{ markersPos[m].col(i) << Markers[m]; }
 
+					// cout << "Markers[4] " << Markers[4].transpose()<<endl;
 
 					/*direction vectors, projections and area*/
 					auto R_wA_wB = markersPos[wristRA].col(i)-markersPos[wristRB].col(i);
@@ -340,7 +372,7 @@ namespace mc_handover
 
 					/*get robot ef marker(s) current pose*/
 					auto efGripperPos =
-						0.25*( markersPos[wristRA].col(i) + markersPos[wristRB].col(i) + markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) );
+					0.25*( markersPos[wristRA].col(i) + markersPos[wristRB].col(i) + markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) );
 					curPosLeftEfMarker << efGripperPos;
 					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
@@ -357,6 +389,9 @@ namespace mc_handover
 
 					if(j<=t_observe)
 					{
+						S_X_efL[j-1] = Subj_X_efL;
+						// cout << "S_X_efL "<<S_X_efL[j-1].translation().transpose()<<endl;
+
 						newPosSubj.col(j-1) = Subj_X_efL.translation();
 						if(j==t_observe)
 							{ ithPosSubj = newPosSubj.col(t_observe-1); j=1; }
@@ -377,8 +412,11 @@ namespace mc_handover
 
 						/*predict position in straight line after t_predict time*/
 						predictPos = ctl.handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
+						// cout << "predicted pos " << predictPos.transpose()<<endl;
 
 						/*get predicted way points between left ef and Subj*/
+
+						/*** get new vel profile ****/
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
@@ -402,8 +440,10 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0))<= 0.7 && (handoverPos(1))<= 0.7 && (handoverPos(2))<=1.5 &&
-								(handoverPos(0))>= 0.2 && (handoverPos(1))>= 0.2 && (handoverPos(2))>=0.9 && prediction ) 
+							if(	(handoverPos(0))>= 0.2 && (handoverPos(0))<= 0.7 && 
+								(handoverPos(1))<= 0.7 &&
+								(handoverPos(2))>= 0.9 && (handoverPos(2))<=1.5 &&
+								prediction )
 							{
 								/*control head*/
 								if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
@@ -412,12 +452,14 @@ namespace mc_handover
 								if(handoverPos(2) < 1.0){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
 								else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
 
-								/*handover position*/
-								ctl.solver().addTask(ctl.posTaskL);
+								/*handover pose*/
 								ctl.posTaskL->position(handoverPos);
 
-								ctl.solver().addTask(ctl.oriTaskL);
-								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+								if((handoverPos(1))<= 0.2)
+								{ ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
+								else
+								{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
+
 							}
 							if(it==wp.cols())
 								{ collected  = false; }
@@ -431,7 +473,6 @@ namespace mc_handover
 						closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({closeGrippers});
-						//cout << "object is inside gripper, closing gripper" <<endl;
 						return true;
 					};
 
@@ -471,6 +512,9 @@ namespace mc_handover
 					if( ( avg1-markersPos[fingerS].col(i) ).norm() <0.2 )
 					{
 						// prediction = false;
+						ctl.solver().addTask(ctl.posTaskL);
+						ctl.solver().addTask(ctl.oriTaskL);
+
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
 					}
@@ -511,12 +555,11 @@ namespace mc_handover
 
 /*------------------------------TO DOs----------------------------------------------
 --- fix threshold
+--- record/display pos trail in rviz
 
 --- stop prediction during handover
 
---- add different object & orientation
-
---- ***record/display pos trail in rviz***
+--- add different orientation
 
 --- change EFl-velocityProfile
 ----------------------------------------------------------------------------------*/

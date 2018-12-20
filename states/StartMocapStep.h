@@ -48,10 +48,15 @@ namespace mc_handover
 			int s{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{true}; // default True for MOCAP
+			bool Flag_CORTEX{false}; // default True for MOCAP
 
-			std::vector<Eigen::Vector3d> Markers;
+			sva::PTransformd Subj_X_efL;
+			sva::PTransformd ltHand;
+			
 			std::vector<Eigen::MatrixXd> markersPos;
+			std::vector<Eigen::Vector3d> Markers;
+			std::vector<Eigen::Vector3d> predictedPositions;
+			std::vector<sva::PTransformd> S_X_efL;
 
 			int body{0};
 
@@ -67,7 +72,7 @@ namespace mc_handover
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
-			Eigen::Quaterniond q, q1;
+			Eigen::Quaterniond q, q1, q2, q3;
 
 			/*Eigen::Matrix3d::Identity();*/
 			Eigen::Matrix3d curRotLeftEfMarker;
@@ -78,8 +83,6 @@ namespace mc_handover
 
 			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
-			sva::PTransformd Subj_X_efL;
-			sva::PTransformd ltHand;
 
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
