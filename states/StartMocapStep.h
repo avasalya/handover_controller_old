@@ -65,7 +65,7 @@ namespace mc_handover
 			int wristRA{0}, wristRB{1};
 			int gripperLA{2}, gripperLB{3};
 
-			int fingerS{4};
+			int object{4};
 			int knuckleSA{5}, knuckleSB{6};
 			int wristSA{7}, wristSB{8};
 			
