@@ -51,7 +51,7 @@ namespace mc_handover
 			bool Flag_CORTEX{false}; // default True for MOCAP
 
 			sva::PTransformd Subj_X_efL;
-			sva::PTransformd ltHand;
+			sva::PTransformd ltHand, rtHand;
 			
 			std::vector<Eigen::MatrixXd> markersPos;
 			std::vector<Eigen::Vector3d> Markers;
@@ -60,14 +60,21 @@ namespace mc_handover
 
 			int body{0};
 
-			int maxMarkers{9};
+			int maxMarkers{13};//17
 
-			int wristRA{0}, wristRB{1};
-			int gripperLA{2}, gripperLB{3};
+			int wristLtEfA{0}, wristLtEfB{1};
+			int gripperLtEfA{2}, gripperLtEfB{3};
 
-			int object{4};
-			int knuckleSA{5}, knuckleSB{6};
-			int wristSA{7}, wristSB{8};
+			int wristRtEfA{4}, wristRtEfB{5};
+			int gripperRtEfA{6}, gripperRtEfB{7};
+
+			int object{8};
+
+			int fingerSubjLt{9};
+			int lShapeLtA{10}, lShapeLtB{11}, lShapeLtC{12};
+
+			// int fingerSubjRt{13};
+			// int lShapeRtA{14}, lShapeRtB{15}, lShapeRtC{16};
 			
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
@@ -78,6 +85,8 @@ namespace mc_handover
 			Eigen::Matrix3d curRotLeftEfMarker;
 			Eigen::Matrix3d curRotLeftEf;
 			Eigen::Matrix3d rotSubj;
+			Eigen::Matrix3d subjLtHandRot,subjRtHandRot;
+
 
 			Eigen::MatrixXd curVelSubj, wp, newPosSubj;
 
@@ -135,3 +144,55 @@ namespace mc_handover
 } // namespace mc_handover
 
 EXPORT_SINGLE_STATE("StartMocapStep", mc_handover::states::StartMocapStep)
+
+
+/*
+
+normal = (u/u.norm()).cross(v/v.norm());
+Eigen::Matrix3d rotation_;
+rotation_.row(0) = (u/u.norm()).transpose();
+rotation_.row(1) = (v/v.norm()).transpose();
+rotation_.row(2) = (normal/normal.norm()).transpose();
+
+
+// orthogonalization method Kevin
+double angle = M_PI / 2. - std::acos(u.dot(v) / (u.norm() * v.norm()));
+Eigen::Vector3d axis = u.cross(v);
+axis = axis / axis.norm();
+angle = angle / 2.;
+//Rodrigues' rotation formula to rotate each of the vertices//
+Eigen::Vector3d urot = u * std::cos(angle) + axis.cross(u) * std::sin(-angle) +
+axis * axis.dot(u) * (1 - std::cos(angle));
+Eigen::Vector3d vrot = v * std::cos(angle) + axis.cross(v) * std::sin(angle) +
+axis * axis.dot(v) * (1 - std::cos(angle));
+Eigen::Vector3d right = urot / urot.norm();
+Eigen::Vector3d forward = vrot / vrot.norm();
+Eigen::Vector3d up;
+up = right.cross(forward);
+rotation_.row(0) = right.transpose();
+rotation_.row(1) = forward.transpose();
+rotation_.row(2) = up.transpose();
+
+
+
+//https://gamedev.stackexchange.com/questions/20097/how-to-calculate-a-3x3-rotation-matrix-from-2-direction-vectors
+Matrix3x3 MakeMatrix( Vector3 X, Vector3 Y )  
+{  
+    // make sure that we actually have two unique vectors.
+    assert( X != Y );
+
+    Matrix3x3 M;  
+    M.X = normalise( X );  
+    M.Z = normalise( cross_product(X,Y) );
+    M.Y = normalise( cross_product(M.Z,X) ); //-- to make sure it is orthogonal
+    //otherwise just
+    //M.Y = normalise( Y );
+    return M;
+}
+
+
+//https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
+//https://math.stackexchange.com/questions/871867/rotation-matrix-of-triangle-in-3d
+//v′i=vicosθ+(k×vi)sinθ+k(k⋅vi)(1−cosθ)
+
+*/

@@ -49,7 +49,6 @@ namespace mc_handover
 			// cout<< chestPosTask->position().transpose()<<endl;
 			chestPosTask->position({0.032, 0.0, 1.12});
 
-
 			/*chest ori task*/
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestOriTask);
@@ -62,16 +61,17 @@ namespace mc_handover
 			ctl.solver().addTask(ctl.posTaskL);
 			ctl.posTaskL->position({0.3,0.3,1.1});
 
-			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 2.0, 1e3);
-			ctl.solver().addTask(ctl.posTaskR);
-			// cout << ctl.posTaskR->position().transpose() <<endl;
-			ctl.posTaskR->position({0.060, -0.373, 0.724});
-
-
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
 			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+
+
+			/*EfR pos Task*/
+			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
+			ctl.solver().addTask(ctl.posTaskR);
+			// cout << ctl.posTaskR->position().transpose() <<endl;
+			ctl.posTaskR->position({0.060, -0.373, 0.724});
 
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
@@ -140,8 +140,8 @@ namespace mc_handover
 					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
 					[this,&ctl](const sva::PTransformd & pos) { 
 						ctl.robots().robot(2).posW(pos);
-						ctl.removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
-						ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"});
+						ctl.removeContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
+						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
 					})
 				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
 				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Subj_X_efL.translation()}); return Subj_X_efL.translation();})
@@ -185,10 +185,10 @@ namespace mc_handover
 				// mc_rtc::gui::Trajectory("obseve subj pos", {{0, 1, 0}, 0.01, mc_rtc::gui::LineStyle::Solid},
 				// 	[this, &ctl]() -> const std::vector<sva::PTransformd>& { return S_X_efL; }),
 
-				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{0,0,1}},
+				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{0,0,0}},
 					[this, &ctl]() -> const std::vector<Eigen::Vector3d>& { return predictedPositions; } ),
 				
-				mc_rtc::gui::Trajectory("traj_l_wrist", {{0,0,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
+				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
 
 				);
@@ -197,6 +197,7 @@ namespace mc_handover
 			/*configure MOCAP*/
 			if(Flag_CORTEX)
 			{
+				LOG_INFO("***MOCAP IS ENABLED***")
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
@@ -242,6 +243,7 @@ namespace mc_handover
 			}
 			else /*simulation*/
 			{
+				LOG_WARNING("***MOCAP IS DISABLED***")
 				startCapture = false; //true for sim
 				
 				name = {"simData3"};
@@ -287,6 +289,7 @@ namespace mc_handover
 
 			/*hand pose*/
 			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
+			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK7")];
 
 
 			/*set com pose*/
@@ -345,37 +348,60 @@ namespace mc_handover
 
 
 				/*check for non zero frame only and store them*/
-				if(	Markers[wristRA](0)!=0 && Markers[wristRA](0)< 20
-					&&  Markers[wristSA](0)!=0 && Markers[wristSA](0)< 20
+				if(	Markers[wristLtEfA](0)!=0 && Markers[wristLtEfA](0)< 20
+					&&  Markers[object](0)!=0 && Markers[object](0)< 20
+					&&  Markers[fingerSubjLt](0)!=0 && Markers[fingerSubjLt](0)< 20
 					)
 				{
 					for(int m=0; m<maxMarkers; m++)
 						{ markersPos[m].col(i) << Markers[m]; }
-
 					// cout << "Markers[4] " << Markers[4].transpose()<<endl;
 
 					/*direction vectors, projections and area*/
-					auto R_wA_wB = markersPos[wristRA].col(i)-markersPos[wristRB].col(i);
-					auto R_wA_lA = markersPos[wristRA].col(i)-markersPos[gripperLA].col(i);
-					auto R_wA_lB = markersPos[wristRA].col(i)-markersPos[gripperLB].col(i);
-					auto R_wA_O = markersPos[wristRA].col(i)-markersPos[object].col(i);
+					auto lEf_wA_wB = markersPos[wristLtEfA].col(i)-markersPos[wristLtEfB].col(i);
+					auto lEf_wA_gA = markersPos[wristLtEfA].col(i)-markersPos[gripperLtEfA].col(i);
+					auto lEf_wA_gB = markersPos[wristLtEfA].col(i)-markersPos[gripperLtEfB].col(i);
+					auto lEf_wA_O  = markersPos[wristLtEfA].col(i)-markersPos[object].col(i);
+					auto lEf_wA_lf  = markersPos[wristLtEfA].col(i)-markersPos[fingerSubjLt].col(i);
 
-					auto wAB_theta_wAlA = acos( R_wA_wB.dot(R_wA_lA)/( R_wA_wB.norm()*R_wA_lA.norm() ) );
-					auto wAB_theta_wAlB = acos( R_wA_wB.dot(R_wA_lB)/( R_wA_wB.norm()*R_wA_lB.norm() ) );
-					auto wAB_theta_wAO = acos( R_wA_wB.dot(R_wA_O)/( R_wA_wB.norm()*R_wA_O.norm() ) );
+					auto lEf_wAgB_theta_wAgA = acos( lEf_wA_gB.dot(lEf_wA_gA)/( lEf_wA_gB.norm()*lEf_wA_gA.norm() ) );
+					auto lEf_wAB_theta_wAgA = acos( lEf_wA_wB.dot(lEf_wA_gA)/( lEf_wA_wB.norm()*lEf_wA_gA.norm() ) );
+					auto lEf_wAB_theta_wAgB = acos( lEf_wA_wB.dot(lEf_wA_gB)/( lEf_wA_wB.norm()*lEf_wA_gB.norm() ) );
+					auto lEf_wAB_theta_wAO = acos( lEf_wA_wB.dot(lEf_wA_O)/( lEf_wA_wB.norm()*lEf_wA_O.norm() ) );
+					auto lEf_wAB_theta_wAf = acos( lEf_wA_wB.dot(lEf_wA_lf)/( lEf_wA_wB.norm()*lEf_wA_lf.norm() ) );
+					
+					auto lEf_area_gAB_wA = 0.5*lEf_wA_gB.norm()*lEf_wA_gA.norm()*sin(lEf_wAgB_theta_wAgA);
+					auto lEf_area_wAB_gA = 0.5*lEf_wA_wB.norm()*lEf_wA_gA.norm()*sin(lEf_wAB_theta_wAgA);
+					auto lEf_area_wAB_gB = 0.5*lEf_wA_wB.norm()*lEf_wA_gB.norm()*sin(lEf_wAB_theta_wAgB);
+					auto lEf_area_wAB_O  = 0.5*lEf_wA_wB.norm()*lEf_wA_O.norm()*sin(lEf_wAB_theta_wAO);
+					auto lEf_area_wAB_f  = 0.5*lEf_wA_wB.norm()*lEf_wA_lf.norm()*sin(lEf_wAB_theta_wAf);
 
-					auto area_wAB_lA = 0.5*R_wA_wB.norm()*R_wA_lA.norm()*sin(wAB_theta_wAlA);
-					auto area_wAB_lB = 0.5*R_wA_wB.norm()*R_wA_lB.norm()*sin(wAB_theta_wAlB);
-					auto area_wAB_O  = 0.5*R_wA_wB.norm()*R_wA_O.norm()*sin(wAB_theta_wAO);
 
-					// auto R_lA_lB = markersPos[gripperLA].col(i)-markersPos[gripperLB].col(i);
-					// auto lAB_theta_wAlB = acos( R_lA_lB.dot(R_wA_lB)/( R_lA_lB.norm()*R_wA_lB.norm() ) );
-					// auto area_lAB_wA = 0.5*R_lA_lB.norm()*R_wA_lB.norm()*sin(lAB_theta_wAlB);
+
+					/*get rotation matrix XYZ of subject LEFT hand*/
+					Vector3d lshpLt_X = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtB].col(i);
+					Vector3d lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtC].col(i);
+					Vector3d lshpLt_Z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());
+
+					subjLtHandRot.row(0) = (lshpLt_X/lshpLt_X.norm()).transpose();
+					subjLtHandRot.row(1) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
+					subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
+
+
+					// /*get rotation matrix XYZ of subject RIGHT hand*/
+					// Vector3d lshpRt_X = markersPos[lShapeRtA].col(i)-markersPos[lShapeRtB].col(i);
+					// Vector3d lshpRt_Y = markersPos[lShapeRtB].col(i)-markersPos[lShapeRtC].col(i);
+					// Vector3d lshpRt_Z = (lshpRt_X/lshpRt_X.norm()).cross(lshpRt_Y/lshpRt_Y.norm());
+
+					// subjLtHandRot.row(0) = (lshpRt_X/lshpRt_X.norm()).transpose();
+					// subjLtHandRot.row(1) = -(lshpRt_Y/lshpRt_Y.norm()).transpose();
+					// subjLtHandRot.row(2) = (lshpRt_Z/lshpRt_Z.norm()).transpose();
+
 
 
 					/*get robot ef marker(s) current pose*/
 					auto efGripperPos =
-					0.25*( markersPos[wristRA].col(i) + markersPos[wristRB].col(i) + markersPos[gripperLA].col(i) + markersPos[gripperLB].col(i) );
+					0.25*( markersPos[wristLtEfA].col(i) + markersPos[wristLtEfB].col(i) + markersPos[gripperLtEfA].col(i) + markersPos[gripperLtEfB].col(i) );
 					curPosLeftEfMarker << efGripperPos;
 					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
@@ -385,7 +411,7 @@ namespace mc_handover
 					sva::PTransformd R_X_efL(curPosLeftEf);
 
 					rotSubj = Eigen::Matrix3d::Identity();
-					sva::PTransformd M_X_Subj(rotSubj, markersPos[object].col(i));
+					sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].col(i));
 
 					/*subj marker(s) pose w.r.t to robot EF frame*/
 					Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
@@ -491,28 +517,28 @@ namespace mc_handover
 
 					/*force control*/ /**** dont use fabs & check also force direction ****/
 					auto checkForce = [&](const char *axis_name, int idx)
-					{											/*area_WAB_subjF*/ /*NOT area_wAB_O*/
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (area_wAB_lA > area_wAB_O) || (area_wAB_lB > area_wAB_O) ) )
+					{
+						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
 							openGripper = true;
 							open_gripperL();
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
-						else { return false; }
+						// else { return false; }
 					};
 
 
 					/*grasp object (close gripper)*/
 					auto compObjRelPos = [&]()
 					{
-						if( (closeGripper==false) && ( (area_wAB_lA > area_wAB_O) || (area_wAB_lB > area_wAB_O) ) ) { close_gripperL(); }
+						if( (closeGripper==false) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) ) { close_gripperL(); }
 						return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 					};
 
 
 					/*handover control*/
-					auto  avg1 = (markersPos[gripperLA].col(i)+markersPos[gripperLB].col(i))/2;
+					auto  avg1 = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
 					if( ( avg1-markersPos[object].col(i) ).norm() <0.2 )
 					{
 						// prediction = false;
