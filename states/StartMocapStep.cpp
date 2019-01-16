@@ -144,17 +144,17 @@ namespace mc_handover
 						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
 					})
 				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-				mc_rtc::gui::Point3D("log data", [this,&ctl](){ ctl.robots().robot(2).posW({Subj_X_efL.translation()}); return Subj_X_efL.translation();})
+				mc_rtc::gui::Point3D("subj fing pos", [this,&ctl](){ ctl.robots().robot(2).posW({Subj_X_efL.translation()}); return Subj_X_efL.translation();})
 				);
 
 
 			/*change prediction_ settings*/
 			ctl.gui()->addElement({"Handover", "tuner"},
-				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "zero"},
+				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "it"},
 					[this]() { return tuner; }, 
 					[this](const Eigen::Vector3d & to){tuner = to;cout<< "t_predict = " << tuner(0)*1/fps<< "sec, t_observe = "<<tuner(1)*1/fps<< "sec"<<endl;}));
 
-			tuner << 400., 20., 80.; 
+			tuner << 400., 20., 60.; 
 			t_predict = (int)tuner(0);
 			t_observe = (int)tuner(1);
 			it = (int)tuner(2);
@@ -185,7 +185,7 @@ namespace mc_handover
 				// mc_rtc::gui::Trajectory("obseve subj pos", {{0, 1, 0}, 0.01, mc_rtc::gui::LineStyle::Solid},
 				// 	[this, &ctl]() -> const std::vector<sva::PTransformd>& { return S_X_efL; }),
 
-				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{0,0,0}},
+				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{1,1,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this, &ctl]() -> const std::vector<Eigen::Vector3d>& { return predictedPositions; } ),
 				
 				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
@@ -340,10 +340,10 @@ namespace mc_handover
 				else /*simulation*/
 				{
 					for(int m=0; m<maxMarkers; m++)
-						{ 
+					{ 
 							// Markers[m] = pos[m].col(s);
-							Markers[m] = ctl.robots().robot(2).bodyPosW("base_link").translation();
-						 }
+						Markers[m] = ctl.robots().robot(2).bodyPosW("base_link").translation();
+					}
 				}
 
 
@@ -377,33 +377,14 @@ namespace mc_handover
 					auto lEf_area_wAB_f  = 0.5*lEf_wA_wB.norm()*lEf_wA_lf.norm()*sin(lEf_wAB_theta_wAf);
 
 
-					/*get robot ef marker(s) current pose*/
-					auto efGripperPos =
-					0.25*( markersPos[wristLtEfA].col(i) + markersPos[wristLtEfB].col(i) + markersPos[gripperLtEfA].col(i) + markersPos[gripperLtEfB].col(i) );
-					curPosLeftEfMarker << efGripperPos;
-					sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
-
-					/*get robot ef current pose*/
-					curRotLeftEf = ltHand.rotation();
-					curPosLeftEf = ltHand.translation();
-					sva::PTransformd R_X_efL(curPosLeftEf);
-
-					rotSubj = Eigen::Matrix3d::Identity();
-					sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].col(i));
-
-					/*subj marker(s) pose w.r.t to robot EF frame*/
-					Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
-
-
-
-					/*get rotation matrix XYZ of subject LEFT hand*/
-					Vector3d lshpLt_X = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtA].col(i); //B ________\C
-					Vector3d lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtC].col(i); //  |       /
-					Vector3d lshpLt_Z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//  |
-																								   //A\|/
-					subjLtHandRot.row(0) = (lshpLt_X/lshpLt_X.norm()).transpose();
-					subjLtHandRot.row(1) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
-					subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
+					// /*get rotation matrix XYZ of subject LEFT hand*/
+					// Vector3d lshpLt_X = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtA].col(i); //B ________\C
+					// Vector3d lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtC].col(i); //  |       /
+					// Vector3d lshpLt_Z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//  |
+					// 																			   //A\|/
+					// subjLtHandRot.row(0) = (lshpLt_X/lshpLt_X.norm()).transpose();
+					// subjLtHandRot.row(1) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
+					// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
 
 
 					// /*get rotation matrix XYZ of subject RIGHT hand*/
@@ -416,24 +397,41 @@ namespace mc_handover
 					// subjLtHandRot.row(2) = (lshpRt_Z/lshpRt_Z.norm()).transpose();
 
 
-					if(j<=t_observe)
-					{
-						S_X_efL[j-1] = Subj_X_efL;
-						// cout << "S_X_efL "<<S_X_efL[j-1].translation().transpose()<<endl;
-
-						newPosSubj.col(j-1) = Subj_X_efL.translation();
-						if(j==t_observe)
-							{ ithPosSubj = newPosSubj.col(t_observe-1); j=1; }
-						j++;
-					}
-
-					/*predicted pos*/
-					if( (i%t_observe == 0) )
+					if( (i%t_observe==0) )
 					{
 						/*prediction_ tuner*/
 						t_predict = (int)tuner(0);
 						t_observe = (int)tuner(1);
 						it = (int)tuner(2);
+
+						/*get robot ef current pose*/
+						curRotLeftEf = ltHand.rotation();
+						curPosLeftEf = ltHand.translation();
+						sva::PTransformd R_X_efL(curPosLeftEf);
+
+						/*get robot ef marker(s) current pose*/
+						auto efGripperPos = 0.25*(
+							markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1)
+							);
+						curPosLeftEfMarker << efGripperPos;
+						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+
+						/*subj marker(s) pose w.r.t to robot EF frame*/
+						for(int j=1;j<=t_observe; j++)
+						{
+							rotSubj = Eigen::Matrix3d::Identity();
+							sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+
+							Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
+
+							S_X_efL[j-1] = Subj_X_efL;
+							// cout << "S_X_efL "<<S_X_efL[j-1].translation().transpose()<<endl;
+
+							newPosSubj.col(j-1) = Subj_X_efL.translation();
+							
+							if(j==t_observe)
+								{ ithPosSubj = newPosSubj.col(t_observe-1); }
+						}
 
 						/*get average velocity of previous *t_observe* sec Subj motion*/
 						curVelSubj  = ctl.handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX
@@ -451,7 +449,7 @@ namespace mc_handover
 						initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
-					}
+					}//t_observe
 
 
 					/*feed Ef pose*/
@@ -468,9 +466,9 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0)>= 0.2) && (handoverPos(0)<= 0.7) && 
-								(handoverPos(1)<= 0.7) &&
-								(handoverPos(2)>= 0.9) && (handoverPos(2)<=1.5) &&
+							if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
+								(handoverPos(1)>= 0.25) && (handoverPos(1)<= 0.7) &&
+								(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) &&
 								prediction )
 							{
 								/*control head*/
@@ -482,17 +480,17 @@ namespace mc_handover
 
 								/*handover pose*/
 								ctl.posTaskL->position(handoverPos);
+								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
-								if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
-								{ ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
-								else
-								{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
-
+								// if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
+								// { ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
+								// else
+								// { ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
 							}
 							if(it==wp.cols())
 								{ collected  = false; }
 						}
-					}
+					}//collected
 
 
 					/*gripper control*/
@@ -520,18 +518,24 @@ namespace mc_handover
 						{
 							openGripper = true;
 							open_gripperL();
+							// closeGripper = false; ///
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
-						// else { return false; }
+						else { return false; }///
 					};
 
 
 					/*grasp object (close gripper)*/
 					auto compObjRelPos = [&]()
 					{
-						if( (closeGripper==false) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) ) { close_gripperL(); }
-						return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+						if( (closeGripper==false) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) ) 
+						{
+							close_gripperL();
+							// return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);///
+						}
+						return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
+						// else { return false; }///
 					};
 
 
