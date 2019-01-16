@@ -468,7 +468,7 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0)<= 0.7) && 
+							if(	(handoverPos(0)>= 0.2) && (handoverPos(0)<= 0.7) && 
 								(handoverPos(1)<= 0.7) &&
 								(handoverPos(2)>= 0.9) && (handoverPos(2)<=1.5) &&
 								prediction )
@@ -483,7 +483,7 @@ namespace mc_handover
 								/*handover pose*/
 								ctl.posTaskL->position(handoverPos);
 
-								if( (handoverPos(0)<= 0.3) && (handoverPos(1)<= 0.2) )
+								if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
 								{ ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
 								else
 								{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
