@@ -48,7 +48,7 @@ namespace mc_handover
 			int s{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{false}; // default True for MOCAP
+			bool Flag_CORTEX{true}; // default True for MOCAP
 
 			sva::PTransformd Subj_X_efL;
 			sva::PTransformd ltHand, rtHand;

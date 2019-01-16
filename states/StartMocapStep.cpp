@@ -59,12 +59,12 @@ namespace mc_handover
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			ctl.posTaskL->position({0.3,0.3,1.1});
+			// ctl.posTaskL->position({0.3,0.3,1.1});
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*EfR pos Task*/
@@ -80,17 +80,17 @@ namespace mc_handover
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({closeGrippers}); openGripper = true;
 					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.7,1.45});
+				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.4});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos2", [this, &ctl](){ ctl.posTaskL->position({0.3,0.6,1.3});
+				mc_rtc::gui::Button( "pos2", [this, &ctl](){ ctl.posTaskL->position({0.4,0.6,1.3});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos3", [this, &ctl](){ ctl.posTaskL->position({0.4,0.5,1.1}); 
+				mc_rtc::gui::Button( "pos3", [this, &ctl](){ ctl.posTaskL->position({0.3,0.4,1.1}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos4", [this, &ctl](){ ctl.posTaskL->position({0.5,0.4,0.9}); 
+				mc_rtc::gui::Button( "pos4", [this, &ctl](){ ctl.posTaskL->position({0.5,0.6,0.9}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos5", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.45}); 
+				mc_rtc::gui::Button( "pos5", [this, &ctl](){ ctl.posTaskL->position({0.1,0.3,1.35}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos6", [this, &ctl](){ ctl.posTaskL->position({0.3,0.2,1.0}); 
+				mc_rtc::gui::Button( "pos6", [this, &ctl](){ ctl.posTaskL->position({0.3,0.5,1.0}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button("open_Left_Gripper",[this, &ctl](){std::string msg = "openGripperL";
 					ctl.read_msg(msg); openGripper = false;} )
@@ -377,28 +377,6 @@ namespace mc_handover
 					auto lEf_area_wAB_f  = 0.5*lEf_wA_wB.norm()*lEf_wA_lf.norm()*sin(lEf_wAB_theta_wAf);
 
 
-
-					/*get rotation matrix XYZ of subject LEFT hand*/
-					Vector3d lshpLt_X = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtB].col(i);
-					Vector3d lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtC].col(i);
-					Vector3d lshpLt_Z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());
-
-					subjLtHandRot.row(0) = (lshpLt_X/lshpLt_X.norm()).transpose();
-					subjLtHandRot.row(1) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
-					subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
-
-
-					// /*get rotation matrix XYZ of subject RIGHT hand*/
-					// Vector3d lshpRt_X = markersPos[lShapeRtA].col(i)-markersPos[lShapeRtB].col(i);
-					// Vector3d lshpRt_Y = markersPos[lShapeRtB].col(i)-markersPos[lShapeRtC].col(i);
-					// Vector3d lshpRt_Z = (lshpRt_X/lshpRt_X.norm()).cross(lshpRt_Y/lshpRt_Y.norm());
-
-					// subjLtHandRot.row(0) = (lshpRt_X/lshpRt_X.norm()).transpose();
-					// subjLtHandRot.row(1) = -(lshpRt_Y/lshpRt_Y.norm()).transpose();
-					// subjLtHandRot.row(2) = (lshpRt_Z/lshpRt_Z.norm()).transpose();
-
-
-
 					/*get robot ef marker(s) current pose*/
 					auto efGripperPos =
 					0.25*( markersPos[wristLtEfA].col(i) + markersPos[wristLtEfB].col(i) + markersPos[gripperLtEfA].col(i) + markersPos[gripperLtEfB].col(i) );
@@ -415,6 +393,28 @@ namespace mc_handover
 
 					/*subj marker(s) pose w.r.t to robot EF frame*/
 					Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
+
+
+
+					/*get rotation matrix XYZ of subject LEFT hand*/
+					Vector3d lshpLt_X = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtA].col(i); //B ________\C
+					Vector3d lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtC].col(i); //  |       /
+					Vector3d lshpLt_Z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//  |
+																								   //A\|/
+					subjLtHandRot.row(0) = (lshpLt_X/lshpLt_X.norm()).transpose();
+					subjLtHandRot.row(1) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
+					subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
+
+
+					// /*get rotation matrix XYZ of subject RIGHT hand*/
+					// Vector3d lshpRt_X = markersPos[lShapeRtA].col(i)-markersPos[lShapeRtB].col(i);
+					// Vector3d lshpRt_Y = markersPos[lShapeRtB].col(i)-markersPos[lShapeRtC].col(i);
+					// Vector3d lshpRt_Z = (lshpRt_X/lshpRt_X.norm()).cross(lshpRt_Y/lshpRt_Y.norm());
+
+					// subjLtHandRot.row(0) = (lshpRt_X/lshpRt_X.norm()).transpose();
+					// subjLtHandRot.row(1) = -(lshpRt_Y/lshpRt_Y.norm()).transpose();
+					// subjLtHandRot.row(2) = (lshpRt_Z/lshpRt_Z.norm()).transpose();
+
 
 					if(j<=t_observe)
 					{
@@ -444,9 +444,7 @@ namespace mc_handover
 						predictedPositions[0] << predictPos;
 						// cout << "predicted pos " << predictPos.transpose()<<endl;
 
-						/*get predicted way points between left ef and Subj*/
-
-						/*** get new vel profile ****/
+						/*get predicted way points between left ef and Subj*/	/*** GET NEW VELOCITY PROFILE ****/
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
@@ -470,9 +468,9 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 
 							/*robot constraint*/
-							if(	(handoverPos(0))>= 0.2 && (handoverPos(0))<= 0.7 && 
-								(handoverPos(1))<= 0.7 &&
-								(handoverPos(2))>= 0.9 && (handoverPos(2))<=1.5 &&
+							if(	(handoverPos(0)<= 0.7) && 
+								(handoverPos(1)<= 0.7) &&
+								(handoverPos(2)>= 0.9) && (handoverPos(2)<=1.5) &&
 								prediction )
 							{
 								/*control head*/
@@ -485,7 +483,7 @@ namespace mc_handover
 								/*handover pose*/
 								ctl.posTaskL->position(handoverPos);
 
-								if((handoverPos(1))<= 0.2)
+								if( (handoverPos(0)<= 0.3) && (handoverPos(1)<= 0.2) )
 								{ ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
 								else
 								{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
@@ -539,7 +537,7 @@ namespace mc_handover
 
 					/*handover control*/
 					auto  avg1 = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					if( ( avg1-markersPos[object].col(i) ).norm() <0.2 )
+					if( ( avg1-markersPos[fingerSubjLt].col(i) ).norm() <0.2 )
 					{
 						// prediction = false;
 						ctl.solver().addTask(ctl.posTaskL);
@@ -548,7 +546,7 @@ namespace mc_handover
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
 					}
-					else if( (avg1-markersPos[object].col(i) ).norm() >1 )
+					else if( (avg1-markersPos[fingerSubjLt].col(i) ).norm() >1 )
 					{
 						// cout << "avg " << avg1.norm() << endl;
 						closeGripper = false;
