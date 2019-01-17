@@ -64,7 +64,7 @@ namespace mc_handover
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*EfR pos Task*/
@@ -480,7 +480,7 @@ namespace mc_handover
 
 								/*handover pose*/
 								ctl.posTaskL->position(handoverPos);
-								// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 								// if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
 								// { ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
@@ -544,19 +544,14 @@ namespace mc_handover
 					if( ( avg1-markersPos[fingerSubjLt].col(i) ).norm() <0.2 )
 					{
 						// prediction = false;
-						// ctl.solver().addTask(ctl.posTaskL);
-						// ctl.solver().addTask(ctl.oriTaskL);
-
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
 					}
-					else if( (avg1-markersPos[fingerSubjLt].col(i) ).norm() >1 )
-					{
-						// cout << "avg " << avg1.norm() << endl;
-						closeGripper = false;
-						// prediction = true;
-					}
-					
+					// else{
+					// 		closeGripper=false;
+					// 		prediction = true;
+					// 	}
+
 					/*iterator*/
 					i+= 1;
 				}// check for non zero frame
@@ -587,7 +582,6 @@ namespace mc_handover
 
 /*------------------------------TO DOs----------------------------------------------
 --- fix threshold
---- record/display pos trail in rviz
 
 --- stop prediction during handover
 
@@ -595,3 +589,20 @@ namespace mc_handover
 
 --- change EFl-velocityProfile
 ----------------------------------------------------------------------------------*/
+
+
+					// if( ( avg1-markersPos[fingerSubjLt].col(i) ).norm() <0.2 )
+					// {
+
+					// 	// ctl.solver().addTask(ctl.posTaskL);
+					// 	// ctl.solver().addTask(ctl.oriTaskL);
+
+					// 	if(openGripper) { open_gripperL(); }
+					// 	compObjRelPos();
+					// }
+					// else if( (avg1-markersPos[fingerSubjLt].col(i) ).norm() >1 )
+					// {
+					// 	// cout << "avg " << avg1.norm() << endl;
+					// 	closeGripper = false;
+					// 	// prediction = true;
+					// }
