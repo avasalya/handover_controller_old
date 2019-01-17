@@ -93,7 +93,7 @@ namespace mc_handover
 				mc_rtc::gui::Button( "pos6", [this, &ctl](){ ctl.posTaskL->position({0.3,0.5,1.0}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button("open_Left_Gripper",[this, &ctl](){std::string msg = "openGripperL";
-					ctl.read_msg(msg); openGripper = false;} )
+					ctl.read_msg(msg); openGripper = false; closeGripper = false;} )
 				// , mc_rtc::gui::Transform("random_pos", 
 				// 	[this,&ctl](){ return ctl.robots().robot(0).bodyPosW("LARM_LINK7"); },
 				// 	[this,&ctl](const sva::PTransformd & pos){ctl.posTaskL->position(pos.translation());} ),
@@ -522,7 +522,7 @@ namespace mc_handover
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
-						else { return false; }///
+						// else { return false; }///
 					};
 
 
@@ -543,14 +543,14 @@ namespace mc_handover
 					auto  avg1 = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
 					if( ( avg1-markersPos[fingerSubjLt].col(i) ).norm() <0.2 )
 					{
-						prediction = false;
+						// prediction = false;
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
 					}
-					else{
-							closeGripper=false;
-							prediction = true;
-						}
+					// else{
+					// 		closeGripper=false;
+					// 		prediction = true;
+					// 	}
 
 					/*iterator*/
 					i+= 1;
