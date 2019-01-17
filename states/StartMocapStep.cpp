@@ -64,7 +64,7 @@ namespace mc_handover
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 
 			/*EfR pos Task*/
@@ -480,7 +480,7 @@ namespace mc_handover
 
 								/*handover pose*/
 								ctl.posTaskL->position(handoverPos);
-								ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+								// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
 								// if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
 								// { ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
@@ -518,7 +518,7 @@ namespace mc_handover
 						{
 							openGripper = true;
 							open_gripperL();
-							// closeGripper = false; ///
+							closeGripper = false; ///
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
@@ -532,10 +532,10 @@ namespace mc_handover
 						if( (closeGripper==false) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) ) 
 						{
 							close_gripperL();
-							// return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);///
+							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);///
 						}
-						return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
-						// else { return false; }///
+						// return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
+						else { return false; }///
 					};
 
 
@@ -544,8 +544,8 @@ namespace mc_handover
 					if( ( avg1-markersPos[fingerSubjLt].col(i) ).norm() <0.2 )
 					{
 						// prediction = false;
-						ctl.solver().addTask(ctl.posTaskL);
-						ctl.solver().addTask(ctl.oriTaskL);
+						// ctl.solver().addTask(ctl.posTaskL);
+						// ctl.solver().addTask(ctl.oriTaskL);
 
 						if(openGripper) { open_gripperL(); }
 						compObjRelPos();
