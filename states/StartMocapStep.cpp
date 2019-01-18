@@ -78,7 +78,7 @@ namespace mc_handover
 			ctl.gui()->addElement({"Handover", "randomPos"},
 				mc_rtc::gui::Button( "init*", [this, &ctl](){ ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({closeGrippers}); openGripper = true;
+					gripper->setTargetQ({closeGrippers}); /*openGripper = true*/;
 					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.4});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
@@ -537,51 +537,47 @@ namespace mc_handover
 						// else { return false; }///
 					};
 
+          /*grasp object (close gripper)*/
+          auto compObjRelPos = [&]()
+          {
 
-					/*grasp object (close gripper)*/
-					auto compObjRelPos = [&]()
-					{
-						if( (closeGripper==false) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )	//(lEf_area_gAB_wA > lEf_area_wAB_f)
-						{
-							close_gripperL();
-						}
-						
-           /*if closed WITHOUT object*/
-					 if(leftForce.norm() <=1.0)
-					 {
-            if(!openGripper)
+            if(!closeGripper)
             {
-					    open_gripperL();
+               if( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) )	//(lEf_area_gAB_wA > lEf_area_wAB_f)
+               {
+                 close_gripperL();
+               }
+               else
+               {
+                  /*if closed WITH object*/
+                  if(leftForce.norm()>=2.0)
+                  {
+                    return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
+                  }
+                  /*if closed WITHOUT object*/
+                  else if(leftForce.norm()<2.0)
+                  {
+                    closeGripper = false;
+                  }
+               }
             }
-					   closeGripper = false;
-					 }
-						/*if closed WITH object*/
-						if(closeGripper && (leftForce.norm()>=2.0) )
-						{
-							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
-						}
-						// else { return false; }///(lEf_area_wAB_gA < lEf_area_wAB_O) -- openGripper=false
-					};
+          };
 
 					//compObjRelPos();
-
 
 					/*handover control*/
 					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
 					if( ( !openGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
 					{
 						// prediction = false;
-						//if(!openGripper) {
                  open_gripperL();
                  compObjRelPos();
-            //}
 					}
            /*restart handover*/
 					if( ( closeGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >1.0) )
 					{
 						closeGripper=false;
             openGripper=false;
-						//cout << "close Gripper " << closeGripper <<endl;
 					}
 
 
