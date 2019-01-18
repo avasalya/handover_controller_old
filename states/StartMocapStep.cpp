@@ -96,13 +96,11 @@ namespace mc_handover
 				mc_rtc::gui::Button("open_Left_Gripper",[this, &ctl](){std::string msg = "openGripperL";
 					ctl.read_msg(msg);/* openGripper = true; closeGripper = false;*/
 					cout<<"on opening "<<ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
-
 				,mc_rtc::gui::Button("close_Left_Gripper",[this, &ctl](){std::string msg = "closeGripperL";
 					ctl.read_msg(msg); /*closeGripper = true; openGripper = false;*/
 					cout<<"on closing "<<ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
-
 				,mc_rtc::gui::Button("Norm_LeftEf_Force",[this, &ctl](){
-         Eigen::Vector3d v = ctl.wrenches.at("LeftHandForceSensor").force();
+					Eigen::Vector3d v = ctl.wrenches.at("LeftHandForceSensor").force();
 					cout<<"Norm "<< v.norm() <<endl; }) 
 
 
@@ -376,13 +374,13 @@ namespace mc_handover
 					auto lEf_wA_O  = markersPos[wristLtEfA].col(i)-markersPos[object].col(i);
 					auto lEf_wA_lf  = markersPos[wristLtEfA].col(i)-markersPos[fingerSubjLt].col(i);
 
-					auto lEf_wAgB_theta_wAgA = acos( lEf_wA_gB.dot(lEf_wA_gA)/( lEf_wA_gB.norm()*lEf_wA_gA.norm() ) );
+					// auto lEf_wAgB_theta_wAgA = acos( lEf_wA_gB.dot(lEf_wA_gA)/( lEf_wA_gB.norm()*lEf_wA_gA.norm() ) );
 					auto lEf_wAB_theta_wAgA = acos( lEf_wA_wB.dot(lEf_wA_gA)/( lEf_wA_wB.norm()*lEf_wA_gA.norm() ) );
 					auto lEf_wAB_theta_wAgB = acos( lEf_wA_wB.dot(lEf_wA_gB)/( lEf_wA_wB.norm()*lEf_wA_gB.norm() ) );
 					auto lEf_wAB_theta_wAO = acos( lEf_wA_wB.dot(lEf_wA_O)/( lEf_wA_wB.norm()*lEf_wA_O.norm() ) );
 					auto lEf_wAB_theta_wAf = acos( lEf_wA_wB.dot(lEf_wA_lf)/( lEf_wA_wB.norm()*lEf_wA_lf.norm() ) );
 					
-					auto lEf_area_gAB_wA = 0.5*lEf_wA_gB.norm()*lEf_wA_gA.norm()*sin(lEf_wAgB_theta_wAgA);
+					// auto lEf_area_gAB_wA = 0.5*lEf_wA_gB.norm()*lEf_wA_gA.norm()*sin(lEf_wAgB_theta_wAgA);
 					auto lEf_area_wAB_gA = 0.5*lEf_wA_wB.norm()*lEf_wA_gA.norm()*sin(lEf_wAB_theta_wAgA);
 					auto lEf_area_wAB_gB = 0.5*lEf_wA_wB.norm()*lEf_wA_gB.norm()*sin(lEf_wAB_theta_wAgB);
 					auto lEf_area_wAB_O  = 0.5*lEf_wA_wB.norm()*lEf_wA_O.norm()*sin(lEf_wAB_theta_wAO);
@@ -422,9 +420,8 @@ namespace mc_handover
 						sva::PTransformd R_X_efL(curPosLeftEf);
 
 						/*get robot ef marker(s) current pose*/
-						auto efLGripperPos = 0.25*(
-							markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1)
-							);
+						auto efLGripperPos = 0.25*( markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +
+							markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1) );
 						curPosLeftEfMarker << efLGripperPos;
 						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
@@ -526,66 +523,59 @@ namespace mc_handover
 					/*force control*/ /**** dont use fabs & check also force direction ****/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )	//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
-							// openGripper = false;
-							// closeGripper = false; /// DONT make it FALSE here -- give some time
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
-						// else { return false; }///
+						else { return false; }
 					};
 
-          /*grasp object (close gripper)*/
-          auto compObjRelPos = [&]()
-          {
+					/*grasp object (close gripper)*/
+					auto compObjRelPos = [&]()
+					{
+						if( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						{
+							if(!closeGripper)
+							{ close_gripperL(); }
 
-            if(!closeGripper)
-            {
-               if( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) )	//(lEf_area_gAB_wA > lEf_area_wAB_f)
-               {
-                 close_gripperL();
-               }
-               else
-               {
-                  /*if closed WITH object*/
-                  if(leftForce.norm()>=2.0)
-                  {
-                    return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
-                  }
-                  /*if closed WITHOUT object*/
-                  else if(leftForce.norm()<2.0)
-                  {
-                    closeGripper = false;
-                  }
-               }
-            }
-          };
-
-					//compObjRelPos();
+							if(closeGripper)
+							{
+								/*if closed WITH object*/
+								if(leftForce.norm()>=2.0)
+								{
+									return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+								}
+								/*if closed WITHOUT object*/
+								else
+								{ return false; }
+							}
+						}
+						return false;
+					};
 
 					/*handover control*/
 					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					if( ( !openGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
+					if( ((gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
 					{
-						// prediction = false;
-                 open_gripperL();
-                 compObjRelPos();
+						// prediction = false; //where should I keep you?
+						if( (!openGripper) && (leftForce.norm()<2.0) )
+						{
+							open_gripperL();
+						}
+						compObjRelPos();
 					}
-           /*restart handover*/
+					else
+					//{ prediction = true; } //where should I keep you?
+
+					/*restart handover*/
 					if( ( closeGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >1.0) )
 					{
 						closeGripper=false;
-            openGripper=false;
+						openGripper=false;
 					}
 
-
-
-					// else{
-					// 		closeGripper=false;
-					// 		prediction = true;
-					// 	}
 
 					/*iterator*/
 					i+= 1;
