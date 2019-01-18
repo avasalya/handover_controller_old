@@ -94,15 +94,17 @@ namespace mc_handover
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 
 				mc_rtc::gui::Button("open_Left_Gripper",[this, &ctl](){std::string msg = "openGripperL";
-					ctl.read_msg(msg); openGripper = true; closeGripper = false;
+					ctl.read_msg(msg);/* openGripper = true; closeGripper = false;*/
 					cout<<"on opening "<<ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
 
 				,mc_rtc::gui::Button("close_Left_Gripper",[this, &ctl](){std::string msg = "closeGripperL";
-					ctl.read_msg(msg); closeGripper = true; openGripper = false;
+					ctl.read_msg(msg); /*closeGripper = true; openGripper = false;*/
 					cout<<"on closing "<<ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
 
-				,mc_rtc::gui::Button("publish_LeftEf_Force",[this, &ctl](){
-					cout<<"on demand "<< ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
+				,mc_rtc::gui::Button("Norm_LeftEf_Force",[this, &ctl](){
+         Eigen::Vector3d v = ctl.wrenches.at("LeftHandForceSensor").force();
+					cout<<"Norm "<< v.norm() <<endl; }) 
+
 
 				// , mc_rtc::gui::Transform("random_pos", 
 				// 	[this,&ctl](){ return ctl.robots().robot(0).bodyPosW("LARM_LINK7"); },
@@ -544,34 +546,46 @@ namespace mc_handover
 							close_gripperL();
 						}
 						
-						// if() //check empty object wrench
-						// {
-							// openGripper = false;
-							// closeGripper = false;
-						// }
-						
-						if(closeGripper)
+           /*if closed WITHOUT object*/
+					 if(leftForce.norm() <=1.0)
+					 {
+            if(!openGripper)
+            {
+					    open_gripperL();
+            }
+					   closeGripper = false;
+					 }
+						/*if closed WITH object*/
+						if(closeGripper && (leftForce.norm()>=2.0) )
 						{
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2); ///
 						}
 						// else { return false; }///(lEf_area_wAB_gA < lEf_area_wAB_O) -- openGripper=false
 					};
 
+					//compObjRelPos();
+
 
 					/*handover control*/
 					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					if( ( gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2 )
+					if( ( !openGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
 					{
 						// prediction = false;
-						if(!openGripper) { open_gripperL(); }
+						//if(!openGripper) {
+                 open_gripperL();
+                 compObjRelPos();
+            //}
 					}
-					if( ( gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >1 )
+           /*restart handover*/
+					if( ( closeGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >1.0) )
 					{
 						closeGripper=false;
-						cout << "close Gripper " << closeGripper <<endl;
+            openGripper=false;
+						//cout << "close Gripper " << closeGripper <<endl;
 					}
 
-					compObjRelPos();
+
+
 					// else{
 					// 		closeGripper=false;
 					// 		prediction = true;
