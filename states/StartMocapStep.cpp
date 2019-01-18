@@ -523,10 +523,12 @@ namespace mc_handover
 					/*force control*/ /**** dont use fabs & check also force direction ****/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (std::abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " fabs force " << fabs(leftForce[idx])<< " reached on left hand")
+              std::cout<<"leftForce: "<<leftForce.transpose()<<std::endl;
+					    std::cout << "ctl.wrenches(leftHandForceSensor) " << ctl.wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << std::abs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
 						else { return false; }
@@ -562,6 +564,7 @@ namespace mc_handover
 						// prediction = false; //where should I keep you?
 						if( (!openGripper) && (leftForce.norm()<2.0) )
 						{
+              LOG_INFO("opengripper with leftforce.norm(): "<<leftForce.norm())
 							open_gripperL();
 						}
 						compObjRelPos();
@@ -570,7 +573,7 @@ namespace mc_handover
 					//{ prediction = true; } //where should I keep you?
 
 					/*restart handover*/
-					if( ( closeGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >1.0) )
+					if( ( closeGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
 					{
 						closeGripper=false;
 						openGripper=false;
