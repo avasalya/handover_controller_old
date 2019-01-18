@@ -118,7 +118,7 @@ namespace mc_handover
 			bool collected{false};
 			bool prediction{true};
 
-			bool openGripper{true};
+			bool openGripper{false};
 			bool closeGripper{false};
 
 			/*cortex*/
