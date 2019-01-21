@@ -119,10 +119,6 @@ namespace mc_handover
 			this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
 			wrenches["RightHandForceSensor"] =
 			this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
-      if (iter % 100 == 0)
-      {
-          std::cout<<"wrenches left hand run(): "<<wrenches["LeftHandForceSensor"].force().transpose()<<std::endl;
-      }
 		}
 		return ret;
 	}

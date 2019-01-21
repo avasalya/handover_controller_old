@@ -108,6 +108,7 @@ namespace mc_handover
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::VectorXd baseTh = Eigen::VectorXd::Zero(12);
+			Eigen::Vector3d leftTh;
 
 			Eigen::Vector3d move, target;
 			Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
@@ -118,6 +119,7 @@ namespace mc_handover
 			bool collected{false};
 			bool prediction{true};
 
+			bool restartHandover{false};
 			bool openGripper{false};
 			bool closeGripper{false};
 

@@ -125,7 +125,7 @@ namespace mc_handover
 					ctl.wrenches.at("RightHandForceSensor").force().transpose() << endl;
 				}),
 
-				mc_rtc::gui::ArrayInput("Threshold",
+				mc_rtc::gui::ArrayInput("set Threshold %",
 					{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
 					[this]() { return thresh; },
 					[this](const Eigen::VectorXd & t)
@@ -308,9 +308,17 @@ namespace mc_handover
 
 
 			/*Force sensor*/
-			auto leftTh = thresh.head(6);
 			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
+			/*auto set Force Threshold*/
+			auto leftThPercnt = thresh.segment(3,3);			
+			if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
+			{
+				leftTh[0] = 0.01*leftThPercnt[3]*leftForce[0] + leftForce[0];
+				leftTh[1] = 0.01*leftThPercnt[4]*leftForce[1] + leftForce[1];
+				leftTh[2] = 0.01*leftThPercnt[5]*leftForce[2] + leftForce[2];
+				// cout <<"leftTh "<< leftTh <<endl;
+			}
 
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
@@ -505,7 +513,7 @@ namespace mc_handover
 					/*gripper control*/
 					auto close_gripperL = [&]()
 					{
-						closeGripper = true;
+						// closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({closeGrippers});
 						return true;
@@ -513,11 +521,12 @@ namespace mc_handover
 
 					auto open_gripperL = [&]()
 					{
-						openGripper = true;
+						// openGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({openGrippers});
 						return true;
 					};
+
 
 
 					/*force control*/ /**** dont use fabs & check also force direction ****/
@@ -526,8 +535,9 @@ namespace mc_handover
 						if( (std::abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
-              std::cout<<"leftForce: "<<leftForce.transpose()<<std::endl;
-					    std::cout << "ctl.wrenches(leftHandForceSensor) " << ctl.wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+							openGripper=false;
+							closeGripper=false;
+							restartHandover=true;
 							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << std::abs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
@@ -537,13 +547,26 @@ namespace mc_handover
 					/*grasp object (close gripper)*/
 					auto compObjRelPos = [&]()
 					{
-						if( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (!closeGripper) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
-							if(!closeGripper)
-							{ close_gripperL(); }
+							close_gripperL();
+							closeGripper = true;
+						}
+						else
+						{ return false; }
+					};
 
-							if(closeGripper)
-							{
+					/*handover control*/
+					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
+					if( ((gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
+					{
+						if( (!openGripper) && (leftForce.norm()<2.0) )
+						{
+							open_gripperL();
+							openGripper = true;
+						}
+						else if( closeGripper && (!restartHandover) )
+						{
 								/*if closed WITH object*/
 								if(leftForce.norm()>=2.0)
 								{
@@ -551,32 +574,24 @@ namespace mc_handover
 								}
 								/*if closed WITHOUT object*/
 								else
-								{ return false; }
-							}
+								{ 
+									openGripper=false;
+									closeGripper=false;
+									return true; 
+								}
 						}
-						return false;
-					};
-
-					/*handover control*/
-					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					if( ((gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
-					{
-						// prediction = false; //where should I keep you?
-						if( (!openGripper) && (leftForce.norm()<2.0) )
+						if( (!closeGripper) && (!restartHandover) )
 						{
-              LOG_INFO("opengripper with leftforce.norm(): "<<leftForce.norm())
-							open_gripperL();
+							compObjRelPos();
 						}
-						compObjRelPos();
 					}
-					else
-					//{ prediction = true; } //where should I keep you?
 
 					/*restart handover*/
-					if( ( closeGripper && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
+					if( ( restartHandover && (!closeGripper) && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
 					{
-						closeGripper=false;
-						openGripper=false;
+						// openGripper=false;
+						// closeGripper=false;
+						restartHandover=false;
 					}
 
 
