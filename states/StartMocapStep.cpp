@@ -311,7 +311,7 @@ namespace mc_handover
 			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
 			/*auto set Force Threshold*/
-      		leftTh = thresh.head(6);
+      auto leftTh = thresh.head(6);
 			//	auto leftThPercnt = thresh.segment(3,3);			
 			//	if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
 			//	{
@@ -516,14 +516,14 @@ namespace mc_handover
 					{
 						closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.0});
+						gripper->setTargetQ({closeGrippers});
 					};
 
 					auto open_gripperL = [&]()
 					{
 						openGripper = false;
 						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({0.5});
+						gripper->setTargetQ({openGrippers});
 					};
 
 
@@ -531,12 +531,12 @@ namespace mc_handover
 					/*force control*/ /**** dont use fabs & check also force direction ****/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
-							openGripper=true;							
+							openGripper=true;
 							open_gripperL();
 							closeGripper=false;
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << fabs(leftForce[idx])<< " reached on left hand")
+							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << abs(leftForce[idx])<< " reached on left hand")
 							return true;
 						}
 					};
@@ -548,7 +548,7 @@ namespace mc_handover
 						{
 							close_gripperL();
 						}
-		            	return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+		            return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 					};
 
 					/*handover control*/
