@@ -96,7 +96,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
-			double closeGrippers = 0.0;//0.16;
+			double closeGrippers =0.16;
 			double openGrippers = 0.5;
 
 

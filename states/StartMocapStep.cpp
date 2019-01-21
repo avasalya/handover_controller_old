@@ -130,7 +130,7 @@ namespace mc_handover
 					[this]() { return thresh; },
 					[this](const Eigen::VectorXd & t)
 					{
-						LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
+						LOG_INFO("Changed threshold percnt to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
 						thresh = t;
 					}),
 
@@ -311,14 +311,15 @@ namespace mc_handover
 			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
 			/*auto set Force Threshold*/
-			auto leftThPercnt = thresh.segment(3,3);			
-			if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
-			{
-				leftTh[0] = 0.01*leftThPercnt[3]*leftForce[0] + leftForce[0];
-				leftTh[1] = 0.01*leftThPercnt[4]*leftForce[1] + leftForce[1];
-				leftTh[2] = 0.01*leftThPercnt[5]*leftForce[2] + leftForce[2];
-				// cout <<"leftTh "<< leftTh <<endl;
-			}
+      leftTh = thresh.head(6);
+		//	auto leftThPercnt = thresh.segment(3,3);			
+		//	if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
+		//	{
+		//		leftTh[0] = 0.01*leftThPercnt[3]*leftForce[0] + leftForce[0];
+		//		leftTh[1] = 0.01*leftThPercnt[4]*leftForce[1] + leftForce[1];
+		//		leftTh[2] = 0.01*leftThPercnt[5]*leftForce[2] + leftForce[2];
+		//		// cout <<"leftTh "<< leftTh <<endl;
+		//	}
 
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
@@ -516,7 +517,7 @@ namespace mc_handover
 						// closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({closeGrippers});
-						return true;
+						//return true;
 					};
 
 					auto open_gripperL = [&]()
@@ -524,7 +525,7 @@ namespace mc_handover
 						// openGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({openGrippers});
-						return true;
+						//return true;
 					};
 
 
@@ -532,16 +533,17 @@ namespace mc_handover
 					/*force control*/ /**** dont use fabs & check also force direction ****/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (std::abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
 							openGripper=false;
 							closeGripper=false;
 							restartHandover=true;
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << std::abs(leftForce[idx])<< " reached on left hand")
-							return true;
+							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << fabs(leftForce[idx])<< " reached on left hand")
+						  //return false;
 						}
-						else { return false; }
+           return false;
+					  //else { return false; }
 					};
 
 					/*grasp object (close gripper)*/
@@ -550,7 +552,7 @@ namespace mc_handover
 						if( (!closeGripper) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							close_gripperL();
-							closeGripper = true;
+							//closeGripper = true;
 						}
 						else
 						{ return false; }
@@ -568,31 +570,49 @@ namespace mc_handover
 						else if( closeGripper && (!restartHandover) )
 						{
 								/*if closed WITH object*/
+             // LOG_INFO("leftForce.norm() "<< leftForce.norm())
 								if(leftForce.norm()>=2.0)
 								{
-									return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+                   LOG_INFO("leftForce.norm() "<< leftForce.norm())
+									checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 								}
-								/*if closed WITHOUT object*/
-								else
-								{ 
-									openGripper=false;
-									closeGripper=false;
-									return true; 
-								}
+                if(leftForce.norm()<=1.0)
+                {
+                    LOG_INFO("restarting handover")
+                    restartHandover=true;
+                }
 						}
 						if( (!closeGripper) && (!restartHandover) )
 						{
 							compObjRelPos();
 						}
+           return false;
 					}
 
 					/*restart handover*/
-					if( ( restartHandover && (!closeGripper) && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
+					if( ( (!closeGripper) && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
 					{
-						// openGripper=false;
-						// closeGripper=false;
-						restartHandover=false;
-					}
+            if(openGripper)
+            {
+						   closeGripper=true;//cout<<"closedGripper=true"<<endl;
+            }
+            if(restartHandover)
+            {
+					     restartHandover=false;
+                closeGripper=false;
+                openGripper=false;
+            }
+           }
+
+//						/*if closed WITHOUT object*/
+//					if( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >2.0 )
+//						{ 
+//              LOG_WARNING("was closed without object")
+//							openGripper=false;
+//							closeGripper=false;
+//						  return false;
+//						}
+//             // return false;
 
 
 					/*iterator*/
