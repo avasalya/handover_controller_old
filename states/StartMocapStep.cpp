@@ -531,14 +531,13 @@ namespace mc_handover
 						{
 							open_gripperL();
 							restartHandover=true;
+              dum1=false;
 							if(dum3)
 							{	
 								dum3=false;
 								LOG_INFO("object returned, threshold on " << axis_name << " with abs force " << abs(leftForce[idx])<< " reached on left hand")
 							}
 						}
-						else
-							{ dum3=true; }
 						return false;
 					};
 
@@ -562,18 +561,6 @@ namespace mc_handover
 							close_gripperL();
 							closeGripper = true;
 						}
-
-						/*when closed WITHOUT object*/
-						else if( closeGripper && (leftForce.norm()<1.0) )
-						{
-							open_gripperL();
-							closeGripper = false;
-							if(dum1)
-							{
-								LOG_ERROR("object is not inside gripper, try again")
-								dum1=false;
-							}
-						}
 						
 						/*when closed WITH object*/
 						else if( closeGripper && (leftForce.norm()>=2.0) )
@@ -586,6 +573,18 @@ namespace mc_handover
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
 					}
+
+						/*when closed WITHOUT object*/
+						else if( closeGripper && (leftForce.norm()<1.0) )
+						{
+							if(dum1)
+							{
+							  open_gripperL();
+							  closeGripper = false;
+								LOG_ERROR("object is not inside gripper, try again")
+								dum1=false;
+							}
+						}
 
 					/*restart handover*/
 					if( (restartHandover) && ( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() >0.50 ) )
