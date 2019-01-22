@@ -414,13 +414,13 @@ namespace mc_handover
 						curRotLeftEf = ltHand.rotation();
 						curPosLeftEf = ltHand.translation();
 						// sva::PTransformd R_X_efL(curPosLeftEf);
-						sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf);
+						sva::PTransformd R_X_efL(curPosLeftEf);
 
 						/*get robot ef marker(s) current pose*/
 						auto efLGripperPos = 0.25*( markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +
 							markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1) );
 						curPosLeftEfMarker << efLGripperPos;
-						sva::PTransformd M_X_efLMarker(curRotLeftEf, curPosLeftEfMarker);
+						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
@@ -473,7 +473,7 @@ namespace mc_handover
 
 							/*robot constraint*/
 							if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
-								(handoverPos(1)>= 0.25) && (handoverPos(1)<= 0.7) &&
+								(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
 								(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
 							{
 								/*control head*/
@@ -586,7 +586,7 @@ namespace mc_handover
 							}
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
-						motion=false;
+						//motion=false;
 					}
 
 					/*when closed WITHOUT object*/
@@ -611,7 +611,7 @@ namespace mc_handover
 							dum1=true;
 							dum2=true;
 							dum3=true;
-							cout<<"restarting handover"<<endl;
+							cout<<"/*******restarting handover*******/"<<endl;
 						}
 					}
 
