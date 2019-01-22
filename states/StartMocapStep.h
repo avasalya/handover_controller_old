@@ -116,7 +116,7 @@ namespace mc_handover
 			/*mocap*/
 			bool startCapture{false};
 			bool collected{false};
-			bool prediction{true};
+			bool motion{true};
 
 			bool restartHandover{false};
 			bool openGripper{false};

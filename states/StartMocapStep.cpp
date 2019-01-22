@@ -8,7 +8,8 @@ namespace mc_handover
 
 		void StartMocapStep::configure(const mc_rtc::Configuration & config)
 		{
-			thresh 	= config("handsWrenchTh");
+			thresh 	= config("handsWrenchTh%");
+			// thresh 	= config("handsWrenchTh");
 			baseTh 	= config("handsWrenchBaseTh");
 			handsWrenchDir = config("handsWrenchDir");
 		}
@@ -78,7 +79,7 @@ namespace mc_handover
 			ctl.gui()->addElement({"Handover", "randomPos"},
 				mc_rtc::gui::Button( "init*", [this, &ctl](){ ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({closeGrippers}); /*openGripper = true*/;
+					gripper->setTargetQ({closeGrippers});
 					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.4});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
@@ -94,10 +95,10 @@ namespace mc_handover
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 
 				mc_rtc::gui::Button("open_Left_Gripper",[this, &ctl](){std::string msg = "openGripperL";
-					ctl.read_msg(msg);/* openGripper = true; closeGripper = false;*/
+					ctl.read_msg(msg);
 					cout<<"on opening "<<ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
 				,mc_rtc::gui::Button("close_Left_Gripper",[this, &ctl](){std::string msg = "closeGripperL";
-					ctl.read_msg(msg); /*closeGripper = true; openGripper = false;*/
+					ctl.read_msg(msg);
 					cout<<"on closing "<<ctl.wrenches.at("LeftHandForceSensor").force().transpose()<<endl; } )
 				,mc_rtc::gui::Button("Norm_LeftEf_Force",[this, &ctl](){
 					Eigen::Vector3d v = ctl.wrenches.at("LeftHandForceSensor").force();
@@ -307,20 +308,6 @@ namespace mc_handover
 			comTask->com(target);
 
 
-			/*Force sensor*/
-			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
-
-			/*auto set Force Threshold*/
-		    auto leftTh = thresh.head(6);
-			//	auto leftThPercnt = thresh.segment(3,3);			
-			//	if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
-			//	{
-			//		leftTh[0] = 0.01*leftThPercnt[3]*leftForce[0] + leftForce[0];
-			//		leftTh[1] = 0.01*leftThPercnt[4]*leftForce[1] + leftForce[1];
-			//		leftTh[2] = 0.01*leftThPercnt[5]*leftForce[2] + leftForce[2];
-			//		// cout <<"leftTh "<< leftTh <<endl;
-			//	}
-
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
 			{
@@ -486,25 +473,28 @@ namespace mc_handover
 							// /*robot constraint*/
 							// if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
 							// 	(handoverPos(1)>= 0.25) && (handoverPos(1)<= 0.7) &&
-							// 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) &&
-							// 	prediction )
+							// 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
 							// {
 							// 	/*control head*/
 							// 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-							// 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//+ve to move head left
+							// 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
 
-							// 	if(handoverPos(2) < 1.0){ctl.set_joint_pos("HEAD_JOINT1",  0.4);} //z //+ve to move head down
-							// 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //+ve to move head down
+							// 	if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
+							// 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
 
 							// 	/*handover pose*/
-							// 	ctl.posTaskL->position(handoverPos);
-							// 	ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+							// 	if(motion)
+							// 	{
+							// 		ctl.posTaskL->position(handoverPos);
+							// 		ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
-							// 	// if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
-							// 	// { ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
-							// 	// else
-							// 	// { ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
+							// 		if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
+							// 		{ ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose()); }
+							// 		else
+							// 		{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
+							// 	}
 							// }
+
 							if(it==wp.cols())
 								{ collected  = false; }
 						}
@@ -524,16 +514,37 @@ namespace mc_handover
 					};
 
 
+					/*Force sensor*/
+					auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
+
+					// auto leftTh = thresh.head(6);
+
+					/*auto set Force Threshold*/
+					Vector3d leftTh;
+					auto leftThPercnt = thresh.segment(3,3);
+					if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
+					{
+						leftTh[0] = 0.01*leftThPercnt[3]*leftForce[0] + leftForce[0];
+						leftTh[1] = 0.01*leftThPercnt[4]*leftForce[1] + leftForce[1];
+						leftTh[2] = 0.01*leftThPercnt[5]*leftForce[2] + leftForce[2];
+						if(i%400==0)
+						{
+							cout <<"leftTh "<< leftTh <<endl;
+							LOG_SUCCESS("leftForce " <<leftForce.transpose())
+						}
+					}
+
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						// if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
 							restartHandover=true;
-              dum1=false;
+							dum1=false;
 							if(dum3)
-							{	
+							{
 								dum3=false;
 								LOG_INFO("object returned, threshold on " << axis_name << " with abs force " << abs(leftForce[idx])<< " reached on left hand")
 							}
@@ -572,31 +583,33 @@ namespace mc_handover
 							}
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
+						motion=false;
 					}
 
-						/*when closed WITHOUT object*/
-						else if( closeGripper && (leftForce.norm()<1.0) )
-						{
-							if(dum1)
-							{
-							  open_gripperL();
-							  closeGripper = false;
-								LOG_ERROR("object is not inside gripper, try again")
-								dum1=false;
-							}
-						}
+					/*when closed WITHOUT object*/
+					else if( dum1 && closeGripper && (leftForce.norm()<1.0) )
+					{
+						open_gripperL();
+						closeGripper = false;
+						LOG_ERROR("object is not inside gripper, try again")
+						dum1=false;
+					}
 
 					/*restart handover*/
-					if( (restartHandover) && ( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() >0.50 ) )
+					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
-						restartHandover=false;
-						openGripper=false;
-						closeGripper=false;
+						motion=true;
+						if( (restartHandover) )
+						{
+							restartHandover=false;
+							openGripper=false;
+							closeGripper=false;
 
-						dum1=true;
-						dum2=true;
-						dum3=true;
-						cout<<"restarting handover"<<endl;
+							dum1=true;
+							dum2=true;
+							dum3=true;
+							cout<<"restarting handover"<<endl;
+						}
 					}
 
 					/*iterator*/
@@ -636,58 +649,3 @@ namespace mc_handover
 
 --- change EFl-velocityProfile
 ----------------------------------------------------------------------------------*/
-
-
-/*grasp object (close gripper)*/
-// auto compObjRelPos = [&]()
-// {
-// 	if( (!closeGripper) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
-// 	{
-// 		close_gripperL();
-// 	}
-// 	// else
-// 	// { return false; }
-// 	return false;
-// };
-
-
-// if( closeGripper && (!restartHandover) )
-// {
-// 	// LOG_INFO("leftForce.norm() "<< leftForce.norm())
-// 	if(leftForce.norm()>=2.0)
-// 	{
-// 		LOG_INFO("leftForce.norm() "<< leftForce.norm())
-// 		checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
-// 	}
-// 	if(leftForce.norm()<=1.0)
-// 	{
-// 		LOG_INFO("restarting handover")
-// 		restartHandover=true;
-// 	}
-// }
-
-
-// /*restart handover*/
-// if( ( (!closeGripper) && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
-// {
-// 	if(openGripper)
-// 	{
-// 		closeGripper=true;//cout<<"closedGripper=true"<<endl;
-// 	}
-// 	if(restartHandover)
-// 	{
-// 		restartHandover=false;
-// 		closeGripper=false;
-// 		openGripper=false;
-// 	}
-// }
-
-// /*if closed WITHOUT object*/
-// if( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >2.0 )
-// { 
-// 	LOG_WARNING("was closed without object")
-// 	openGripper=false;
-// 	closeGripper=false;
-// 	return false;
-// }
-// // return false;
