@@ -96,8 +96,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
-			
-			double closeGrippers =0.16;
+			double closeGrippers =0.14;
 			double openGrippers = 0.5;
 
 
@@ -109,7 +108,7 @@ namespace mc_handover
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::VectorXd baseTh = Eigen::VectorXd::Zero(12);
-			//Eigen::Vector3d leftTh;
+			Eigen::Vector3d leftTh;
 
 			Eigen::Vector3d move, target;
 			Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
@@ -121,9 +120,11 @@ namespace mc_handover
 			bool prediction{true};
 
 			bool restartHandover{false};
-
-			bool openGripper{true};
+			bool openGripper{false};
 			bool closeGripper{false};
+
+			bool dum1{true};
+			bool dum2{true};
 
 			/*cortex*/
 			sBodyDefs* pBodyDefs{NULL};

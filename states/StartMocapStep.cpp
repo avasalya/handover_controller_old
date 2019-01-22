@@ -59,12 +59,12 @@ namespace mc_handover
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			ctl.posTaskL->position({0.3,0.3,1.1}); //comment later
+			ctl.posTaskL->position({0.3,0.3,1.1}); //COMMENT LATER
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //comment later
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //COMMENT LATER
 
 
 			/*EfR pos Task*/
@@ -311,7 +311,7 @@ namespace mc_handover
 			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
 			/*auto set Force Threshold*/
-      auto leftTh = thresh.head(6);
+		      leftTh = thresh.head(6);
 			//	auto leftThPercnt = thresh.segment(3,3);			
 			//	if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
 			//	{
@@ -514,55 +514,83 @@ namespace mc_handover
 					/*gripper control*/
 					auto close_gripperL = [&]()
 					{
-						closeGripper = true;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({closeGrippers});
 					};
-
 					auto open_gripperL = [&]()
 					{
-						openGripper = false;
 						auto gripper = ctl.grippers["l_gripper"].get();
 						gripper->setTargetQ({openGrippers});
 					};
 
 
-
-					/*force control*/ /**** dont use fabs & check also force direction ****/
+					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
-							openGripper=true;
 							open_gripperL();
-							closeGripper=false;
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " abs force " << abs(leftForce[idx])<< " reached on left hand")
-							return true;
+							restartHandover=true;
+							LOG_INFO("Opening grippers, threshold on " << axis_name << " with abs force " << fabs(leftForce[idx])<< " reached on left hand")
 						}
+						return false;
 					};
 
-					/*grasp object (close gripper)*/
-					auto compObjRelPos = [&]()
-					{
-						if( (closeGripper==false) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
-						{
-							close_gripperL();
-						}
-		            return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
-					};
 
 					/*handover control*/
 					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					
-					if( ((gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2) )
+
+					if( ( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2 ) )
 					{
-						if(openGripper)
+						/*open empty gripper when subject come near to robot*/
+						if( (!openGripper) && (leftForce.norm()<1.0) )
 						{
 							open_gripperL();
+							LOG_INFO("opening gripper with leftForceNorm "<< leftForce.norm())
+							openGripper = true;
 						}
-						compObjRelPos();
+
+						/*close gripper*/
+						if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
+						{
+							close_gripperL();
+							closeGripper = true;
+						}
+
+						/*when closed WITHOUT object*/
+						else if( closeGripper && (leftForce.norm()<1.0) )
+						{
+							open_gripperL();
+							closeGripper = false;
+							if(dum2)
+							{
+								LOG_ERROR("object is not inside gripper, try again")
+								dum2=false;
+							}
+						}
+						
+						/*when closed WITH object*/
+						else if( closeGripper && (leftForce.norm()>=1.6) )
+						{
+							if(dum1)
+							{
+								LOG_INFO("object inside gripper with leftForce norm "<< leftForce.norm())
+								dum1 = false;
+							}
+							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+						}
 					}
 
+					/*restart handover*/
+					if( (restartHandover) && ( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() >0.50 ) )
+					{
+						restartHandover=false;
+						openGripper=false;
+						closeGripper=false;
+
+						dum1=true;
+						dum2=true;
+					}
 
 					/*iterator*/
 					i+= 1;
@@ -591,3 +619,68 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
+
+/*------------------------------TO DOs----------------------------------------------
+--- fix threshold --  // dont use fabs & check also force direction
+
+--- stop prediction during handover
+
+--- add different orientation
+
+--- change EFl-velocityProfile
+----------------------------------------------------------------------------------*/
+
+
+/*grasp object (close gripper)*/
+// auto compObjRelPos = [&]()
+// {
+// 	if( (!closeGripper) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+// 	{
+// 		close_gripperL();
+// 	}
+// 	// else
+// 	// { return false; }
+// 	return false;
+// };
+
+
+// if( closeGripper && (!restartHandover) )
+// {
+// 	// LOG_INFO("leftForce.norm() "<< leftForce.norm())
+// 	if(leftForce.norm()>=2.0)
+// 	{
+// 		LOG_INFO("leftForce.norm() "<< leftForce.norm())
+// 		checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+// 	}
+// 	if(leftForce.norm()<=1.0)
+// 	{
+// 		LOG_INFO("restarting handover")
+// 		restartHandover=true;
+// 	}
+// }
+
+
+// /*restart handover*/
+// if( ( (!closeGripper) && (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >0.50) )
+// {
+// 	if(openGripper)
+// 	{
+// 		closeGripper=true;//cout<<"closedGripper=true"<<endl;
+// 	}
+// 	if(restartHandover)
+// 	{
+// 		restartHandover=false;
+// 		closeGripper=false;
+// 		openGripper=false;
+// 	}
+// }
+
+// /*if closed WITHOUT object*/
+// if( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() >2.0 )
+// { 
+// 	LOG_WARNING("was closed without object")
+// 	openGripper=false;
+// 	closeGripper=false;
+// 	return false;
+// }
+// // return false;
