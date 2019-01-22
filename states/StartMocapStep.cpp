@@ -311,7 +311,7 @@ namespace mc_handover
 			auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
 			/*auto set Force Threshold*/
-		      leftTh = thresh.head(6);
+		    auto leftTh = thresh.head(6);
 			//	auto leftThPercnt = thresh.segment(3,3);			
 			//	if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
 			//	{
@@ -546,7 +546,7 @@ namespace mc_handover
 						if( (!openGripper) && (leftForce.norm()<1.0) )
 						{
 							open_gripperL();
-							LOG_INFO("opening gripper with leftForceNorm "<< leftForce.norm())
+							LOG_WARNING("opening gripper with leftForceNorm "<< leftForce.norm())
 							openGripper = true;
 						}
 
@@ -570,7 +570,7 @@ namespace mc_handover
 						}
 						
 						/*when closed WITH object*/
-						else if( closeGripper && (leftForce.norm()>=1.6) )
+						else if( closeGripper && (leftForce.norm()>=2.0) )
 						{
 							if(dum1)
 							{

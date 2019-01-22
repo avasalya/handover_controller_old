@@ -107,8 +107,7 @@ namespace mc_handover
 			std::vector<bool> handsWrenchDir;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
-			Eigen::VectorXd baseTh = Eigen::VectorXd::Zero(12);
-			Eigen::Vector3d leftTh;
+			Eigen::VectorXd baseTh = Eigen::VectorXd::Zero(12);			
 
 			Eigen::Vector3d move, target;
 			Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
