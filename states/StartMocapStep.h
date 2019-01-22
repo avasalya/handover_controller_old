@@ -124,6 +124,7 @@ namespace mc_handover
 
 			bool dum1{true};
 			bool dum2{true};
+			bool dum3{true};
 
 			/*cortex*/
 			sBodyDefs* pBodyDefs{NULL};

@@ -527,12 +527,18 @@ namespace mc_handover
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if( (fabs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
 							restartHandover=true;
-							LOG_INFO("Opening grippers, threshold on " << axis_name << " with abs force " << fabs(leftForce[idx])<< " reached on left hand")
+							if(dum3)
+							{	
+								dum3=false;
+								LOG_INFO("object returned, threshold on " << axis_name << " with abs force " << abs(leftForce[idx])<< " reached on left hand")
+							}
 						}
+						else
+							{ dum3=true; }
 						return false;
 					};
 
@@ -546,7 +552,7 @@ namespace mc_handover
 						if( (!openGripper) && (leftForce.norm()<1.0) )
 						{
 							open_gripperL();
-							LOG_WARNING("opening gripper with leftForceNorm "<< leftForce.norm())
+							LOG_WARNING("opening gripper with left Force Norm "<< leftForce.norm())
 							openGripper = true;
 						}
 
@@ -562,20 +568,20 @@ namespace mc_handover
 						{
 							open_gripperL();
 							closeGripper = false;
-							if(dum2)
+							if(dum1)
 							{
 								LOG_ERROR("object is not inside gripper, try again")
-								dum2=false;
+								dum1=false;
 							}
 						}
 						
 						/*when closed WITH object*/
 						else if( closeGripper && (leftForce.norm()>=2.0) )
 						{
-							if(dum1)
+							if(dum2)
 							{
-								LOG_INFO("object inside gripper with leftForce norm "<< leftForce.norm())
-								dum1 = false;
+								LOG_SUCCESS("object is inside gripper with left Force Norm "<< leftForce.norm())
+								dum2 = false;
 							}
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
@@ -590,6 +596,8 @@ namespace mc_handover
 
 						dum1=true;
 						dum2=true;
+						dum3=true;
+						cout<<"restarting handover"<<endl;
 					}
 
 					/*iterator*/
