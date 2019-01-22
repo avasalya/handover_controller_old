@@ -8,8 +8,8 @@ namespace mc_handover
 
 		void StartMocapStep::configure(const mc_rtc::Configuration & config)
 		{
-			thresh 	= config("handsWrenchTh%");
-			// thresh 	= config("handsWrenchTh");
+			// thresh 	= config("handsWrenchTh%");
+			thresh 	= config("handsWrenchTh");
 			baseTh 	= config("handsWrenchBaseTh");
 			handsWrenchDir = config("handsWrenchDir");
 		}
@@ -60,12 +60,12 @@ namespace mc_handover
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			ctl.posTaskL->position({0.3,0.3,1.1}); //COMMENT LATER
+			// ctl.posTaskL->position({0.3,0.3,1.1}); //COMMENT LATER
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //COMMENT LATER
+			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //COMMENT LATER
 
 
 			/*EfR pos Task*/
@@ -420,7 +420,7 @@ namespace mc_handover
 						auto efLGripperPos = 0.25*( markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +
 							markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1) );
 						curPosLeftEfMarker << efLGripperPos;
-						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+						sva::PTransformd M_X_efLMarker(curRotLeftEf, curPosLeftEfMarker);
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
@@ -533,7 +533,7 @@ namespace mc_handover
 					// 	if(i%400==0)
 					// 	{
 					// 		cout <<"leftTh "<< leftTh.transpose() <<endl;
-					// 		LOG_SUCCESS("leftForce " <<leftForce.transpose())
+					// 		LOG_ERROR("leftForce " <<leftForce.transpose())
 					// 	}
 					// }
 
