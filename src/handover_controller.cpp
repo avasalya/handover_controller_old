@@ -59,49 +59,43 @@ namespace mc_handover
 	{
 		mc_control::fsm::Controller::reset(reset_data);
 
-
 		/*getHostInfo*/
 		getHostInfo();
-
 
 		auto q = reset_data.q;
 		MCController::reset({q});
 
 				/* gripper control */
 		gui()->addElement({"Handover", "Grippers"},
-			
 
-			mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 
-						std::cout << "at right gripper opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-		}),
-			
-			mc_rtc::gui::Button("close_Right_Gripper",[this]() { std::string msg = "closeGripperR"; read_msg(msg); 
-						std::cout << "at right gripper closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;          
-		}),
-			
-			mc_rtc::gui::Button("open_Left_Gripper",[this]() { std::string msg = "openGripperL"; read_msg(msg); 
-						std::cout << "at left gripper opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-		}),
-			
-			mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg); 
-						std::cout << "at left gripper closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-		}),
-			
-			mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
-				read_msg(msg); 
-						std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-						std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-			}),
+				mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 
+							std::cout << "at right gripper opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+				}),
+				
+				mc_rtc::gui::Button("close_Right_Gripper",[this]() { std::string msg = "closeGripperR"; read_msg(msg); 
+							std::cout << "at right gripper closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+				}),
+				
+				mc_rtc::gui::Button("open_Left_Gripper",[this]() { std::string msg = "openGripperL"; read_msg(msg); 
+					std::cout << "at left gripper opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+				
+				mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg); 
+					std::cout << "at left gripper closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+				
+				mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
+					read_msg(msg); 
+							std::cout << "at grippers opening: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+							std::cout << "at grippers opening: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+				}),
 
-			mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
-						std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
-						std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
-		})
-
+				mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
+							std::cout << "at grippers closing: right hand wrench:: Torques, Forces " << wrenches.at("RightHandForceSensor")/*.force().transpose()*/ << endl;
+							std::cout << "at grippers closing: left hand wrench:: Torques, Forces " << wrenches.at("LeftHandForceSensor")/*.force().transpose()*/ << endl;
+				})
 			);
 	}
-
-
 
 	//////////////
 	//
@@ -116,10 +110,23 @@ namespace mc_handover
 		{
 				/* Force Sensor*/
 			wrenches["LeftHandForceSensor"] =
-			this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
+			// this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
+			this->robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(this->robot());
+			
+			auto leftForceOffset = this->robot().forceSensor("LeftHandForceSensor").offset();
+			auto leftForceSenMass = this->robot().forceSensor("LeftHandForceSensor").mass();
+
+			if(itr%400==0)
+			{
+				LOG_ERROR("left hand Forces in world frame " << wrenches.at("LeftHandForceSensor").force().transpose())
+				cout << "leftForceOffset in world frame" << leftForceOffset/*.tail(3).transpose()*/<<endl;
+				LOG_SUCCESS("MASS of sensor " << leftForceSenMass )
+			}
+
 			wrenches["RightHandForceSensor"] =
 			this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
 		}
+		itr+=1;
 		return ret;
 	}
 

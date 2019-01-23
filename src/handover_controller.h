@@ -98,7 +98,6 @@ namespace mc_handover
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 		std::shared_ptr<mc_handover::HandoverTrajectoryTask>handoverTrajTask = nullptr;
 
-
 		bool publishWrench();
 
 		bool getHostInfo();
@@ -106,7 +105,7 @@ namespace mc_handover
 		
 		bool runOnce = true;
 
-    int iter=0;
+		int itr=0;
 
 	private:
 
