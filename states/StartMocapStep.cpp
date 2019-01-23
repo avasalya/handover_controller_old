@@ -407,8 +407,9 @@ namespace mc_handover
 
 					
 					/*move EF when subject is approaches object*/
-					if( (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
+					if( oneTime && (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
 					{
+						oneTime=false;
 						ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 						ctl.posTaskL->position({0.3,0.25,1.1});
 					}
@@ -546,7 +547,8 @@ namespace mc_handover
 					/*Force sensor*/
 					auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
-					auto leftTh = leftForcewhengrasped+ thresh.head(6);
+					// auto leftTh = leftForcewhengrasped + thresh.head(6);
+					auto leftTh = thresh.segment(3,3);
 
 					// auto leftForceOffset = ctl.wrenches.at("LeftHandForceSensor").force().offset();
 					// cout << "leftForceOffset " << leftForceOffset.transpose()<<endl;
@@ -569,12 +571,25 @@ namespace mc_handover
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-            
-				     LOG_ERROR("left hand Forces in world frame from Ctl" << ctl.wrenches.at("LeftHandForceSensor").force().transpose())
-             LOG_SUCCESS("left hand force in world frame from FSM" << leftForce.transpose())
+						LOG_ERROR("left hand Forces in world frame from Ctl" << ctl.wrenches.at("LeftHandForceSensor").force().transpose())
 						
-              // if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
-						if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						LOG_SUCCESS("left hand force in world frame from FSM" << leftForce.transpose())
+						
+						auto directForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+						LOG_WARNING("direct Force from sensor "<< directForce.transpose())
+						
+						cout << "lT thresh " << leftTh.transpose() << endl;
+						
+
+						if(leftForceNormAtGrasp>=leftTh.norm())
+						{
+							leftTh+= leftForcesAtGrasp;
+						}
+
+						
+						// if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						
+						if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
 							restartHandover=true;
@@ -606,6 +621,8 @@ namespace mc_handover
 						{
 							close_gripperL();
 							closeGripper = true;
+							leftForcesAtGrasp = leftForce;
+							leftForceNormAtGrasp = leftForce.norm();
 						}
 						
 						/*when closed WITH object*/

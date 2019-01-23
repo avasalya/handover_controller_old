@@ -75,7 +75,10 @@ namespace mc_handover
 
 			// int fingerSubjRt{13};
 			// int lShapeRtA{14}, lShapeRtB{15}, lShapeRtC{16};
+
+			double leftForceNormAtGrasp;
 			
+			Eigen::Vector3d leftForcesAtGrasp;
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
@@ -98,6 +101,7 @@ namespace mc_handover
 
 			double closeGrippers =0.14;
 			double openGrippers = 0.5;
+
 
 
 		private:
@@ -129,6 +133,8 @@ namespace mc_handover
 			bool option1{false};
 			bool option2{false};
 			bool option3{false};
+
+			bool oneTime{true};
 
 			/*cortex*/
 			sBodyDefs* pBodyDefs{NULL};

@@ -115,7 +115,8 @@ namespace mc_handover
 
 
 			wrenches["RightHandForceSensor"] =
-			this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
+			// this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
+			this->robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(this->robot());
 		}
 		itr+=1;
 		return ret;
