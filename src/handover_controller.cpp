@@ -112,16 +112,7 @@ namespace mc_handover
 			wrenches["LeftHandForceSensor"] =
 			// this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
 			this->robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(this->robot());
-			
-			auto leftForceOffset = this->robot().forceSensor("LeftHandForceSensor").offset();
-			auto leftForceSenMass = this->robot().forceSensor("LeftHandForceSensor").mass();
 
-			if(itr%400==0)
-			{
-				LOG_ERROR("left hand Forces in world frame " << wrenches.at("LeftHandForceSensor").force().transpose())
-				cout << "leftForceOffset in world frame" << leftForceOffset/*.tail(3).transpose()*/<<endl;
-				LOG_SUCCESS("MASS of sensor " << leftForceSenMass )
-			}
 
 			wrenches["RightHandForceSensor"] =
 			this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());

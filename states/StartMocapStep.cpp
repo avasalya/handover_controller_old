@@ -546,7 +546,7 @@ namespace mc_handover
 					/*Force sensor*/
 					auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
 
-					auto leftTh = thresh.head(6);
+					auto leftTh = leftForcewhengrasped+ thresh.head(6);
 
 					// auto leftForceOffset = ctl.wrenches.at("LeftHandForceSensor").force().offset();
 					// cout << "leftForceOffset " << leftForceOffset.transpose()<<endl;
@@ -569,7 +569,11 @@ namespace mc_handover
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						// if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+            
+				     LOG_ERROR("left hand Forces in world frame from Ctl" << ctl.wrenches.at("LeftHandForceSensor").force().transpose())
+             LOG_SUCCESS("left hand force in world frame from FSM" << leftForce.transpose())
+						
+              // if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
