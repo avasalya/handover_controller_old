@@ -584,9 +584,10 @@ namespace mc_handover
 						if(leftForceNormAtGrasp>=leftTh.norm())
 						{
 							leftTh+= leftForcesAtGrasp;
+							cout << "new lT thresh " << leftTh.transpose() << endl;
 						}
 
-						
+
 						// if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						
 						if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
