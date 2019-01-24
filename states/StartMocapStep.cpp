@@ -571,30 +571,30 @@ namespace mc_handover
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						/*check each force individually*/
+						///*check each force individually*/
 						leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-						// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
+						//// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
 
-						/*check if forces are already greater than default thresholds*/
-						if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
-						{
-							leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0)-leftTh[0]) + 1.0; /*+ some % of abs(leftForcesAtGrasp(0) */
-							LOG_ERROR("new lTx thresh " << leftThAtGrasp[0])
-						}
-						if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
-						{
-							leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
-							LOG_ERROR("new lTy thresh " << leftThAtGrasp[1])
-						}
-						if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
-						{
-							leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
-							LOG_ERROR("new lTz thresh " << leftThAtGrasp[2])
-						}
-						else
-						{
-							leftThAtGrasp = thresh.segment(3,3);
-						}
+						///*check if forces are already greater than default thresholds*/
+						//if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
+						//{
+						//	leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0)-leftTh[0]) + 1.0; /*+ some % of abs(leftForcesAtGrasp(0) */
+						//	LOG_ERROR("new lTx thresh " << leftThAtGrasp[0])
+						//}
+						//if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+						//{
+						//	leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
+						//	LOG_ERROR("new lTy thresh " << leftThAtGrasp[1])
+						//}
+						//if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+						//{
+						//	leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
+						//	LOG_ERROR("new lTz thresh " << leftThAtGrasp[2])
+						//}
+						//else
+						//{
+						//	leftThAtGrasp = thresh.segment(3,3);
+						//}
 
 						if( (abs(leftForcesAtGrasp[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
@@ -634,35 +634,35 @@ namespace mc_handover
 						/*when closed WITH object*/
 						if( closeGripper && (leftForce.norm()>=2.0) )
 						{
+							//leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 							if(dum2)
 							{
 
 								/* test this one*/
 		
-								// /*check each force individually*/
-								// leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-								// // leftForceNormAtGrasp = leftForcesAtGrasp.norm();
+								/*check each force individually*/
+								// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
 
-								// /*check if forces are already greater than default thresholds*/
-								// if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
-								// {
-								// 	leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0)-leftTh[0]) + 1.0; /*+ some % of abs(leftForcesAtGrasp(0) */
-								// 	LOG_ERROR("new lTx thresh " << leftThAtGrasp[0])
-								// }
-								// if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
-								// {
-								// 	leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
-								// 	LOG_ERROR("new lTy thresh " << leftThAtGrasp[1])
-								// }
-								// if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
-								// {
-								// 	leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
-								// 	LOG_ERROR("new lTz thresh " << leftThAtGrasp[2])
-								// }
-								// else
-								// {
-								// 	leftThAtGrasp = thresh.segment(3,3);
-								// }
+								///*check if forces are already greater than default thresholds*/
+								//if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
+								//{
+								//	leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0)-leftTh[0]) + 1.0; /*+ some % of abs(leftForcesAtGrasp(0) */
+								//	LOG_ERROR("new lTx thresh " << leftThAtGrasp[0])
+								//}
+								//if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+								//{
+								//	leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
+								//	LOG_ERROR("new lTy thresh " << leftThAtGrasp[1])
+								//}
+								//if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+								//{
+								//	leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
+								//	LOG_ERROR("new lTz thresh " << leftThAtGrasp[2])
+								//}
+								//else
+								//{
+								//	leftThAtGrasp = thresh.segment(3,3);
+								//}
 
 
 								LOG_INFO(" object is inside gripper ") /*with left Forces " << leftForcesAtGrasp.transpose()<< " & norm "<<leftForceNormAtGrasp <<" left Th norm "<<leftTh.norm() )*/
@@ -691,8 +691,9 @@ namespace mc_handover
 					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
 						// motion=true;
-						if(leftForce.norm()>=2.0)
+						if( (!restartHandover) && (leftForce.norm()>=2.0) )
 						{
+              //LOG_INFO("readyToGrasp")
 							readyToGrasp=true;
 						} 
 						if(restartHandover)
