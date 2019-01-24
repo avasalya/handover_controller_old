@@ -75,7 +75,7 @@ namespace mc_handover
 			ctl.posTaskR->position({0.060, -0.373, 0.724});
 
 			/*Handover buttons*/
-			ctl.gui()->addElement({"Handover", "randomPos"},
+			ctl.gui()->addElement({"Handover", "Buttons"},
 				mc_rtc::gui::Button("B1", [this](){option1=true; option2=false; option3=false;}),
 				mc_rtc::gui::Button("B2", [this](){option1=false; option2=true; option3=false;}),
 				mc_rtc::gui::Button("B3", [this](){option1=false; option2=false; option3=true;})
@@ -545,10 +545,12 @@ namespace mc_handover
 
 
 					/*Force sensor*/
-					auto leftForce = ctl.wrenches.at("LeftHandForceSensor").force();
+					//auto leftForce  = ctl.wrenches.at("LeftHandForceSensor").force();
+					auto leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 
 					// auto leftTh = leftForcewhengrasped + thresh.head(6);
 					auto leftTh = thresh.segment(3,3);
+                leftTh1 =leftTh;
 
 					// auto leftForceOffset = ctl.wrenches.at("LeftHandForceSensor").force().offset();
 					// cout << "leftForceOffset " << leftForceOffset.transpose()<<endl;
@@ -571,26 +573,18 @@ namespace mc_handover
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						LOG_ERROR("left hand Forces in world frame from Ctl" << ctl.wrenches.at("LeftHandForceSensor").force().transpose())
-						
-						LOG_SUCCESS("left hand force in world frame from FSM" << leftForce.transpose())
-						
-						auto directForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-						LOG_WARNING("direct Force from sensor "<< directForce.transpose())
-						
-						cout << "lT thresh " << leftTh.transpose() << endl;
-						
+						//LOG_ERROR("left hand Forces in world frame from Ctl" << ctl.wrenches.at("LeftHandForceSensor").force().transpose())
+						//cout << "GUI set lT thresh " << leftTh.transpose() << endl;
 
 						if(leftForceNormAtGrasp>=leftTh.norm())
 						{
-							leftTh+= leftForcesAtGrasp;
-							cout << "new lT thresh " << leftTh.transpose() << endl;
+            LOG_INFO("leftForceatGrasp " << leftForcesAtGrasp<< "& norm "<<leftForceNormAtGrasp )
+							leftTh1 = leftTh + leftForcesAtGrasp;
+							cout << "new lT thresh " << leftTh1.transpose() << endl;
 						}
 
 
-						// if( (abs(leftForce[idx]) > leftTh[idx+3]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
-						
-						if( (abs(leftForce[idx]) > leftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (abs(leftForce[idx]) > leftTh1[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
 							restartHandover=true;
@@ -599,6 +593,7 @@ namespace mc_handover
 							{
 								dum3=false;
 								LOG_INFO("object returned, threshold on " << axis_name << " with abs force " << abs(leftForce[idx])<< " reached on left hand")
+						    LOG_SUCCESS("direct left hand force in world frame from FSM" << leftForce.transpose())
 							}
 						}
 						return false;
