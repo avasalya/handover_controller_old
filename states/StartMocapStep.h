@@ -78,7 +78,7 @@ namespace mc_handover
 
 			double leftForceNormAtGrasp;
 			
-			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh, leftTh1;
+			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh, leftThAtGrasp;
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
@@ -125,6 +125,7 @@ namespace mc_handover
 			bool restartHandover{false};
 			bool openGripper{false};
 			bool closeGripper{false};
+			bool readyToGrasp{false};
 
 			bool dum1{true};
 			bool dum2{true};
