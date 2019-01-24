@@ -120,13 +120,13 @@ namespace mc_handover
 
 				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {
 					std::cout << "left hand Forces " <<
-					ctl.wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+					ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 					std::cout << "right hand Forces " <<
-					ctl.wrenches.at("RightHandForceSensor").force().transpose() << endl;
+					ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 				}),
 				
 				mc_rtc::gui::Button("Norm_LeftEf_Force",[this, &ctl](){
-					Eigen::Vector3d v = ctl.wrenches.at("LeftHandForceSensor").force();
+					Eigen::Vector3d v = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 					cout<<"Norm "<< v.norm() <<endl; }),
 
 				mc_rtc::gui::ArrayInput("set Threshold %",
@@ -293,6 +293,10 @@ namespace mc_handover
 
 			for(int m=0; m<maxMarkers; m++)
 				{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
+
+
+			/*initil force threshold*/
+			leftTh1 = thresh.segment(3,3);
 		}// start
 
 
@@ -545,44 +549,31 @@ namespace mc_handover
 
 
 					/*Force sensor*/
-					//auto leftForce  = ctl.wrenches.at("LeftHandForceSensor").force();
 					auto leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 
-					// auto leftTh = leftForcewhengrasped + thresh.head(6);
 					auto leftTh = thresh.segment(3,3);
-                leftTh1 =leftTh;
-
-					// auto leftForceOffset = ctl.wrenches.at("LeftHandForceSensor").force().offset();
-					// cout << "leftForceOffset " << leftForceOffset.transpose()<<endl;
+					// leftTh1 =leftTh;
 
 					// /*auto set Force Threshold*/
 					// Vector3d leftTh;
 					// auto leftThPercnt = thresh.segment(3,3);
 					// if( abs(leftForce[0])<1.0 && abs(leftForce[1]<1.0) )
 					// {
-					// 	leftTh[0] = 0.01*leftThPercnt[3]*leftForce[0] + leftForce[0];
-					// 	leftTh[1] = 0.01*leftThPercnt[4]*leftForce[1] + leftForce[1];
-					// 	leftTh[2] = 0.01*leftThPercnt[5]*leftForce[2] + leftForce[2];
-					// 	if(i%400==0)
-					// 	{
-					// 		cout <<"leftTh "<< leftTh.transpose() <<endl;
-					// 		LOG_ERROR("leftForce " <<leftForce.transpose())
-					// 	}
+					// 	leftTh[0] = 0.01*leftThPercnt[3]*abs(leftForce[0]) + abs(leftForce[0]);
+					// 	leftTh[1] = 0.01*leftThPercnt[4]*abs(leftForce[1]) + abs(leftForce[1]);
+					// 	leftTh[2] = 0.01*leftThPercnt[5]*abs(leftForce[2]) + abs(leftForce[2]);					
 					// }
 
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						//LOG_ERROR("left hand Forces in world frame from Ctl" << ctl.wrenches.at("LeftHandForceSensor").force().transpose())
-						//cout << "GUI set lT thresh " << leftTh.transpose() << endl;
-
-						if(leftForceNormAtGrasp>=leftTh.norm())
+						if(leftForceNormAtGrasp>=leftTh.norm()) /*instead of norm --check each force individually ???*/
 						{
-            LOG_INFO("leftForceatGrasp " << leftForcesAtGrasp<< "& norm "<<leftForceNormAtGrasp )
-							leftTh1 = leftTh + leftForcesAtGrasp;
-							cout << "new lT thresh " << leftTh1.transpose() << endl;
+							leftTh1[0] = leftTh[0] + abs(leftForcesAtGrasp(0)-leftTh[0]) + 1.0; /*+ some % of abs(leftForcesAtGrasp(0) */
+							leftTh1[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
+							leftTh1[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
+							LOG_ERROR("new lT thresh " << leftTh1.transpose())
 						}
-
 
 						if( (abs(leftForce[idx]) > leftTh1[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
@@ -593,7 +584,7 @@ namespace mc_handover
 							{
 								dum3=false;
 								LOG_INFO("object returned, threshold on " << axis_name << " with abs force " << abs(leftForce[idx])<< " reached on left hand")
-						    LOG_SUCCESS("direct left hand force in world frame from FSM" << leftForce.transpose())
+								// LOG_SUCCESS("direct left hand force in world frame from FSM" << leftForce.transpose())
 							}
 						}
 						return false;
@@ -619,6 +610,8 @@ namespace mc_handover
 							closeGripper = true;
 							leftForcesAtGrasp = leftForce;
 							leftForceNormAtGrasp = leftForce.norm();
+							LOG_INFO("left Forces at Grasp " << leftForcesAtGrasp<< "& norm "<<leftForceNormAtGrasp<<"left Th norm "<<leftTh.norm())
+
 						}
 						
 						/*when closed WITH object*/
@@ -687,13 +680,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
-
-/*------------------------------TO DOs----------------------------------------------
---- fix threshold --  // dont use fabs & check also force direction
-
---- stop prediction during handover
-
---- add different orientation
-
---- change EFl-velocityProfile
-----------------------------------------------------------------------------------*/

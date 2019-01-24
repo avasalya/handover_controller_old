@@ -108,7 +108,7 @@ namespace mc_handover
 
 		if(ret)
 		{
-				/* Force Sensor*/
+			/* Force Sensor*/
 			wrenches["LeftHandForceSensor"] =
 			// this->robot().forceSensor("LeftHandForceSensor").wrenchWithoutGravity(this->robot());
 			this->robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(this->robot());
