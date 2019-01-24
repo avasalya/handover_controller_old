@@ -549,9 +549,8 @@ namespace mc_handover
 
 
 					/*Force sensor*/
-					auto leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-
-					auto leftTh = thresh.segment(3,3);
+					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+					leftTh = thresh.segment(3,3);
 					// leftTh1 =leftTh;
 
 					// /*auto set Force Threshold*/
@@ -567,15 +566,31 @@ namespace mc_handover
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						if(leftForceNormAtGrasp>=leftTh.norm()) /*instead of norm --check each force individually ???*/
+						/*check each force individually*/
+					  leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+            leftForceNormAtGrasp = leftForcesAtGrasp.norm();
+
+            if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
 						{
 							leftTh1[0] = leftTh[0] + abs(leftForcesAtGrasp(0)-leftTh[0]) + 1.0; /*+ some % of abs(leftForcesAtGrasp(0) */
-							leftTh1[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
-							leftTh1[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
-							LOG_ERROR("new lT thresh " << leftTh1.transpose())
+							LOG_ERROR("new lTx thresh " << leftTh1[0])
 						}
+            if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+            {
+							leftTh1[1] = leftTh[1] + abs(leftForcesAtGrasp(1)-leftTh[1]) + 1.0;
+							LOG_ERROR("new lTy thresh " << leftTh1[1])
+            }
+            if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+            {
+							leftTh1[2] = leftTh[2] + abs(leftForcesAtGrasp(2)-leftTh[2]) + 1.0;
+							LOG_ERROR("new lTz thresh " << leftTh1[2])
+            }
+            else
+            {
+                leftTh1 = thresh.segment(3,3);
+            }
 
-						if( (abs(leftForce[idx]) > leftTh1[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
+						if( (abs(leftForcesAtGrasp[idx]) > leftTh1[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )//(lEf_area_gAB_wA > lEf_area_wAB_f)
 						{
 							open_gripperL();
 							restartHandover=true;
@@ -583,8 +598,10 @@ namespace mc_handover
 							if(dum3)
 							{
 								dum3=false;
-								LOG_INFO("object returned, threshold on " << axis_name << " with abs force " << abs(leftForce[idx])<< " reached on left hand")
-								// LOG_SUCCESS("direct left hand force in world frame from FSM" << leftForce.transpose())
+								LOG_SUCCESS("object returned, threshold on " << axis_name << " with abs force " << abs(leftForceAtGrasp[idx])<< " reached on left hand with th1 " << leftTh1[idx])
+                
+               // leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+						   // LOG_SUCCESS(" object is inside gripper with left Forces " << leftForcesAtGrasp.transpose()<< " & norm "<<leftForceNormAtGrasp /*<<" left Th norm "<<leftTh.norm()*/)
 							}
 						}
 						return false;
@@ -608,18 +625,16 @@ namespace mc_handover
 						{
 							close_gripperL();
 							closeGripper = true;
-							leftForcesAtGrasp = leftForce;
-							leftForceNormAtGrasp = leftForce.norm();
-							LOG_INFO("left Forces at Grasp " << leftForcesAtGrasp<< "& norm "<<leftForceNormAtGrasp<<"left Th norm "<<leftTh.norm())
-
 						}
 						
 						/*when closed WITH object*/
-						else if( closeGripper && (leftForce.norm()>=2.0) )
+						if( closeGripper && (leftForce.norm()>=2.0) )
 						{
 							if(dum2)
 							{
-								LOG_SUCCESS("object is inside gripper with left Force Norm "<< leftForce.norm())
+//							  leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+	//						  leftForceNormAtGrasp = leftForcesAtGrasp.norm();
+		  				  LOG_INFO(" object is inside gripper ") /*with left Forces " << leftForcesAtGrasp.transpose()<< " & norm "<<leftForceNormAtGrasp <<" left Th norm "<<leftTh.norm() )*/
 								dum2 = false;
 							}
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
