@@ -564,17 +564,13 @@ namespace mc_handover
 						{
 							leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0))-leftTh[0] + 1.0;
 						}
-						else if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+						if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
 						{
 							leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1))-leftTh[1] + 1.0;
 						}
-						else if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+						if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
 						{
 							leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2))-leftTh[2] + 1.0;
-						}
-						else
-						{
-							leftThAtGrasp = thresh.segment(3,3);
 						}
 
 						if( (abs(leftForcesAtGrasp[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
@@ -587,6 +583,7 @@ namespace mc_handover
 							{
 								dum3=false;
 								LOG_SUCCESS("object returned, threshold on " << axis_name << " with forces " << leftForcesAtGrasp.transpose()<< " reached on left hand with th1 " << leftThAtGrasp.transpose())
+								leftThAtGrasp = thresh.segment(3,3);
 							}
 						}
 						return false;
