@@ -468,7 +468,7 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						initRefPos << wp(0,it), wp(1,it), wp(2,it);
+						initRefPos << ltHand.translation(); //wp(0,it), wp(1,it), wp(2,it);
 
 						collected = true;
 					}//t_observe
@@ -485,49 +485,51 @@ namespace mc_handover
 						{
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 
-							// handoverPos = curLEfPos + refPos - initRefPos;
+							handoverPos = curLEfPos + refPos - initRefPos;
 
 
-							if(option1)
-							{
-								handoverPos = curLEfPos + refPos - initRefPos;
-							}
-							else if(option2)
-							{
-								handoverPos = curLEfPos + refPos;
-							}
-							else if(option3)
-							{
-								handoverPos = refPos;
-							}
+							//if(option1)
+							//{
+							//	handoverPos = curLEfPos + refPos - initRefPos;
+							//}
+							//else if(option2)
+							//{
+							//	handoverPos = curLEfPos + refPos;
+							//}
+							//else if(option3)
+							//{
+							//	handoverPos = refPos;
+							//}
+
+								//handoverPos = refPos;
 
 
-							// /*robot constraint*/
-							// if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
-							// 	(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
-							// 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
-							// {
-							// 	/*control head*/
-							// 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-							// 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
+							 /*robot constraint*/
+							 if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
+							 	(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
+							 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
+							 {
+							 	/*control head*/
+							 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
+							 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
 
-							// 	if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
-							// 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
+							 	if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
+							 	else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
 
-							// 	/*handover pose*/
-							// 	if(motion)
-							// 	{
-							// 		ctl.posTaskL->position(handoverPos);
-							// 		// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+							 	/*handover pose*/
+							 	if(motion)
+							 	{
+							 		ctl.posTaskL->position(handoverPos);
+							 		ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
 
-							// 		if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
-							// 		{
-							// 			ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
-							// 		}
-							// 		else
-							// 		{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
-							// 	}
-							// }
+							 		//if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
+							 		//{
+							 		//	ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
+							 		//}
+							 		//else
+							 		//{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
+							 	}
+							 }
 
 							if(it==wp.cols())
 								{ collected  = false; }
@@ -564,11 +566,11 @@ namespace mc_handover
 						{
 							leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0))-leftTh[0] + 1.0;
 						}
-						if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+						else if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
 						{
 							leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1))-leftTh[1] + 1.0;
 						}
-						if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+						else if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
 						{
 							leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2))-leftTh[2] + 1.0;
 						}
