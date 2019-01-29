@@ -65,7 +65,7 @@ namespace mc_handover
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
 
 
 			/*EfR pos Task*/
@@ -416,11 +416,6 @@ namespace mc_handover
 					}
 
 
-
-					/*check subj hand's relative orientation*/
-					ctl.oriTaskL->orientation(subjLtHandRot.transpose());
-
-
 					/*observe subject motion for t_observe period*/
 					if( (i%t_observe==0) )
 					{
@@ -491,6 +486,23 @@ namespace mc_handover
 
 							handoverPos = curLEfPos + refPos - initRefPos;
 
+
+							//if(option1)
+							//{
+							//	handoverPos = curLEfPos + refPos - initRefPos;
+							//}
+							//else if(option2)
+							//{
+							//	handoverPos = curLEfPos + refPos;
+							//}
+							//else if(option3)
+							//{
+							//	handoverPos = refPos;
+							//}
+
+								//handoverPos = refPos;
+
+
 							 /*robot constraint*/
 							 if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
 							 	(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
@@ -506,15 +518,15 @@ namespace mc_handover
 							 	/*handover pose*/
 							 	if(motion)
 							 	{
-							 		// ctl.posTaskL->position(handoverPos);
-							 		// // ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
+							 		ctl.posTaskL->position(handoverPos);
+							 		// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
 
-							 		// //if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
-							 		// //{
-							 		// //	ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
-							 		// //}
-							 		// //else
-							 		// //{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
+							 		//if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
+							 		//{
+							 		//	ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
+							 		//}
+							 		//else
+							 		//{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
 							 	}
 							 }
 
@@ -613,7 +625,7 @@ namespace mc_handover
 							{
 								return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 							}
-						motion=false;
+						//motion=false;
 					}
 
 					/*when closed WITHOUT object*/
@@ -628,7 +640,7 @@ namespace mc_handover
 					/*restart handover*/
 					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
-						motion=true;
+						// motion=true;
 						if( (!restartHandover) && (leftForce.norm()>=2.0) )
 						{
 							readyToGrasp=true;
