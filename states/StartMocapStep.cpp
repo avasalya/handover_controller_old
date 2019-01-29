@@ -65,7 +65,7 @@ namespace mc_handover
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
 
 
 			/*EfR pos Task*/
@@ -204,7 +204,6 @@ namespace mc_handover
 				
 				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
-
 				);
 
 
@@ -219,7 +218,6 @@ namespace mc_handover
 					{ retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); }
 				else{ retval = Cortex_Initialize("10.1.1.200", "10.1.1.190"); }
 
-
 				if (retval != RC_Okay)
 					{ printf("Error: Unable to initialize ethernet communication\n");
 				retval = Cortex_Exit(); }
@@ -231,7 +229,6 @@ namespace mc_handover
 					printf("ERROR, GetContextFrameRate\n");
 				float *contextFrameRate = (float*) pResponse;
 				printf("ContextFrameRate = %3.1f Hz\n", *contextFrameRate);
-
 
 				// get name of bodies being tracked and its set of markers //
 				printf("\n****** Cortex_GetBodyDefs ******\n");
@@ -419,6 +416,7 @@ namespace mc_handover
 					}
 
 
+					/*observe subject motion for t_observe period*/
 					if( (i%t_observe==0) )
 					{
 						/*prediction_ tuner*/
@@ -468,7 +466,8 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						initRefPos << ltHand.translation(); //wp(0,it), wp(1,it), wp(2,it);
+						initRefPos << wp(0,it), wp(1,it), wp(2,it);
+						// initRefPos << ltHand.translation();
 
 						collected = true;
 					}//t_observe
@@ -505,9 +504,9 @@ namespace mc_handover
 
 
 							 /*robot constraint*/
-							 if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
+							 if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
 							 	(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
-							 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
+							 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5))
 							 {
 							 	/*control head*/
 							 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
@@ -520,7 +519,7 @@ namespace mc_handover
 							 	if(motion)
 							 	{
 							 		ctl.posTaskL->position(handoverPos);
-							 		ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+							 		// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
 
 							 		//if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
 							 		//{
