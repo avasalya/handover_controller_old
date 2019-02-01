@@ -201,7 +201,6 @@ namespace mc_handover
 				
 				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
-
 				);
 
 
@@ -216,7 +215,6 @@ namespace mc_handover
 					{ retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); }
 				else{ retval = Cortex_Initialize("10.1.1.200", "10.1.1.190"); }
 
-
 				if (retval != RC_Okay)
 					{ printf("Error: Unable to initialize ethernet communication\n");
 				retval = Cortex_Exit(); }
@@ -228,7 +226,6 @@ namespace mc_handover
 					printf("ERROR, GetContextFrameRate\n");
 				float *contextFrameRate = (float*) pResponse;
 				printf("ContextFrameRate = %3.1f Hz\n", *contextFrameRate);
-
 
 				// get name of bodies being tracked and its set of markers //
 				printf("\n****** Cortex_GetBodyDefs ******\n");
@@ -428,10 +425,7 @@ namespace mc_handover
 					}
 
 
-<<<<<<< HEAD
-=======
 					/*observe subject motion for t_observe period*/
->>>>>>> a34cd7dced816d7158457001ffa652f9ca194637
 					if( (i%t_observe==0) )
 					{
 						/*prediction_ tuner*/
@@ -480,7 +474,8 @@ namespace mc_handover
 						wp_efL_Subj=ctl.handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 						wp = get<0>(wp_efL_Subj);
 
-						initRefPos << ltHand.translation(); //wp(0,it), wp(1,it), wp(2,it);
+						initRefPos << wp(0,it), wp(1,it), wp(2,it);
+						// initRefPos << ltHand.translation();
 
 						collected = true;
 					}//t_observe
@@ -499,35 +494,11 @@ namespace mc_handover
 
 							handoverPos = curLEfPos + refPos - initRefPos;
 
-
-							//if(option1)
-							//{
-							//	handoverPos = curLEfPos + refPos - initRefPos;
-							//}
-							//else if(option2)
-							//{
-							//	handoverPos = curLEfPos + refPos;
-							//}
-							//else if(option3)
-							//{
-							//	handoverPos = refPos;
-							//}
-
-								//handoverPos = refPos;
-
-
 							 /*robot constraint*/
-<<<<<<< HEAD
-							 if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
-							 	(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
-							 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
-							 {
-=======
 							if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
 								(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
 								(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5))
 							{
->>>>>>> a34cd7dced816d7158457001ffa652f9ca194637
 							 	/*control head*/
 							 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
 							 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
@@ -538,15 +509,15 @@ namespace mc_handover
 							 	/*handover pose*/
 							 	if(motion)
 							 	{
-							 		ctl.posTaskL->position(handoverPos);
-							 		ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+							 		// ctl.posTaskL->position(handoverPos);
+							 		// // ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
 
-							 		//if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
-							 		//{
-							 		//	ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
-							 		//}
-							 		//else
-							 		//{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
+							 		// //if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
+							 		// //{
+							 		// //	ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
+							 		// //}
+							 		// //else
+							 		// //{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
 							 	}
 							 }
 
@@ -667,17 +638,10 @@ namespace mc_handover
 
 						/*check if object is being pulled*/
 						if(readyToGrasp)
-<<<<<<< HEAD
-							{
-								return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
-							}
-						//motion=false;
-=======
 						{
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
 						motion=false;
->>>>>>> a34cd7dced816d7158457001ffa652f9ca194637
 					}
 
 					/*when closed WITHOUT object*/
@@ -692,7 +656,7 @@ namespace mc_handover
 					/*restart handover*/
 					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
-						// motion=true;
+						motion=true;
 						if( (!restartHandover) && (leftForce.norm()>=2.0) )
 						{
 							readyToGrasp=true;
