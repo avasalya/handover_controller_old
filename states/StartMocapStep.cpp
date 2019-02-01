@@ -117,9 +117,9 @@ namespace mc_handover
 
 				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {
 					std::cout << "left hand Forces " <<
-					ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-					std::cout << "right hand Forces " <<
-					ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+					ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
+					// std::cout << "right hand Forces " <<
+					// ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
 				}),
 				
 				mc_rtc::gui::Button("Norm_LeftEf_Force",[this, &ctl](){
@@ -281,6 +281,9 @@ namespace mc_handover
 			/*allocate memory for mocap markers*/
 			Markers.resize(maxMarkers);
 			markersPos.resize(maxMarkers);
+
+			efLPos.resize(3);
+			efLVel.resize(2);
 
 			predictedPositions.resize(1);
 			S_X_efL.resize(t_observe);
