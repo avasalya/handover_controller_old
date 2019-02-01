@@ -53,10 +53,12 @@ namespace mc_handover
 			sva::PTransformd Subj_X_efL;
 			sva::PTransformd ltHand, rtHand;
 			
+			std::vector<sva::PTransformd> S_X_efL;
 			std::vector<Eigen::MatrixXd> markersPos;
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::Vector3d> predictedPositions;
-			std::vector<sva::PTransformd> S_X_efL;
+			std::vector<Eigen::Vector3d> efLPos, efLVel;
+			Eigen::Vector3d efLAce;
 
 			int body{0};
 

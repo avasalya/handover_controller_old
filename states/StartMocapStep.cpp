@@ -47,13 +47,11 @@ namespace mc_handover
 			/*chest pos task*/
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
-			// cout<< chestPosTask->position().transpose()<<endl;
 			chestPosTask->position({0.032, 0.0, 1.12});
 
 			/*chest ori task*/
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestOriTask);
-			// cout<<chestOriTask->orientation()<<endl;
 			chestOriTask->orientation(Eigen::Matrix3d::Identity());
 
 
@@ -66,7 +64,6 @@ namespace mc_handover
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
 			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
-
 
 			/*EfR pos Task*/
 			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
@@ -134,7 +131,7 @@ namespace mc_handover
 					[this]() { return thresh; },
 					[this](const Eigen::VectorXd & t)
 					{
-						LOG_INFO("Changed threshold percnt to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
+						LOG_INFO("Changed threshold to:\nLeft: " << t.head(6).transpose() << "\nRight: " << t.tail(6).transpose() << "\n")
 						thresh = t;
 					}),
 
@@ -305,6 +302,9 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+			// ctl.solver().addTask(ctl.posTaskL);
+			// ctl.solver().addTask(ctl.oriTaskL);
+			
 			/*hand pose*/
 			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
 			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK7")];
@@ -318,7 +318,7 @@ namespace mc_handover
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
 			{
-				getCurFrame =  Cortex_GetCurrentFrame();
+				getCurFrame = Cortex_GetCurrentFrame();
 				Cortex_CopyFrame(getCurFrame, &FrameofData);
 
 				int ithFrame = FrameofData.iFrame;
@@ -354,7 +354,7 @@ namespace mc_handover
 				{
 					for(int m=0; m<maxMarkers; m++)
 					{ 
-							// Markers[m] = pos[m].col(s);
+						// Markers[m] = pos[m].col(s);
 						Markers[m] = ctl.robots().robot(2).bodyPosW("base_link").translation();
 					}
 				}
@@ -397,7 +397,7 @@ namespace mc_handover
 
 					subjLtHandRot.row(0) = (lshpLt_X/lshpLt_X.norm()).transpose();
 					subjLtHandRot.row(1) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
-					subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
+					subjLtHandRot.row(2) = -lshpLt_Z.transpose();
 
 
 					// /*get rotation matrix XYZ of subject RIGHT hand*/  							//C /________ B
@@ -408,9 +408,18 @@ namespace mc_handover
 					// subjRtHandRot.row(0) = (lshpRt_X/lshpRt_X.norm()).transpose();
 					// subjRtHandRot.row(1) = -(lshpRt_Y/lshpRt_Y.norm()).transpose();
 					// subjRtHandRot.row(2) = (lshpRt_Z/lshpRt_Z.norm()).transpose();
-
 					
-					/*move EF when subject is approaches object*/
+					/*check subj hand's relative orientation*/
+					// if(!oneTime)
+					// {
+						// ctl.oriTaskL->orientation(ltHand.rotation()*subjLtHandRot.transpose());
+
+						// cout << "subjLtHandRot.transpose() "<<subjLtHandRot.transpose()<<endl;
+						// ctl.oriTaskL->orientation(Eigen::Matrix3d::Identity());
+					// }
+
+
+					/*move EF when subject is approaches object 1st time*/
 					if( oneTime && (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
 					{
 						oneTime=false;
@@ -419,6 +428,10 @@ namespace mc_handover
 					}
 
 
+<<<<<<< HEAD
+=======
+					/*observe subject motion for t_observe period*/
+>>>>>>> a34cd7dced816d7158457001ffa652f9ca194637
 					if( (i%t_observe==0) )
 					{
 						/*prediction_ tuner*/
@@ -447,7 +460,6 @@ namespace mc_handover
 							Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
 
 							S_X_efL[j-1] = Subj_X_efL;
-							// cout << "S_X_efL "<<S_X_efL[j-1].translation().transpose()<<endl;
 
 							newPosSubj.col(j-1) = Subj_X_efL.translation();
 							
@@ -505,10 +517,17 @@ namespace mc_handover
 
 
 							 /*robot constraint*/
+<<<<<<< HEAD
 							 if(	(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
 							 	(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
 							 	(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5) )
 							 {
+=======
+							if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
+								(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
+								(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5))
+							{
+>>>>>>> a34cd7dced816d7158457001ffa652f9ca194637
 							 	/*control head*/
 							 	if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
 							 	else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
@@ -531,9 +550,9 @@ namespace mc_handover
 							 	}
 							 }
 
-							if(it==wp.cols())
-								{ collected  = false; }
-						}
+							 if(it==wp.cols())
+							 	{ collected  = false; }
+							}
 					}//collected
 
 
@@ -550,6 +569,31 @@ namespace mc_handover
 					};
 
 
+					/*get acceleration of lHand*/
+					if(i%3==0)
+					{
+						for(int g=1; g<=3; g++)
+						{
+							efLPos[3-g] = 0.25*(
+								markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+								markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+								);
+						}
+						efLVel[0] = efLPos[1]-efLPos[0];
+						efLVel[1] = efLPos[2]-efLPos[1];
+						efLAce = efLVel[1]-efLVel[0];
+						// cout <<"ace efL " <<efLAce.transpose()<<endl;
+					}
+
+
+
+
+
+
+
+
+
+
 					/*Force sensor*/
 					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 					leftTh = thresh.segment(3,3);
@@ -561,19 +605,19 @@ namespace mc_handover
 						leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 						// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
 
-						/*check if forces are already greater than default thresholds*/
-						if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
-						{
-							leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0))-leftTh[0] + 1.0;
-						}
-						else if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
-						{
-							leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1))-leftTh[1] + 1.0;
-						}
-						else if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
-						{
-							leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2))-leftTh[2] + 1.0;
-						}
+						// /*check if forces are already greater than default thresholds*/
+						// if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
+						// {
+						// 	leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0))-leftTh[0] + 1.0;
+						// }
+						// else if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+						// {
+						// 	leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1))-leftTh[1] + 1.0;
+						// }
+						// else if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+						// {
+						// 	leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2))-leftTh[2] + 1.0;
+						// }
 
 						if( (abs(leftForcesAtGrasp[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
@@ -585,7 +629,7 @@ namespace mc_handover
 							{
 								dum3=false;
 								LOG_SUCCESS("object returned, threshold on " << axis_name << " with forces " << leftForcesAtGrasp.transpose()<< " reached on left hand with th1 " << leftThAtGrasp.transpose())
-								leftThAtGrasp = thresh.segment(3,3);
+								// leftThAtGrasp = thresh.segment(3,3);
 							}
 						}
 						return false;
@@ -623,10 +667,17 @@ namespace mc_handover
 
 						/*check if object is being pulled*/
 						if(readyToGrasp)
+<<<<<<< HEAD
 							{
 								return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 							}
 						//motion=false;
+=======
+						{
+							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+						}
+						motion=false;
+>>>>>>> a34cd7dced816d7158457001ffa652f9ca194637
 					}
 
 					/*when closed WITHOUT object*/
