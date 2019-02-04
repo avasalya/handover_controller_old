@@ -58,7 +58,9 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::Vector3d> predictedPositions;
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
-			Eigen::Vector3d efLAce;
+			
+			Eigen::Vector3d efLAce, lFmeas, lFinert, lFpull;
+			double efLMass, lHandMass{1.1}, objMass{0.75};
 
 			int body{0};
 

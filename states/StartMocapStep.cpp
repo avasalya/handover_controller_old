@@ -72,10 +72,13 @@ namespace mc_handover
 			ctl.posTaskR->position({0.060, -0.373, 0.724});
 
 			/*Handover buttons*/
-			ctl.gui()->addElement({"Handover", "Buttons"},
-				mc_rtc::gui::Button("B1", [this](){option1=true; option2=false; option3=false;}),
-				mc_rtc::gui::Button("B2", [this](){option1=false; option2=true; option3=false;}),
-				mc_rtc::gui::Button("B3", [this](){option1=false; option2=false; option3=true;})
+			ctl.gui()->addElement({"Handover", "Weights"},
+				mc_rtc::gui::NumberInput("lHand Weight", [this]() { return lHandMass; }, [this](double w1){ lHandMass = w1; }),
+				mc_rtc::gui::NumberInput("object Weight",[this]() { return objMass; }, [this](double w2){ objMass = w2; })
+
+				// mc_rtc::gui::Button("B1", [this](){option1=true; option2=false; option3=false;}),
+				// mc_rtc::gui::Button("B2", [this](){option1=false; option2=true; option3=false;}),
+				// mc_rtc::gui::Button("B3", [this](){option1=false; option2=false; option3=true;})
 				);
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
@@ -145,20 +148,6 @@ namespace mc_handover
 					}));
 
 
-			/*move object using cursor or simData*/
-			ctl.gui()->addElement({"Handover","move_object"},
-				mc_rtc::gui::Transform("Position", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { 
-						ctl.robots().robot(2).posW(pos);
-						ctl.removeContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
-						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
-					})
-				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-				mc_rtc::gui::Point3D("subj fing pos", [this,&ctl](){ ctl.robots().robot(2).posW({Subj_X_efL.translation()}); return Subj_X_efL.translation();})
-				);
-
-
 			/*change prediction_ settings*/
 			ctl.gui()->addElement({"Handover", "tuner"},
 				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "it"},
@@ -189,6 +178,19 @@ namespace mc_handover
 			comTask->com(initialCom);
 			ctl.solver().addTask(comTask);
 
+			
+			/*move object using cursor or simData*/
+			ctl.gui()->addElement({"Handover","move_object"},
+				mc_rtc::gui::Transform("Position", 
+					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+					[this,&ctl](const sva::PTransformd & pos) { 
+						ctl.robots().robot(2).posW(pos);
+						ctl.removeContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
+						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
+					})
+				, mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
+				mc_rtc::gui::Point3D("subj fing pos", [this,&ctl](){ ctl.robots().robot(2).posW({Subj_X_efL.translation()}); return Subj_X_efL.translation();})
+				);
 
 			/*trajectory trail*/
 			ctl.gui()->addElement({"Handover", "Trajectories"},
@@ -512,8 +514,8 @@ namespace mc_handover
 							 	/*handover pose*/
 							 	if(motion)
 							 	{
-							 		// ctl.posTaskL->position(handoverPos);
-							 		// // ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
+							 		ctl.posTaskL->position(handoverPos);
+							 		ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
 
 							 		// //if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
 							 		// //{
@@ -543,31 +545,6 @@ namespace mc_handover
 					};
 
 
-					/*get acceleration of lHand*/
-					if(i%3==0)
-					{
-						for(int g=1; g<=3; g++)
-						{
-							efLPos[3-g] = 0.25*(
-								markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
-								markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
-								);
-						}
-						efLVel[0] = efLPos[1]-efLPos[0];
-						efLVel[1] = efLPos[2]-efLPos[1];
-						efLAce = efLVel[1]-efLVel[0];
-						// cout <<"ace efL " <<efLAce.transpose()<<endl;
-					}
-
-
-
-
-
-
-
-
-
-
 					/*Force sensor*/
 					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 					leftTh = thresh.segment(3,3);
@@ -578,22 +555,28 @@ namespace mc_handover
 						/*check each force individually*/
 						leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 						// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
+						
+						/*get acceleration of lHand*/
+						if(i>=3)
+						{
+							for(int g=1; g<=3; g++)
+							{
+								efLPos[3-g] = 0.25*(
+									markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+									markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+									);
+							}
+							efLVel[0] = (efLPos[1]-efLPos[0])*fps;
+							efLVel[1] = (efLPos[2]-efLPos[1])*fps;
+							efLAce = (efLVel[1]-efLVel[0])*fps;
+							// cout <<"ace efL " <<efLAce.transpose()<<endl;
 
-						// /*check if forces are already greater than default thresholds*/
-						// if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
-						// {
-						// 	leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0))-leftTh[0] + 1.0;
-						// }
-						// else if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
-						// {
-						// 	leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1))-leftTh[1] + 1.0;
-						// }
-						// else if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
-						// {
-						// 	leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2))-leftTh[2] + 1.0;
-						// }
+							efLMass = lHandMass + objMass;
+							lFinert = efLMass*efLAce; //inertial Force at efL
+							lFpull = leftForcesAtGrasp-lFinert; // pull force
+						}
 
-						if( (abs(leftForcesAtGrasp[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
+						if( (abs(lFpull[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
 							open_gripperL();
 							restartHandover=true;
@@ -602,8 +585,8 @@ namespace mc_handover
 							if(dum3)
 							{
 								dum3=false;
-								LOG_SUCCESS("object returned, threshold on " << axis_name << " with forces " << leftForcesAtGrasp.transpose()<< " reached on left hand with th1 " << leftThAtGrasp.transpose())
-								// leftThAtGrasp = thresh.segment(3,3);
+								LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << leftThAtGrasp.transpose())
+								leftThAtGrasp = thresh.segment(3,3);
 							}
 						}
 						return false;
@@ -704,3 +687,18 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
+
+
+// /*check if forces are already greater than default thresholds*/
+// if( abs(leftForcesAtGrasp(0))>=leftTh[0] )
+// {
+// 	leftThAtGrasp[0] = leftTh[0] + abs(leftForcesAtGrasp(0))-leftTh[0] + 1.0;
+// }
+// else if( abs(leftForcesAtGrasp(1))>=leftTh[1] )
+// {
+// 	leftThAtGrasp[1] = leftTh[1] + abs(leftForcesAtGrasp(1))-leftTh[1] + 1.0;
+// }
+// else if( abs(leftForcesAtGrasp(2))>=leftTh[2] )
+// {
+// 	leftThAtGrasp[2] = leftTh[2] + abs(leftForcesAtGrasp(2))-leftTh[2] + 1.0;
+// }
