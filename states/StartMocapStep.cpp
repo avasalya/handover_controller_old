@@ -585,6 +585,8 @@ namespace mc_handover
 							if(dum3)
 							{
 								dum3=false;
+								cout << "leftForcesAtGrasp "<< leftForcesAtGrasp.transpose() <<endl;
+								cout << "lFinert "<< lFinert.transpose()<<endl;
 								LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << leftThAtGrasp.transpose())
 								leftThAtGrasp = thresh.segment(3,3);
 							}
