@@ -596,8 +596,8 @@ namespace mc_handover
 						// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
 						
 						/*get acceleration of lHand*/
-						if(i>=3)
-						// if(i%3==0)
+						//if(i>=3)
+						if(i%3==0)
 						{
 							for(int g=1; g<=3; g++)
 							{
@@ -618,20 +618,20 @@ namespace mc_handover
 							lFpull[2] = abs(leftForcesAtGrasp[2])-abs(lFinert[2]);
 						}
 
-						/*check if forces are already greater than default thresholds*/
-						if( abs(lFpull(0))>=leftTh[0] )
-						{
-							leftThAtGrasp[0] = leftTh[0] + abs(lFpull(0))-leftTh[0] + 1.0;
-						}
-						if( abs(lFpull(1))>=leftTh[1] )
-						{
-							leftThAtGrasp[1] = leftTh[1] + abs(lFpull(1))-leftTh[1] + 1.0;
-						}
-						if( abs(lFpull(2))>=leftTh[2] )
-						{
-							leftThAtGrasp[2] = leftTh[2] + abs(lFpull(2))-leftTh[2] + 1.0;
-						}
-
+//						/*check if forces are already greater than default thresholds*/
+//						if( abs(lFpull(0))>=leftTh[0] )
+//						{
+//							leftThAtGrasp[0] = leftTh[0] + abs(lFpull(0))-leftTh[0] + 1.0;
+//						}
+//						else if( abs(lFpull(1))>=leftTh[1] )
+//						{
+//							leftThAtGrasp[1] = leftTh[1] + abs(lFpull(1))-leftTh[1] + 1.0;
+//						}
+//						else if( abs(lFpull(2))>=leftTh[2] )
+//						{
+//							leftThAtGrasp[2] = leftTh[2] + abs(lFpull(2))-leftTh[2] + 1.0;
+//						}
+//
 
 						if( (abs(lFpull[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
@@ -643,7 +643,7 @@ namespace mc_handover
 							{
 								dum3=false;
 								cout << "leftForcesAtGrasp "<< leftForcesAtGrasp.transpose() <<endl;
-								cout << "lFinert "<< lFinert.transpose()<<endl;
+								cout << "lFinert           "<< lFinert.transpose()<<endl;
 								LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << leftThAtGrasp.transpose())
 								leftThAtGrasp = thresh.segment(3,3);
 							}
