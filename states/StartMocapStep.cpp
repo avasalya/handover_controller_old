@@ -209,7 +209,7 @@ namespace mc_handover
 			/*configure MOCAP*/
 			if(Flag_CORTEX)
 			{
-				LOG_INFO("***MOCAP IS ENABLED***")
+				LOG_SUCCESS("***MOCAP IS ENABLED***")
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 
@@ -253,7 +253,7 @@ namespace mc_handover
 			}
 			else /*simulation*/
 			{
-				LOG_WARNING("***MOCAP IS DISABLED***")
+				LOG_ERROR("***MOCAP IS DISABLED***")
 				startCapture = false; //true for sim
 				
 				name = {"simData3"};
@@ -545,6 +545,45 @@ namespace mc_handover
 					};
 
 
+
+
+
+					// /*********************************************************/
+
+					// 	/*check each force individually*/
+					// 	leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+					// 	// leftForceNormAtGrasp = leftForcesAtGrasp.norm();
+						
+					// 	/*get acceleration of lHand*/
+					// 	if(i>=3)
+					// 	// if(i%3==0)
+					// 	{
+					// 		for(int g=1; g<=3; g++)
+					// 		{
+					// 			efLPos[3-g] = 0.25*(
+					// 				markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+					// 				markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+					// 				);
+					// 		}
+					// 		efLVel[0] = (efLPos[1]-efLPos[0])*fps;
+					// 		efLVel[1] = (efLPos[2]-efLPos[1])*fps;
+					// 		efLAce = (efLVel[1]-efLVel[0])*fps;
+					// 		// cout <<"ace efL " <<efLAce.transpose()<<endl;
+
+					// 		efLMass = lHandMass + objMass;
+					// 		lFinert = efLMass*efLAce; //inertial Force at efL
+					// 		lFpull = leftForcesAtGrasp-lFinert; // pull force
+
+					// 		// LOG_INFO("lFAtGrasp "<< leftForcesAtGrasp.transpose())
+					// 		LOG_SUCCESS("lFinert   "<< lFinert.transpose())
+					// 		// LOG_ERROR("lFpull    "<< lFpull.transpose())
+					// 	}
+
+
+					// /*********************************************************/
+
+
+
 					/*Force sensor*/
 					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 					leftTh = thresh.segment(3,3);
@@ -558,6 +597,7 @@ namespace mc_handover
 						
 						/*get acceleration of lHand*/
 						if(i>=3)
+						// if(i%3==0)
 						{
 							for(int g=1; g<=3; g++)
 							{
@@ -573,8 +613,25 @@ namespace mc_handover
 
 							efLMass = lHandMass + objMass;
 							lFinert = efLMass*efLAce; //inertial Force at efL
-							lFpull = leftForcesAtGrasp-lFinert; // pull force
+							lFpull[0] = abs(leftForcesAtGrasp[0])-abs(lFinert[0]); // pull force
+							lFpull[1] = abs(leftForcesAtGrasp[1])-abs(lFinert[1]);
+							lFpull[2] = abs(leftForcesAtGrasp[2])-abs(lFinert[2]);
 						}
+
+						/*check if forces are already greater than default thresholds*/
+						if( abs(lFpull(0))>=leftTh[0] )
+						{
+							leftThAtGrasp[0] = leftTh[0] + abs(lFpull(0))-leftTh[0] + 1.0;
+						}
+						if( abs(lFpull(1))>=leftTh[1] )
+						{
+							leftThAtGrasp[1] = leftTh[1] + abs(lFpull(1))-leftTh[1] + 1.0;
+						}
+						if( abs(lFpull(2))>=leftTh[2] )
+						{
+							leftThAtGrasp[2] = leftTh[2] + abs(lFpull(2))-leftTh[2] + 1.0;
+						}
+
 
 						if( (abs(lFpull[idx]) > leftThAtGrasp[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
