@@ -5,6 +5,8 @@
 
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/fsm/State.h>
+// #include <SpaceVecAlg/SpaceVecAlg>
+
 
 #include <mc_rbdyn/Robot.h>
 
@@ -59,8 +61,11 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> predictedPositions;
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
 			
-			Eigen::Vector3d efLAce, lFmeas, lFinert, lFpull;
+			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh, leftThAtGrasp;
+			Eigen::Vector3d efLAce, lFmeas, lFinert, lFload, lFpull;
+			
 			double efLMass, lHandMass{1.1}, objMass{0.75};
+			double leftForceNormAtGrasp;
 
 			int body{0};
 
@@ -80,13 +85,11 @@ namespace mc_handover
 			// int fingerSubjRt{13};
 			// int lShapeRtA{14}, lShapeRtB{15}, lShapeRtC{16};
 
-			double leftForceNormAtGrasp;
 			
-			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh, leftThAtGrasp;
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
-			Eigen::Quaterniond q, q1, q2, q3;
+			Eigen::Quaterniond q, q1, q2, q3, q_;
 
 			/*Eigen::Matrix3d::Identity();*/
 			Eigen::Matrix3d curRotLeftEfMarker;
