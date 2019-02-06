@@ -327,10 +327,7 @@ namespace mc_handover
 
 			/*check each force individually*/
 			auto wrenchWithGravity = ctl.robot().forceSensor("LeftHandForceSensor").worldWrench(ctl.robot()).force();
-			LOG_SUCCESS("wrenchWithGravity    " <<wrenchWithGravity.transpose() )
 			auto wrenchWithoutGravity = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-			LOG_ERROR("wrenchWithoutGravity " <<wrenchWithoutGravity.transpose() )
-
 
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
@@ -572,30 +569,30 @@ namespace mc_handover
 					// /*********************************************************/
 
 						
-						/*get acceleration of lHand*/
-						if(i>=3)
-						// if(i%3==0)
-						{
-							for(int g=1; g<=3; g++)
-							{
-								efLPos[3-g] = 0.25*(
-									markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
-									markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
-									);
-							}
-							efLVel[0] = (efLPos[1]-efLPos[0])*fps;
-							efLVel[1] = (efLPos[2]-efLPos[1])*fps;
-							efLAce = (efLVel[1]-efLVel[0])*fps;
-							// cout <<"ace efL " <<efLAce.transpose()<<endl;
+						///*get acceleration of lHand*/
+						//if(i>=3)
+						//// if(i%3==0)
+						//{
+						//	for(int g=1; g<=3; g++)
+						//	{
+						//		efLPos[3-g] = 0.25*(
+						//			markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+						//			markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+						//			);
+						//	}
+						//	efLVel[0] = (efLPos[1]-efLPos[0])*fps;
+						//	efLVel[1] = (efLPos[2]-efLPos[1])*fps;
+						//	efLAce = (efLVel[1]-efLVel[0])*fps;
+						//	// cout <<"ace efL " <<efLAce.transpose()<<endl;
 
-							efLMass = lHandMass + objMass;
-							lFinert = efLMass*efLAce; //inertial Force at efL
-							lFload = wrenchWithoutGravity-lFinert; // pull force
+						//	efLMass = lHandMass + objMass;
+						//	lFinert = efLMass*efLAce; //inertial Force at efL
+						//	lFload = wrenchWithoutGravity-lFinert; // pull force
 
-							// LOG_INFO("lFAtGrasp "<< leftForcesAtGrasp.transpose())
-							LOG_SUCCESS("lFinert   "<< lFinert.transpose())
-							// LOG_ERROR("lFload    "<< lFload.transpose())
-						}
+						//	// LOG_INFO("lFAtGrasp "<< leftForcesAtGrasp.transpose())
+						//	LOG_SUCCESS("lFinert   "<< lFinert.transpose())
+						//	// LOG_ERROR("lFload    "<< lFload.transpose())
+						//}
 
 
 					// /*********************************************************/
@@ -652,6 +649,8 @@ namespace mc_handover
 							dum1=false;
 							if(dum3)
 							{
+			          LOG_ERROR("wrenchWithoutGravity " <<wrenchWithoutGravity.transpose() )
+			          LOG_SUCCESS("wrenchWithGravity    " <<wrenchWithGravity.transpose() )
 								dum3=false;
 								cout << "leftForcesAtGrasp "<< leftForcesAtGrasp.transpose() <<endl;
 								cout << "lFinert           "<< lFinert.transpose()<<endl;
