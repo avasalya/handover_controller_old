@@ -48,6 +48,7 @@ namespace mc_handover
 			int i{1};
 			int j{1};
 			int s{0};
+			int r{0};
 
 			/*mocap*/
 			bool Flag_CORTEX{true}; // default True for MOCAP
@@ -60,9 +61,11 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> Markers;
 			std::vector<Eigen::Vector3d> predictedPositions;
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
+
+			std::vector<Eigen::Vector3d> lFinert_, lFload_;
 			
-			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh, leftThAtGrasp;
-			Eigen::Vector3d efLAce, lFmeas, lFinert, lFload, lFpull;
+			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh;
+			Eigen::Vector3d efLAce, lFinert, lFLoad_min, lFload, lFpull;
 			
 			double efLMass, lHandMass{1.1}, objMass{0.75};
 			double leftForceNormAtGrasp;
