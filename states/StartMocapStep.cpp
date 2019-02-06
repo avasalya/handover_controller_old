@@ -58,19 +58,13 @@ namespace mc_handover
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			// ctl.posTaskL->position({0.3,0.3,1.1}); 										//COMMENT LATER
+			ctl.posTaskL->position({0.3,0.3,1.1}); 										//COMMENT LATER
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
-			// // ctl.oriTaskL->orientation(sva::RotY(25.0));
-			// q_ = {1.,0.,0.,0.};
-			// auto a1 = q.toRotationMatrix().transpose();
-			// auto a2 = q_.toRotationMatrix().transpose();
-			// auto r_er = sva::rotationError(a1, a2, 1e-8);
-			// r_er = r_er*180/3.14;
-			// ctl.oriTaskL->orientation(sva::RotX(r_er(0))*sva::RotY(r_er(1))*sva::RotZ(r_er(2)));
+			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
+
 
 			/*EfR pos Task*/
 			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
@@ -81,22 +75,20 @@ namespace mc_handover
 			/*Handover buttons*/
 			ctl.gui()->addElement({"Handover", "Weights"},
 				mc_rtc::gui::NumberInput("lHand Weight", [this]() { return lHandMass; }, [this](double w1){ lHandMass = w1; }),
-				mc_rtc::gui::NumberInput("object Weight",[this]() { return objMass; }, [this](double w2){ objMass = w2; })
-
-				// mc_rtc::gui::Button("B1", [this](){option1=true; option2=false; option3=false;}),
-				// mc_rtc::gui::Button("B2", [this](){option1=false; option2=true; option3=false;}),
-				// mc_rtc::gui::Button("B3", [this](){option1=false; option2=false; option3=true;})
-				);
+				mc_rtc::gui::NumberInput("object Weight",[this]() { return objMass; }, [this](double w2){ objMass = w2; }) );
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "randomPos"},
-				mc_rtc::gui::Button("init*", [this, &ctl]()
+				mc_rtc::gui::Button("open_gripperL & set flags", [this, &ctl]()
 				{
-					//ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({openGrippers});
-          closeGripper = false;
-					//ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose());
+          			closeGripper = false; motion=true;
+				}),
+				mc_rtc::gui::Button("init*", [this, &ctl]()
+				{
+					ctl.posTaskL->position({0.0,0.37,0.72});
+					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose());
 				}),
 
 				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.4});
@@ -111,15 +103,6 @@ namespace mc_handover
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos6", [this, &ctl](){ ctl.posTaskL->position({0.3,0.5,1.0}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } )
-
-				// , mc_rtc::gui::Transform("random_pos", 
-				// 	[this,&ctl](){ return ctl.robots().robot(0).bodyPosW("LARM_LINK7"); },
-				// 	[this,&ctl](const sva::PTransformd & pos){ctl.posTaskL->position(pos.translation());} ),
-
-				// , mc_rtc::gui::ArrayInput("random_pos",
-				// 	{"x", "y", "z"},
-				// 	[this]() { return randPos; },
-				// 	[this, &ctl](const Eigen::Vector3d & t){randPos = t; ctl.posTaskL->position(randPos);} )
 				);
 
 
@@ -295,8 +278,8 @@ namespace mc_handover
 			efLPos.resize(3);
 			efLVel.resize(2);
 
-			lFinert_.resize(60000);
-			lFload_.resize(60000);
+			// lFinert_.resize(60000);
+			// lFload_.resize(60000);
 
 			predictedPositions.resize(1);
 			S_X_efL.resize(t_observe);
@@ -528,8 +511,9 @@ namespace mc_handover
 							 	/*handover pose*/
 							 	if(motion)
 							 	{
-							 		ctl.posTaskL->position(handoverPos);
-							 		ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); //in old code.. used only once in Start
+							 		// ctl.posTaskL->position(handoverPos);
+							 		// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
+
 
 							 		// //if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
 							 		// //{
@@ -560,25 +544,18 @@ namespace mc_handover
 
 
 
-					// /*Force sensor*/
-					// auto leftWrenchWithGravity = ctl.robot().forceSensor("LeftHandForceSensor").worldWrench(ctl.robot()).force();
-					// auto leftWrenchWithoutGravity = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-					// LOG_ERROR("leftWrenchWithoutGravity " <<leftWrenchWithoutGravity.transpose() )
-					// LOG_SUCCESS("leftWrenchWithGravity    " <<leftWrenchWithGravity.transpose() )
+					/*Force sensor*/
+					auto leftWrenchWithGravity = ctl.robot().forceSensor("LeftHandForceSensor").worldWrench(ctl.robot()).force();
 					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 					
-					
-
+					LOG_SUCCESS("leftWrenchWithGravity    " <<leftWrenchWithGravity.transpose() <<" norm " << leftWrenchWithGravity.norm() )
+					LOG_ERROR("leftWrenchWithoutGravity " <<leftForce.transpose() << " norm "<< leftForce.norm() )
 					
 					/*force control*/
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
-						/*check each force individually*/
-						//leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-						
-						
 						/*get acceleration of lHand*/
-						if(i>3) //(i%3==0)
+						if(i>3)
 						{
 							for(int g=1; g<=3; g++)
 							{
@@ -599,8 +576,8 @@ namespace mc_handover
 							lFpull[2] = abs(leftForce[2])-abs(lFinert[2]);
 						}
 
+						/*new threshold*/
 						auto newLeftTh = lFLoad_min + leftTh;
-						
 
 						if( (abs(lFpull[idx]) > newLeftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
@@ -610,7 +587,6 @@ namespace mc_handover
 							dum1=false;
 							if(dum3)
 							{
-								
 								dum3=false;
 								cout << "leftForces at Grasp "<< leftForce.transpose() <<endl;
 								cout << "lFinert              "<< lFinert.transpose()<<endl;
@@ -638,6 +614,7 @@ namespace mc_handover
 						if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
 						{
 							close_gripperL();
+							motion=false; //when subject hand is very close to efL
 							closeGripper = true;
 						}
 						
@@ -656,55 +633,44 @@ namespace mc_handover
 						{
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
-						//motion=false; //when subject hand is very close to efL
 					}
-
-					/*when closed WITHOUT object*/
-					//else if( dum1 && closeGripper && (leftForce.norm()<1.0) )
-					//{
-					//	open_gripperL();
-					//	closeGripper = false;
-					//	LOG_ERROR("object is not inside gripper, try again " <<leftForce.norm())
-					//	dum1=false;
-					//}
 
 					/*restart handover*/
 					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
-
-						motion=true;
+						/*here comes only after object is grasped*/
 						if( (!restartHandover) && (leftForce.norm()>=2.0) )
 						{
-					    /*get acceleration of lHand*/
-					    if(i>3) //(i%3==0)
-					    {
-					    	for(int g=1; g<=3; g++)
-					    	{
-					    		efLPos[3-g] = 0.25*(
-					    			markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
-					    			markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
-					    			);
-					    	}
-					    	efLVel[0] = (efLPos[1]-efLPos[0])*fps;
-					    	efLVel[1] = (efLPos[2]-efLPos[1])*fps;
-					    	efLAce = (efLVel[1]-efLVel[0])*fps;
-					    	// cout <<"ace efL " <<efLAce.transpose()<<endl;
+							/*get acceleration of lHand*/
+							if(i>3)
+							{
+								for(int g=1; g<=3; g++)
+								{
+									efLPos[3-g] = 0.25*(
+									markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+									markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+									);
+								}
+								efLVel[0] = (efLPos[1]-efLPos[0])*fps;
+								efLVel[1] = (efLPos[2]-efLPos[1])*fps;
+								efLAce = (efLVel[1]-efLVel[0])*fps;
+								// cout <<"ace efL " <<efLAce.transpose()<<endl;
 
-					    	efLMass = lHandMass + objMass;
-					    	lFinert = efLMass*efLAce; //inertial Force at efL
+								efLMass = lHandMass + objMass;
+								lFinert = efLMass*efLAce; // THIS inertial force SHOUD BE ~ZERO SINCE HAND IS NOT MOVING
 
-					    	// lFload_[r] = leftForce;
-					    	// lFinert_[r]= lFinert;
-                
-                /*make lFload_min abs*/
-					    	lFLoad_min[0] = abs(abs(leftForce[0])-abs(lFinert[0])); // pull force
-					    	lFLoad_min[1] = abs(abs(leftForce[1])-abs(lFinert[1]));
-					    	lFLoad_min[2] = abs(abs(leftForce[2])-abs(lFinert[2]));
+								// lFload_[r] = leftForce;
+								// lFinert_[r]= lFinert;
 
-						  // r+=1;
-					    }
+								/*make lFload_min abs*/
+								lFLoad_min[0] = abs(abs(leftForce[0])-abs(lFinert[0])); // pull force
+								lFLoad_min[1] = abs(abs(leftForce[1])-abs(lFinert[1]));
+								lFLoad_min[2] = abs(abs(leftForce[2])-abs(lFinert[2]));
+
+								// r+=1;
+							}
 							readyToGrasp=true;
-						} 
+						}
 						if(restartHandover)
 						{
 							restartHandover=false;
@@ -715,6 +681,11 @@ namespace mc_handover
 							dum2=true;
 							dum3=true;
 							cout<<"/*******restarting handover*******/"<<endl;
+						}
+
+						if(i%400==0)//2 sec
+						{
+							motion=true;// it should be somewhere else ... it should not be true here yet, maybe wait like 2 sec here then make it true?
 						}
 					}
 					// else
@@ -748,17 +719,11 @@ namespace mc_handover
 
 } // namespace mc_handover
 
-
-// /*check if forces are already greater than default thresholds*/
-// if( abs(lFload(0))>=leftTh[0] )
-// {
-// 	leftTh[0] = leftTh[0] + abs(lFload(0))-leftTh[0] + 1.0;
-// }
-// else if( abs(lFload(1))>=leftTh[1] )
-// {
-// 	leftTh[1] = leftTh[1] + abs(lFload(1))-leftTh[1] + 1.0;
-// }
-// else if( abs(lFload(2))>=leftTh[2] )
-// {
-// 	leftTh[2] = leftTh[2] + abs(lFload(2))-leftTh[2] + 1.0;
-// }
+/*when closed WITHOUT object*/
+//else if( dum1 && closeGripper && (leftForce.norm()<1.0) )
+//{
+//	open_gripperL();
+//	closeGripper = false;
+//	LOG_ERROR("object is not inside gripper, try again " <<leftForce.norm())
+//	dum1=false;
+//}
