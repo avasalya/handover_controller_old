@@ -67,7 +67,7 @@ namespace mc_handover
 			Eigen::Vector3d leftForce, leftForcesAtGrasp, leftTh;
 			Eigen::Vector3d efLAce, lFinert, lFLoad_min, lFload, lFpull;
 			
-			double efLMass, lHandMass{1.1}, objMass{0.75};
+			double efLMass, lHandMass{1.1}, objMass{0.175};
 			double leftForceNormAtGrasp;
 
 			int body{0};

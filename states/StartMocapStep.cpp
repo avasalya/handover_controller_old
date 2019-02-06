@@ -92,10 +92,11 @@ namespace mc_handover
 			ctl.gui()->addElement({"Handover", "randomPos"},
 				mc_rtc::gui::Button("init*", [this, &ctl]()
 				{
-					ctl.posTaskL->position({0.0,0.37,0.72});
+					//ctl.posTaskL->position({0.0,0.37,0.72});
 					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({closeGrippers});
-					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose());
+					gripper->setTargetQ({openGrippers});
+          closeGripper = false;
+					//ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose());
 				}),
 
 				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.4});
@@ -178,7 +179,7 @@ namespace mc_handover
 				);
 
 			comTask = std::make_shared<mc_tasks::CoMTask>
-			(ctl.robots(), ctl.robots().robotIndex(), 10., 1000.);
+			(ctl.robots(), ctl.robots().robotIndex(), 10., 1e5);
 			// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
 
 			initialCom = rbd::computeCoM(ctl.robot().mb(),ctl.robot().mbc());
@@ -573,7 +574,7 @@ namespace mc_handover
 					auto checkForce = [&](const char *axis_name, int idx)
 					{
 						/*check each force individually*/
-						leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+						//leftForcesAtGrasp = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 						
 						
 						/*get acceleration of lHand*/
@@ -593,12 +594,12 @@ namespace mc_handover
 							efLMass = lHandMass + objMass;
 							lFinert = efLMass*efLAce; //inertial Force at efL
 
-							lFpull[0] = abs(leftForcesAtGrasp[0])-abs(lFinert[0]); // pull force
-							lFpull[1] = abs(leftForcesAtGrasp[1])-abs(lFinert[1]);
-							lFpull[2] = abs(leftForcesAtGrasp[2])-abs(lFinert[2]);
+							lFpull[0] = abs(leftForce[0])-abs(lFinert[0]); // pull force
+							lFpull[1] = abs(leftForce[1])-abs(lFinert[1]);
+							lFpull[2] = abs(leftForce[2])-abs(lFinert[2]);
 						}
 
-						auto newLeftTh = lFLoad_min + leftTh; //maybe make abs?
+						auto newLeftTh = lFLoad_min + leftTh;
 						
 
 						if( (abs(lFpull[idx]) > newLeftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
@@ -611,8 +612,8 @@ namespace mc_handover
 							{
 								
 								dum3=false;
-								cout << "leftForcesAtGrasp "<< leftForcesAtGrasp.transpose() <<endl;
-								cout << "lFinert            "<< lFinert.transpose()<<endl;
+								cout << "leftForces at Grasp "<< leftForce.transpose() <<endl;
+								cout << "lFinert              "<< lFinert.transpose()<<endl;
 								LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << newLeftTh.transpose())
 							}
 						}
@@ -631,6 +632,7 @@ namespace mc_handover
 							LOG_WARNING("opening gripper with left Force Norm "<< leftForce.norm())
 							openGripper = true;
 						}
+
 
 						/*close gripper*/
 						if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
@@ -654,55 +656,53 @@ namespace mc_handover
 						{
 							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 						}
-						motion=false; //when subject hand is very close to efL
+						//motion=false; //when subject hand is very close to efL
 					}
 
 					/*when closed WITHOUT object*/
-					else if( dum1 && closeGripper && (leftForce.norm()<1.0) )
-					{
-						open_gripperL();
-						closeGripper = false;
-						LOG_ERROR("object is not inside gripper, try again " <<leftForce.norm())
-						dum1=false;
-					}
+					//else if( dum1 && closeGripper && (leftForce.norm()<1.0) )
+					//{
+					//	open_gripperL();
+					//	closeGripper = false;
+					//	LOG_ERROR("object is not inside gripper, try again " <<leftForce.norm())
+					//	dum1=false;
+					//}
 
 					/*restart handover*/
 					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
 
-					/*get acceleration of lHand*/
-					if(i>3) //(i%3==0)
-					{
-						for(int g=1; g<=3; g++)
-						{
-							efLPos[3-g] = 0.25*(
-								markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
-								markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
-								);
-						}
-						efLVel[0] = (efLPos[1]-efLPos[0])*fps;
-						efLVel[1] = (efLPos[2]-efLPos[1])*fps;
-						efLAce = (efLVel[1]-efLVel[0])*fps;
-						// cout <<"ace efL " <<efLAce.transpose()<<endl;
-
-						efLMass = lHandMass + objMass;
-						lFinert = efLMass*efLAce; //inertial Force at efL
-
-						// lFload_[r] = leftForce;
-						// lFinert_[r]= lFinert;
-
-						lFLoad_min[0] = abs(leftForce[0])-abs(lFinert[0]); // pull force
-						lFLoad_min[1] = abs(leftForce[1])-abs(lFinert[1]);
-						lFLoad_min[2] = abs(leftForce[2])-abs(lFinert[2]);
-
-						// r+=1;
-					}
-
-
-
 						motion=true;
 						if( (!restartHandover) && (leftForce.norm()>=2.0) )
 						{
+					    /*get acceleration of lHand*/
+					    if(i>3) //(i%3==0)
+					    {
+					    	for(int g=1; g<=3; g++)
+					    	{
+					    		efLPos[3-g] = 0.25*(
+					    			markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+					    			markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+					    			);
+					    	}
+					    	efLVel[0] = (efLPos[1]-efLPos[0])*fps;
+					    	efLVel[1] = (efLPos[2]-efLPos[1])*fps;
+					    	efLAce = (efLVel[1]-efLVel[0])*fps;
+					    	// cout <<"ace efL " <<efLAce.transpose()<<endl;
+
+					    	efLMass = lHandMass + objMass;
+					    	lFinert = efLMass*efLAce; //inertial Force at efL
+
+					    	// lFload_[r] = leftForce;
+					    	// lFinert_[r]= lFinert;
+                
+                /*make lFload_min abs*/
+					    	lFLoad_min[0] = abs(abs(leftForce[0])-abs(lFinert[0])); // pull force
+					    	lFLoad_min[1] = abs(abs(leftForce[1])-abs(lFinert[1]));
+					    	lFLoad_min[2] = abs(abs(leftForce[2])-abs(lFinert[2]));
+
+						  // r+=1;
+					    }
 							readyToGrasp=true;
 						} 
 						if(restartHandover)
