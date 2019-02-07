@@ -58,12 +58,12 @@ namespace mc_handover
 			/*EfL pos Task*/
 			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			ctl.posTaskL->position({0.3,0.3,1.1}); 										//COMMENT LATER
+			//ctl.posTaskL->position({0.3,0.3,1.1}); 										//COMMENT LATER
 
 			/*EfL ori Task*/
 			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
-			ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
+			//ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
 
 
 			/*EfR pos Task*/
@@ -614,7 +614,8 @@ namespace mc_handover
 						/*when closed WITH object*/
 						if( dum2 && closeGripper && (leftForce.norm()>=2.0) )
 						{
-							LOG_INFO(" object is inside gripper ")
+              lFNormAtClose = leftForce.norm();
+							LOG_INFO(" object is inside gripper "<< leftForce.norm() )
 							dum2 = false;
 						}
 
@@ -629,11 +630,11 @@ namespace mc_handover
 					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
 					{
 						/*here comes only after object is grasped*/
-						if( (closeGripper) && (!restartHandover) && (leftForce.norm()>=2.0) )
+						if( (closeGripper) && (!restartHandover) && (lFNormAtClose>=2.0) )
 						{
-							if(e==400)//wait xx sec
+							if(e%200==0)//wait xx sec
 							{
-								e=0;
+								//e=0;
 								motion=true;
 								readyToGrasp=true;
 
@@ -654,8 +655,9 @@ namespace mc_handover
 								lFloady.push_back( abs( abs(leftForce[1])-abs(lFzero[1]) ) );
 								lFloadz.push_back( abs( abs(leftForce[2])-abs(lFzero[2]) ) );
 							}
+					    	e+=1;cout << "e " << e << endl;
 						}
-						
+
 						if(restartHandover)
 						{
 							restartHandover=false;
@@ -667,7 +669,6 @@ namespace mc_handover
 							dum3=true;
 							cout<<"/*******restarting handover*******/"<<endl;
 						}
-						e+=1;
 					}
 					/*iterator*/
 					i+= 1;

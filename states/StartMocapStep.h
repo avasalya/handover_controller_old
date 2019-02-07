@@ -65,7 +65,7 @@ namespace mc_handover
 			std::vector<double> lFloadx, lFloady, lFloadz;
 			Eigen::Vector3d efLAce, lFinert, lFzero, lFload, lFpull, leftForce, leftTh;
 			
-			double efLMass;// lHandMass{1.1}, objMass{0.175};
+			double efLMass, lFNormAtClose;// lHandMass{1.1}, objMass{0.175};
 
 			int body{0};
 
