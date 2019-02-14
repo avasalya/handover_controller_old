@@ -438,12 +438,13 @@ namespace mc_handover
 						
 
 						/*get rotation matrix XYZ of subject LEFT hand*/
-						lshpLt_Z = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtB].col(i);//vAB=Z
+						lshpLt_Z = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtA].col(i);//vAB=Z
 
-						lshpLt_Y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtB].col(i);//vDB=Y
+						lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtD].col(i);//vDB=Y
 						// LOG_SUCCESS("lshpLt_Y                    " << lshpLt_Y.transpose() )
 
-						lshpLt_X = (lshpLt_Y/lshpLt_Y.norm()).cross(lshpLt_Z/lshpLt_Z.norm());//Y.cross(Z)=-X
+						lshpLt_X = (lshpLt_Z/lshpLt_Z.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//Z.cross(Y)=X
+						// lshpLt_X = (lshpLt_Y/lshpLt_Y.norm()).cross(lshpLt_Z/lshpLt_Z.norm());//Y.cross(Z)=-X
 						
 						// lshpLt_Y = lshpLt_Z.cross(-lshpLt_X);//re-orthogonalization
 						// LOG_ERROR("lshpLt_Y re-orthogonalization " << lshpLt_Y.transpose() )
@@ -453,7 +454,14 @@ namespace mc_handover
 						// subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
 						// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
 
-						subjLtHandRot.row(2) = (lshpLt_X/lshpLt_X.norm());
+						/*also stable working*/// with
+						// lshpLt_X = (lshpLt_Z/lshpLt_Z.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//Z.cross(Y)=X
+
+						// subjLtHandRot.row(1) = (lshpLt_X/lshpLt_X.norm());
+						// subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
+						// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
+
+						subjLtHandRot.row(1) = (lshpLt_X/lshpLt_X.norm());
 						subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
 						subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
 
@@ -465,13 +473,15 @@ namespace mc_handover
 						// LOG_INFO("err XYZ degrees "<< err.transpose())
 
 
+						ctl.oriTaskL->orientation(subjLtHandRot);
+
+
 						// ctl.oriTaskL->orientation(sva::RotZ((180/3.14)*rand()));
 						// ctl.oriTaskL->orientation(Eigen::Matrix3d::Identity());
 						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation()*subjLtHandRot);
 						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation().transpose()*subjLtHandRot);
 						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation()*subjLtHandRot.transpose());
 						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation().transpose()*subjLtHandRot.transpose());
-						ctl.oriTaskL->orientation(subjLtHandRot);
 						// ctl.oriTaskL->orientation(subjLtHandRot.transpose());	// better so far
 						
 						// ctl.oriTaskL->orientation( sva::RotX(err(0)) * sva::RotY(err(1)) * sva::RotZ(err(2)) );//try this
