@@ -69,7 +69,7 @@ namespace mc_handover
 
 			int body{0};
 
-			int maxMarkers{13};//17
+			int maxMarkers{14};//17
 
 			int wristLtEfA{0}, wristLtEfB{1};
 			int gripperLtEfA{2}, gripperLtEfB{3};
@@ -80,10 +80,10 @@ namespace mc_handover
 			int object{8};
 
 			int fingerSubjLt{9};
-			int lShapeLtA{10}, lShapeLtB{11}, lShapeLtC{12};
+			int lShapeLtA{10}, lShapeLtB{11}, lShapeLtC{12}, lShapeLtD{13};
 
-			// int fingerSubjRt{13};
-			// int lShapeRtA{14}, lShapeRtB{15}, lShapeRtC{16};
+			// int fingerSubjRt{14};
+			// int lShapeRtA{15}, lShapeRtB{16}, lShapeRtC{17}, lShapeRtD{18};
 
 			
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
@@ -95,8 +95,10 @@ namespace mc_handover
 			Eigen::Matrix3d curRotLeftEfMarker;
 			Eigen::Matrix3d curRotLeftEf;
 			Eigen::Matrix3d rotSubj;
-			Eigen::Matrix3d subjLtHandRot,subjRtHandRot;
+			Eigen::Matrix3d subjLtHandRot,subjRtHandRot, idt;
 
+			Eigen::Vector3d lshpLt_X, lshpLt_Y, lshpLt_Z;
+			Eigen::Vector3d lshpRt_X, lshpRt_Y, lshpRt_Z;
 
 			Eigen::MatrixXd curVelSubj, wp, newPosSubj;
 
