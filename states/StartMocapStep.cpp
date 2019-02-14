@@ -438,9 +438,9 @@ namespace mc_handover
 						
 
 						/*get rotation matrix XYZ of subject LEFT hand*/
-						lshpLt_Z = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtA].col(i);//vAB=Z
+						lshpLt_Z = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtB].col(i);//vAB=Z
 
-						lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtD].col(i);//vDB=Y
+						lshpLt_Y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtB].col(i);//vDB=Y
 						// LOG_SUCCESS("lshpLt_Y                    " << lshpLt_Y.transpose() )
 
 						lshpLt_X = (lshpLt_Y/lshpLt_Y.norm()).cross(lshpLt_Z/lshpLt_Z.norm());//Y.cross(Z)=-X
