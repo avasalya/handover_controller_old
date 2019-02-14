@@ -461,8 +461,8 @@ namespace mc_handover
 						// subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
 						// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
 
-						subjLtHandRot.row(1) = (lshpLt_X/lshpLt_X.norm());
-						subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
+						subjLtHandRot.row(1) = (lshpLt_X/lshpLt_X.norm()).transpose();
+						subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm());
 						subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
 
 						// cout << "subjLtHandRot.transpose() "<<endl<<subjLtHandRot.transpose()<<endl;
