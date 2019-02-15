@@ -89,6 +89,7 @@ namespace mc_handover
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
+			Eigen::Vector3d p_; 
 			Eigen::Quaterniond q, q1, q2, q3, q_;
 
 			/*Eigen::Matrix3d::Identity();*/
@@ -97,8 +98,8 @@ namespace mc_handover
 			Eigen::Matrix3d rotSubj;
 			Eigen::Matrix3d subjLtHandRot,subjRtHandRot, idt;
 
-			Eigen::Vector3d lshpLt_X, lshpLt_Y, lshpLt_Z;
-			Eigen::Vector3d lshpRt_X, lshpRt_Y, lshpRt_Z;
+			Eigen::Vector3d x, y, z, lshpLt_X, lshpLt_Y, lshpLt_Z;
+			Eigen::Vector3d x_, y_, z_, lshpRt_X, lshpRt_Y, lshpRt_Z;
 
 			Eigen::MatrixXd curVelSubj, wp, newPosSubj;
 
@@ -110,6 +111,8 @@ namespace mc_handover
 
 			double closeGrippers =0.13;
 			double openGrippers = 0.5;
+
+			double pi = 3.14;
 
 
 
@@ -185,11 +188,13 @@ double angle = M_PI / 2. - std::acos(u.dot(v) / (u.norm() * v.norm()));
 Eigen::Vector3d axis = u.cross(v);
 axis = axis / axis.norm();
 angle = angle / 2.;
+
 //Rodrigues' rotation formula to rotate each of the vertices//
 Eigen::Vector3d urot = u * std::cos(angle) + axis.cross(u) * std::sin(-angle) +
 axis * axis.dot(u) * (1 - std::cos(angle));
 Eigen::Vector3d vrot = v * std::cos(angle) + axis.cross(v) * std::sin(angle) +
 axis * axis.dot(v) * (1 - std::cos(angle));
+
 Eigen::Vector3d right = urot / urot.norm();
 Eigen::Vector3d forward = vrot / vrot.norm();
 Eigen::Vector3d up;

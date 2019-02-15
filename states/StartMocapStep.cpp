@@ -14,7 +14,6 @@ namespace mc_handover
 		}
 
 
-
 		void MyErrorMsgHandler(int iLevel, const char *szMsg)
 		{
 			const char *szLevel = NULL;
@@ -25,7 +24,6 @@ namespace mc_handover
 			else if (iLevel == VL_Error) { szLevel = "Error"; }
 			printf("  %s: %s\n", szLevel, szMsg);
 		}
-
 
 
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
@@ -43,6 +41,8 @@ namespace mc_handover
 			q2 = {-0.42, -0.5, 0.56, 0.49}; // for extra orientation (-90)
 			q3 = {-0.44, 0.47, 0.49, 0.58}; //to get closer to body
 
+			p_<< 0.3,0.3,1.1;
+
 			/*chest pos task*/
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
@@ -55,18 +55,18 @@ namespace mc_handover
 
 
 			/*EfL pos Task*/
-			ctl.posTaskL = std::make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
+			ctl.posTaskL = make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskL);
-			//ctl.posTaskL->position({0.3,0.3,1.1}); 										//COMMENT LATER
+			//ctl.posTaskL->position(p_); 										//COMMENT LATER
 
 			/*EfL ori Task*/
-			ctl.oriTaskL = std::make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
+			ctl.oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
 			//ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); 				//COMMENT LATER
 
 
 			/*EfR pos Task*/
-			ctl.posTaskR = std::make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
+			ctl.posTaskR = make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 3.0, 1e3);
 			ctl.solver().addTask(ctl.posTaskR);
 			// cout << ctl.posTaskR->position().transpose() <<endl;
 			ctl.posTaskR->position({0.060, -0.373, 0.724});
@@ -109,9 +109,9 @@ namespace mc_handover
 			ctl.gui()->addElement({"Handover", "wrench"},
 
 				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {
-					std::cout << "left hand Forces " <<
+					cout << "left hand Forces " <<
 					ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
-					// std::cout << "right hand Forces " <<
+					// cout << "right hand Forces " <<
 					// ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
 				}),
 				
@@ -160,7 +160,7 @@ namespace mc_handover
 						cout << " com pos set to:\n" << initialCom + move << endl;})
 				);
 
-			comTask = std::make_shared<mc_tasks::CoMTask>
+			comTask = make_shared<mc_tasks::CoMTask>
 			(ctl.robots(), ctl.robots().robotIndex(), 10., 1e5);
 			// comTask->dimWeight(Eigen::Vector3d(1., 1., 1.));
 
@@ -186,10 +186,10 @@ namespace mc_handover
 			ctl.gui()->addElement({"Handover", "Trajectories"},
 
 				// mc_rtc::gui::Trajectory("obseve subj pos", {{0, 1, 0}, 0.01, mc_rtc::gui::LineStyle::Solid},
-				// 	[this, &ctl]() -> const std::vector<sva::PTransformd>& { return S_X_efL; }),
+				// 	[this, &ctl]() -> const vector<sva::PTransformd>& { return S_X_efL; }),
 
 				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{1,1,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
-					[this, &ctl]() -> const std::vector<Eigen::Vector3d>& { return predictedPositions; } ),
+					[this, &ctl]() -> const vector<Eigen::Vector3d>& { return predictedPositions; } ),
 				
 				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
@@ -247,8 +247,8 @@ namespace mc_handover
 				startCapture = false; //true for sim
 				
 				name = {"simData3"};
-				std::string fn = std::string(DATA_PATH) + "/" + name + ".txt";
-				std::ifstream file(fn);
+				string fn = string(DATA_PATH) + "/" + name + ".txt";
+				ifstream file(fn);
 
 				if(!file.is_open())
 					{ LOG_ERROR("Failed to open ") }
@@ -291,7 +291,6 @@ namespace mc_handover
 		}// start
 
 
-
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
@@ -327,8 +326,6 @@ namespace mc_handover
 			}
 
 
-
-
 			/*on simulation*/
 			if(!Flag_CORTEX)
 			{
@@ -347,9 +344,6 @@ namespace mc_handover
 				" y-angle " << (180/3.14)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) <<
 				" z-angle " << (180/3.14)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
 			}
-
-
-
 
 
 			/*start only when ithFrame == 1*/
@@ -416,13 +410,13 @@ namespace mc_handover
 					if( oneTime && (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
 					{
 						ctl.oriTaskL->orientation(q.toRotationMatrix().transpose());
-						ctl.posTaskL->position({0.3,0.25,1.1});
+						ctl.posTaskL->position(p_);
 					}
 
 
-					Vector3d p_;
-					p_<< 0.3,0.25,1.1;
-					if( oneTime && (ctl.posTaskL->position() - p_).norm()<=0.02 )
+					if( oneTime
+						&& ((ctl.posTaskL->position() - p_).norm()<=0.02)
+						&& ((ctl.oriTaskL->orientation() - q.toRotationMatrix().transpose() ).norm()<=0.02) )
 					{
 						oneTime=false;
 					}
@@ -432,18 +426,50 @@ namespace mc_handover
 					if(!oneTime
 						&&	Markers[lShapeLtA](0)!=0 && Markers[lShapeLtA](0)< 20
 						&& 	Markers[lShapeLtB](0)!=0 && Markers[lShapeLtB](0)< 20
+						&& 	Markers[lShapeLtC](0)!=0 && Markers[lShapeLtC](0)< 20
 						&& 	Markers[lShapeLtD](0)!=0 && Markers[lShapeLtD](0)< 20
 						)
 					{
+						/*get rotation matrix XYZ of subject LEFT hand*/
+						x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
+						y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
+						z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//X.cross(Y)=Z 
+						
+						subjLtHandRot.row(0) = (x/x.norm()).transpose();
+						subjLtHandRot.row(1) = (y/y.norm()).transpose();
+						subjLtHandRot.row(2) = (z/z.norm()).transpose();
+
+						// orthogonalization method Kevin
+						double angle = pi / 2. - acos(x.dot(y) / (x.norm() * y.norm()));
+						Eigen::Vector3d axis = x.cross(y);
+						axis = axis / axis.norm();
+						angle = angle / 2.;
+
+						/*Rodrigues' rotation formula to rotate each of the vertices*/
+						Eigen::Vector3d xrot = x * cos(angle) + axis.cross(x) * sin(-angle) +
+						axis * axis.dot(x) * (1 - cos(angle));
+						Eigen::Vector3d yrot = y * cos(angle) + axis.cross(y) * sin(angle) +
+						axis * axis.dot(y) * (1 - cos(angle));
+
+						lshpLt_X = xrot / xrot.norm();
+
+						lshpLt_Y = yrot / yrot.norm();
+
+						lshpLt_Z = lshpLt_X.cross(lshpLt_Y);
+						
+						subjLtHandRot.row(0) = lshpLt_X.transpose();
+						subjLtHandRot.row(1) = lshpLt_Y.transpose();
+						subjLtHandRot.row(2) = lshpLt_Z.transpose();
 						
 
-						/*get rotation matrix XYZ of subject LEFT hand*/
-						lshpLt_Z = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtA].col(i);//vAB=Z
+						ctl.oriTaskL->orientation(subjLtHandRot.transpose());
 
-						lshpLt_Y = markersPos[lShapeLtB].col(i)-markersPos[lShapeLtD].col(i);//vDB=Y
-						// LOG_SUCCESS("lshpLt_Y                    " << lshpLt_Y.transpose() )
+						LOG_WARNING("my XYZ angles  " << (180/3.14)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
+								(180/3.14)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
+								(180/3.14)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
 
-						lshpLt_X = (lshpLt_Z/lshpLt_Z.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//Z.cross(Y)=X
+
+
 						// lshpLt_X = (lshpLt_Y/lshpLt_Y.norm()).cross(lshpLt_Z/lshpLt_Z.norm());//Y.cross(Z)=-X
 						
 						// lshpLt_Y = lshpLt_Z.cross(-lshpLt_X);//re-orthogonalization
@@ -461,19 +487,17 @@ namespace mc_handover
 						// subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
 						// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
 
-						subjLtHandRot.row(1) = (lshpLt_X/lshpLt_X.norm()).transpose();
-						subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm());
-						subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
-
 						// cout << "subjLtHandRot.transpose() "<<endl<<subjLtHandRot.transpose()<<endl;
 
-						
-						auto err = sva::rotationError(ctl.oriTaskL->orientation(),subjLtHandRot, 1e-8);
-						err = err*(180/3.14);
+
+
+
+						// auto err = sva::rotationError(ctl.oriTaskL->orientation(),subjLtHandRot, 1e-8);
+						// err = err*(180/3.14);
 						// LOG_INFO("err XYZ degrees "<< err.transpose())
 
 
-						ctl.oriTaskL->orientation(subjLtHandRot);
+
 
 
 						// ctl.oriTaskL->orientation(sva::RotZ((180/3.14)*rand()));
@@ -486,11 +510,6 @@ namespace mc_handover
 						
 						// ctl.oriTaskL->orientation( sva::RotX(err(0)) * sva::RotY(err(1)) * sva::RotZ(err(2)) );//try this
 						// ctl.oriTaskL->orientation( sva::RotZ(err(2)) );
-
-						LOG_WARNING("my  XYZ angles  " << (180/3.14)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
-								(180/3.14)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
-								(180/3.14)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
-
 
 					}
 
