@@ -324,25 +324,26 @@ namespace mc_handover
 					return true;
 				}
 			}
-
-
 			/*on simulation*/
-			if(!Flag_CORTEX)
+			else
 			{
+				// cout<<" rotX matrix \n" << sva::RotX(90*180/pi)<<endl;
+				// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*sva::RotX(150*180/pi));
+
 				subjLtHandRot = ctl.oriTaskL->orientation();
 				idt <<	1.0, 0.0, 0.0,
 						0.0, 1.0, 0.0,
 						0.0, 0.0, 1.0;
 				
-				// ctl.oriTaskL->orientation(idt); 
+				ctl.oriTaskL->orientation(idt); 
 				
 				auto err= sva::rotationError(subjLtHandRot, idt, 1e-8);
 				
-				LOG_SUCCESS("XYZ degrees "<< (180/3.14)*err.transpose())
+				LOG_SUCCESS("XYZ degrees "<< (180/pi)*err.transpose())
 				
-				LOG_ERROR(" x-angle " << (180/3.14)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) <<
-				" y-angle " << (180/3.14)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) <<
-				" z-angle " << (180/3.14)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
+				LOG_ERROR(" x-angle " << (180/pi)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) <<
+				" y-angle " << (180/pi)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) <<
+				" z-angle " << (180/pi)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
 			}
 
 
@@ -417,9 +418,7 @@ namespace mc_handover
 					if( oneTime
 						&& ((ctl.posTaskL->position() - p_).norm()<=0.02)
 						&& ((ctl.oriTaskL->orientation() - q.toRotationMatrix().transpose() ).norm()<=0.02) )
-					{
-						oneTime=false;
-					}
+					{ oneTime=false; }
 
 
 					/*check subj hand's relative orientation*/
@@ -433,11 +432,8 @@ namespace mc_handover
 						/*get rotation matrix XYZ of subject LEFT hand*/
 						x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
 						y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
-						z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//X.cross(Y)=Z 
-						
-						subjLtHandRot.row(0) = (x/x.norm()).transpose();
-						subjLtHandRot.row(1) = (y/y.norm()).transpose();
-						subjLtHandRot.row(2) = (z/z.norm()).transpose();
+						z = (x/x.norm()).cross(y/y.norm());//X.cross(Y)=Z 
+						// z = (lshpLt_X/lshpLt_X.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//X.cross(Y)=Z 
 
 						// orthogonalization method Kevin
 						double angle = pi / 2. - acos(x.dot(y) / (x.norm() * y.norm()));
@@ -448,70 +444,24 @@ namespace mc_handover
 						/*Rodrigues' rotation formula to rotate each of the vertices*/
 						Eigen::Vector3d xrot = x * cos(angle) + axis.cross(x) * sin(-angle) +
 						axis * axis.dot(x) * (1 - cos(angle));
+
 						Eigen::Vector3d yrot = y * cos(angle) + axis.cross(y) * sin(angle) +
 						axis * axis.dot(y) * (1 - cos(angle));
 
 						lshpLt_X = xrot / xrot.norm();
-
 						lshpLt_Y = yrot / yrot.norm();
-
 						lshpLt_Z = lshpLt_X.cross(lshpLt_Y);
 						
 						subjLtHandRot.row(0) = lshpLt_X.transpose();
 						subjLtHandRot.row(1) = lshpLt_Y.transpose();
 						subjLtHandRot.row(2) = lshpLt_Z.transpose();
-						
 
-						// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot);// reverse Y,Z
 						ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X
 
-						LOG_WARNING("my XYZ angles  " << (180/3.14)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
-								(180/3.14)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
-								(180/3.14)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
-
-
-
-						// lshpLt_X = (lshpLt_Y/lshpLt_Y.norm()).cross(lshpLt_Z/lshpLt_Z.norm());//Y.cross(Z)=-X
-						
-						// lshpLt_Y = lshpLt_Z.cross(-lshpLt_X);//re-orthogonalization
-						// LOG_ERROR("lshpLt_Y re-orthogonalization " << lshpLt_Y.transpose() )
-
-						/*stable working*/
-						// subjLtHandRot.row(2) = lshpLt_X;//(lshpLt_X/lshpLt_X.norm());
-						// subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
-						// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
-
-						/*also stable working*/// with
-						// lshpLt_X = (lshpLt_Z/lshpLt_Z.norm()).cross(lshpLt_Y/lshpLt_Y.norm());//Z.cross(Y)=X
-
-						// subjLtHandRot.row(1) = (lshpLt_X/lshpLt_X.norm());
-						// subjLtHandRot.row(0) = (lshpLt_Y/lshpLt_Y.norm()).transpose();
-						// subjLtHandRot.row(2) = (lshpLt_Z/lshpLt_Z.norm()).transpose();
-
-						// cout << "subjLtHandRot.transpose() "<<endl<<subjLtHandRot.transpose()<<endl;
-
-
-
-
-						// auto err = sva::rotationError(ctl.oriTaskL->orientation(),subjLtHandRot, 1e-8);
-						// err = err*(180/3.14);
-						// LOG_INFO("err XYZ degrees "<< err.transpose())
-
-
-
-
-
-						// ctl.oriTaskL->orientation(sva::RotZ((180/3.14)*rand()));
-						// ctl.oriTaskL->orientation(Eigen::Matrix3d::Identity());
-						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation()*subjLtHandRot);
-						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation().transpose()*subjLtHandRot);
-						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation()*subjLtHandRot.transpose());
-						// ctl.oriTaskL->orientation(ctl.oriTaskL->orientation().transpose()*subjLtHandRot.transpose());
-						// ctl.oriTaskL->orientation(subjLtHandRot.transpose());	// better so far
-						
-						// ctl.oriTaskL->orientation( sva::RotX(err(0)) * sva::RotY(err(1)) * sva::RotZ(err(2)) );//try this
-						// ctl.oriTaskL->orientation( sva::RotZ(err(2)) );
-
+						LOG_WARNING("my XYZ angles  " <<
+							(180/pi)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
+							(180/pi)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
+							(180/pi)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
 					}
 
 
@@ -791,16 +741,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
-
-
-
-
-
-// /*get rotation matrix XYZ of subject RIGHT hand*/
-// lshpRt_X = markersPos[lShapeRtB].col(i)-markersPos[lShapeRtA].col(i);
-// lshpRt_Y = markersPos[lShapeRtB].col(i)-markersPos[lShapeRtC].col(i);
-// lshpRt_Z = (lshpRt_X/lshpRt_X.norm()).cross(lshpRt_Y/lshpRt_Y.norm());
-
-// subjRtHandRot.row(0) = (lshpRt_X/lshpRt_X.norm()).transpose();
-// subjRtHandRot.row(1) = -(lshpRt_Y/lshpRt_Y.norm()).transpose();
-// subjRtHandRot.row(2) = lshpRt_Z.transpose();
