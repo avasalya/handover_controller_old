@@ -462,7 +462,8 @@ namespace mc_handover
 						subjLtHandRot.row(2) = lshpLt_Z.transpose();
 						
 
-						ctl.oriTaskL->orientation(subjLtHandRot.transpose());
+						// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot);// reverse Y,Z
+						ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X
 
 						LOG_WARNING("my XYZ angles  " << (180/3.14)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
 								(180/3.14)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
