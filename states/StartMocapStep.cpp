@@ -458,12 +458,17 @@ namespace mc_handover
 							subjLtHandRot.row(1) = lshpLt_Y.transpose();
 							subjLtHandRot.col(2) = lshpLt_Z.transpose();
 
+
+							// subjLtHandRot.col(0) = lshpLt_X;
+							// subjLtHandRot.col(1) = lshpLt_Y;
+							// subjLtHandRot.col(2) = lshpLt_Z;
+
 							// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X
 
-							LOG_WARNING("my XYZ angles  " <<
-								(180/pi)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
-								(180/pi)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
-								(180/pi)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
+							// LOG_WARNING("my XYZ angles  " <<
+							// 	(180/pi)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
+							// 	(180/pi)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
+							// 	(180/pi)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
 						}
 						
 						/*prediction_ tuner*/
@@ -551,13 +556,29 @@ namespace mc_handover
 
 
 									/*handover pose*/
-							 		ctl.posTaskL->position(handoverPos);
-									ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X -- but stable
+									
+									Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot.transpose();
+
+									// Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot; // reverse X -- but stable
+									sva::PTransformd new_pose(go_rot,handoverPos);
+									ctl.oriTaskL->orientation(new_pose.rotation());
+									ctl.posTaskL->position(new_pose.translation());
 
 
+							 		// ctl.posTaskL->position(handoverPos);
+									// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X -- but stable
+
+									Eigen::Matrix3d my_angles = ctl.oriTaskL->orientation();
+									LOG_WARNING("my XYZ angles  " <<
+									(180/pi)*atan2(my_angles(2,1), my_angles(2,2)) << " "<<
+									(180/pi)*atan2(-my_angles(2,0), sqrt( pow( my_angles(2,1),2) + pow(my_angles(2,2),2) ) ) << " "<<
+									(180/pi)*atan2(my_angles(1,0), my_angles(0,0)) )
 
 
-							 	// 	Eigen::Matrix3d from_rot = Subj_X_efL.rotation();//ctl.oriTaskL->orientation();//q.toRotationMatrix().transpose();
+									// ctl.oriTaskL->orientation( RotZ ((180/pi)*atan2(my_angles(2,1), my_angles(2,2)) ) );
+
+									
+							 	// 	Eigen::Matrix3d from_rot = Subj_X_efL.rotation(); //ctl.oriTaskL->orientation(); //q.toRotationMatrix().transpose();
 							 	// 	Eigen::Matrix3d to_rot = subjLtHandRot.transpose();
 							 	// 	Eigen::Vector3d er_the = (180/pi)*sva::rotationError(from_rot,to_rot);
 									// LOG_ERROR(er_the.transpose())
@@ -754,20 +775,3 @@ namespace mc_handover
 	} // namespace states
 
 } // namespace mc_handover
-
-	// Eigen::Matrix3d initRotEfL = q.toRotationMatrix().transpose();
-	// Eigen::Matrix3d newRot_ = subjLtHandRot.transpose();
-
-	// Eigen::Vector3d er_tha = (180/pi)*sva::rotationError(newRot_, initRotEfL);
-	// LOG_ERROR(er_tha.transpose())
-	// Eigen::Matrix3d togo_ = initRotEfL*sva::RotX(er_tha(0))*sva::RotY(er_tha(1))*sva::RotZ(er_tha(2));
-	// ctl.oriTaskL->orientation(togo_);
-
-
-
-// //if( (handoverPos(0)<= 0.4) && (handoverPos(1)<= 0.25) )
-// //{
-// //	ctl.oriTaskL->orientation(q3.toRotationMatrix().transpose());
-// //}
-// //else
-// //{ ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); }
