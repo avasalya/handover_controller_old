@@ -437,27 +437,39 @@ namespace mc_handover
 							/*reverse Z*/
 							// x = markersPos[lShapeLtC].col(i)-markersPos[lShapeLtA].col(i);//vCA=X
 
-							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
+
+
+							// x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
 							
-							y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
+							// y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
+
+							/*reverse Y*/
+							x = -markersPos[lShapeLtA].col(i)+markersPos[lShapeLtC].col(i);//vCA=X
+							
+							y = -markersPos[lShapeLtD].col(i)+markersPos[lShapeLtC].col(i);//vCD=Y
 							
 							z = (x/x.norm()).cross(y/y.norm());//X.cross(Y)=Z 
 
 							// orthogonalization method Kevin
-							double angle = pi / 2. - acos(x.dot(y) / (x.norm() * y.norm()));
-							Eigen::Vector3d axis = x.cross(y);
-							axis = axis / axis.norm();
-							angle = angle / 2.;
+							// double angle = pi / 2. - acos(x.dot(y) / (x.norm() * y.norm()));
+							// Eigen::Vector3d axis = x.cross(y);
+							// axis = axis / axis.norm();
+							// angle = angle / 2.;
 
 							/*Rodrigues' rotation formula to rotate each of the vertices*/
-							Eigen::Vector3d xrot = x * cos(angle) + axis.cross(x) * sin(angle) +
-							axis * axis.dot(x) * (1 - cos(angle));
+							// Eigen::Vector3d xrot = x * cos(angle) + axis.cross(x) * sin(angle) +
+							// axis * axis.dot(x) * (1 - cos(angle));
 
-							Eigen::Vector3d yrot = y * cos(angle) + axis.cross(y) * sin(angle) +
-							axis * axis.dot(y) * (1 - cos(angle));
+							// Eigen::Vector3d yrot = y * cos(angle) + axis.cross(y) * sin(angle) +
+							// axis * axis.dot(y) * (1 - cos(angle));
 
-							lshpLt_X = xrot / xrot.norm();
-							lshpLt_Y = yrot / yrot.norm();
+							// lshpLt_X = xrot / xrot.norm();
+							// lshpLt_Y = yrot / yrot.norm();
+
+							/*reverse Y*/
+							lshpLt_X = x/x.norm();
+							lshpLt_Y = y/y.norm();
+
 							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);
 
 							/*with wrong method*/
@@ -466,12 +478,10 @@ namespace mc_handover
 							// subjLtHandRot.col(2) = lshpLt_Z.transpose();
 
 
-							/*reverse X or Z*/
+							/*reverse X or Z or Y*/
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
 							subjLtHandRot.col(2) = lshpLt_Z;
-
-							
 
 							// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X
 
@@ -568,12 +578,12 @@ namespace mc_handover
 									/*with wrong method*/
 									// Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot.transpose();
 
-									/*reverse Z*/
-									// Eigen::Matrix3d go_rot = q.toRotationMatrix()*subjLtHandRot;
+									/*reverse Y, Z*/
+									Eigen::Matrix3d go_rot = q.toRotationMatrix()*subjLtHandRot;
 
 
 									// /*reverse X*/
-									Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot;
+									// Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot;
 									
 
 									/*handover pose*/
@@ -586,6 +596,7 @@ namespace mc_handover
 									// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X -- but stable
 
 									// Eigen::Matrix3d my_angles = ctl.oriTaskL->orientation();
+
 									// LOG_WARNING("my XYZ angles  " <<
 									// (180/pi)*atan2(my_angles(2,1), my_angles(2,2)) << " "<<
 									// (180/pi)*atan2(-my_angles(2,0), sqrt( pow( my_angles(2,1),2) + pow(my_angles(2,2),2) ) ) << " "<<
