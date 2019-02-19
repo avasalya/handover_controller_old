@@ -36,6 +36,10 @@ namespace mc_handover
 			gripperL->setTargetQ({closeGrippers});
 			gripperR->setTargetQ({closeGrippers});
 
+			ltRotW << -0.138901, -0.0699416, 0.987833,
+					0.084922, 0.992987, 0.0822475,
+					-0.986658, 0.095313, -0.131987;
+
 			q  = {0.64, -0.01, -0.76, -0.06}; // initial orientation
 			q1 = {0.95, 0.086, -0.25, -0.15}; //for mocap_temp
 			q2 = {-0.42, -0.5, 0.56, 0.49}; // for extra orientation (-90)
@@ -297,6 +301,8 @@ namespace mc_handover
 			
 			/*hand pose*/
 			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
+			// ltRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].rotation();
+
 			rtHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK7")];
 
 
@@ -433,62 +439,22 @@ namespace mc_handover
 							)
 						{
 							/*get unit vectors XYZ of subject LEFT hand*/
+							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
+							y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
 							
-							/*reverse Z*/
-							// x = markersPos[lShapeLtC].col(i)-markersPos[lShapeLtA].col(i);//vCA=X
-
-
-
-							// x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
-							
-							// y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
-
-							/*reverse Y*/
-							x = -markersPos[lShapeLtA].col(i)+markersPos[lShapeLtC].col(i);//vCA=X
-							
-							y = -markersPos[lShapeLtD].col(i)+markersPos[lShapeLtC].col(i);//vCD=Y
-							
-							z = (x/x.norm()).cross(y/y.norm());//X.cross(Y)=Z 
-
-							// orthogonalization method Kevin
-							// double angle = pi / 2. - acos(x.dot(y) / (x.norm() * y.norm()));
-							// Eigen::Vector3d axis = x.cross(y);
-							// axis = axis / axis.norm();
-							// angle = angle / 2.;
-
-							/*Rodrigues' rotation formula to rotate each of the vertices*/
-							// Eigen::Vector3d xrot = x * cos(angle) + axis.cross(x) * sin(angle) +
-							// axis * axis.dot(x) * (1 - cos(angle));
-
-							// Eigen::Vector3d yrot = y * cos(angle) + axis.cross(y) * sin(angle) +
-							// axis * axis.dot(y) * (1 - cos(angle));
-
-							// lshpLt_X = xrot / xrot.norm();
-							// lshpLt_Y = yrot / yrot.norm();
-
-							/*reverse Y*/
 							lshpLt_X = x/x.norm();
 							lshpLt_Y = y/y.norm();
-
-							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);
+							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);//X.cross(Y)=Z
 
 							/*with wrong method*/
-							// subjLtHandRot.row(0) = lshpLt_X.transpose();
-							// subjLtHandRot.row(1) = lshpLt_Y.transpose();
-							// subjLtHandRot.col(2) = lshpLt_Z.transpose();
+							// subjLtHandRot.row(0) = lshpLt_X;
+							// subjLtHandRot.row(1) = lshpLt_Y;
+							// subjLtHandRot.col(2) = lshpLt_Z;
 
-
-							/*reverse X or Z or Y*/
+							/*reverse X*/
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
 							subjLtHandRot.col(2) = lshpLt_Z;
-
-							// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X
-
-							// LOG_WARNING("my XYZ angles  " <<
-							// 	(180/pi)*atan2(subjLtHandRot(2,1), subjLtHandRot(2,2)) << " "<<
-							// 	(180/pi)*atan2(-subjLtHandRot(2,0), sqrt( pow( subjLtHandRot(2,1),2) + pow(subjLtHandRot(2,2),2) ) ) << " "<<
-							// 	(180/pi)*atan2(subjLtHandRot(1,0), subjLtHandRot(0,0)) )
 						}
 						
 						/*prediction_ tuner*/
@@ -574,29 +540,19 @@ namespace mc_handover
 									else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
 
 
-									
-									/*with wrong method*/
-									// Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot.transpose();
-
-									/*reverse Y, Z*/
-									Eigen::Matrix3d go_rot = q.toRotationMatrix()*subjLtHandRot;
-
-
-									// /*reverse X*/
-									// Eigen::Matrix3d go_rot = q.toRotationMatrix().transpose()*subjLtHandRot;
-									
-
 									/*handover pose*/
-									sva::PTransformd new_pose(go_rot,handoverPos);
+									//reverse X*
+									handoverRot = ltRotW*subjLtHandRot;
+
+									//reverse Y, Z & wrong method
+									// handoverRot = ltRotW*subjLtHandRot.transpose();
+
+									sva::PTransformd new_pose(handoverRot,handoverPos);
 									ctl.oriTaskL->orientation(new_pose.rotation());
 									ctl.posTaskL->position(new_pose.translation());
 
 
-							 		// ctl.posTaskL->position(handoverPos);
-									// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*subjLtHandRot.transpose());// reverse X -- but stable
-
 									// Eigen::Matrix3d my_angles = ctl.oriTaskL->orientation();
-
 									// LOG_WARNING("my XYZ angles  " <<
 									// (180/pi)*atan2(my_angles(2,1), my_angles(2,2)) << " "<<
 									// (180/pi)*atan2(-my_angles(2,0), sqrt( pow( my_angles(2,1),2) + pow(my_angles(2,2),2) ) ) << " "<<
@@ -788,16 +744,9 @@ namespace mc_handover
 // 	Eigen::Vector3d er_the = (180/pi)*sva::rotationError(from_rot,to_rot);
 // LOG_ERROR(er_the.transpose())
 
-// Eigen::Matrix3d go_rot = sva::RotX(er_the(0)) * sva::RotY(er_the(1)) * sva::RotZ(er_the(2));
-// sva::PTransformd new_pose(go_rot,handoverPos);
+// Eigen::Matrix3d handoverRot = sva::RotX(er_the(0)) * sva::RotY(er_the(1)) * sva::RotZ(er_the(2));
+// sva::PTransformd new_pose(handoverRot,handoverPos);
 // ctl.oriTaskL->orientation(new_pose.rotation());
 // ctl.posTaskL->position(new_pose.translation());
 // // ctl.oriTaskL->orientation(togo_);
 // // ctl.posTaskL->position(handoverPos);
-
-
-
-
-
-// ctl.oriTaskL->orientation(Subj_X_efL.rotation());
-// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*Subj_X_efL.rotation());//wrong but stable
