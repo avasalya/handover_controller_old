@@ -444,7 +444,7 @@ namespace mc_handover
 							
 							lshpLt_X = x/x.norm();
 							lshpLt_Y = y/y.norm();
-							lshpLt_Z = lshpLt_Y.cross(lshpLt_X);//X.cross(Y)=Z
+							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);//X.cross(Y)=Z
 
 							/*with wrong method*/
 							// subjLtHandRot.row(0) = lshpLt_X;
