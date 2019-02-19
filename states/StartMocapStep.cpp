@@ -446,6 +446,8 @@ namespace mc_handover
 							lshpLt_Y = y/y.norm();
 							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);//X.cross(Y)=Z
 
+							// lshpLt_X = lshpLt_Z.cross(lshpLt_Y);// new posture when efl is near chest
+
 							/*with wrong method*/
 							// subjLtHandRot.row(0) = lshpLt_X;
 							// subjLtHandRot.row(1) = lshpLt_Y;
@@ -541,11 +543,8 @@ namespace mc_handover
 
 
 									/*handover pose*/
-									//reverse X*
-									handoverRot = ltRotW*subjLtHandRot;
-
-									//reverse Y, Z & wrong method
-									// handoverRot = ltRotW*subjLtHandRot.transpose();
+									handoverRot = ltRotW*subjLtHandRot;//reverse X
+									// handoverRot = ltRotW*subjLtHandRot.transpose();//reverse Y, Z & wrong method
 
 									sva::PTransformd new_pose(handoverRot,handoverPos);
 									ctl.oriTaskL->orientation(new_pose.rotation());
