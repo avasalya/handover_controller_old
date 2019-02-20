@@ -94,15 +94,15 @@ namespace mc_handover
 					ctl.oriTaskL->orientation(q1.toRotationMatrix().transpose());
 				}),
 
-				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.2,0.3,1.4});
+				mc_rtc::gui::Button( "pos1", [this, &ctl](){ ctl.posTaskL->position({0.24,0.3,0.8});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos2", [this, &ctl](){ ctl.posTaskL->position({0.4,0.6,1.3});
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos3", [this, &ctl](){ ctl.posTaskL->position({0.3,0.4,1.1}); 
+				mc_rtc::gui::Button( "pos3", [this, &ctl](){ ctl.posTaskL->position({0.3,0.25,1.1}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos4", [this, &ctl](){ ctl.posTaskL->position({0.5,0.6,0.9}); 
+				mc_rtc::gui::Button( "pos4", [this, &ctl](){ ctl.posTaskL->position({0.5,0.3,0.8}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
-				mc_rtc::gui::Button( "pos5", [this, &ctl](){ ctl.posTaskL->position({0.1,0.3,1.35}); 
+				mc_rtc::gui::Button( "pos5", [this, &ctl](){ ctl.posTaskL->position({0.1,0.4,1.24}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } ),
 				mc_rtc::gui::Button( "pos6", [this, &ctl](){ ctl.posTaskL->position({0.3,0.5,1.0}); 
 					ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()); } )
@@ -333,8 +333,8 @@ namespace mc_handover
 			/*on simulation*/
 			else
 			{
-				// cout<<" rotX matrix \n" << sva::RotX(90*180/pi)<<endl;
-				// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*sva::RotX(150*180/pi));
+				// cout<<" rotX matrix \n" << sva::RotX(90*pi/180)<<endl;
+				// ctl.oriTaskL->orientation(q.toRotationMatrix().transpose()*sva::RotX(150*pi/180));
 
 				subjLtHandRot = ctl.oriTaskL->orientation();
 				idt <<	1.0, 0.0, 0.0,
@@ -439,13 +439,7 @@ namespace mc_handover
 							)
 						{
 							/*get unit vectors XYZ of subject LEFT hand*/
-
-							// x <<abs( markersPos[lShapeLtC].col(i)(0)-markersPos[lShapeLtA].col(i)(0) ),
-							// 	abs( markersPos[lShapeLtC].col(i)(1)-markersPos[lShapeLtA].col(i)(1) ),
-							// 	abs( markersPos[lShapeLtC].col(i)(2)-markersPos[lShapeLtA].col(i)(2) );
-
-							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
-							
+							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X							
 							y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
 							
 							lshpLt_X = x/x.norm();
@@ -455,14 +449,15 @@ namespace mc_handover
 							// lshpLt_X = lshpLt_Z.cross(lshpLt_Y);// new posture when efl is near chest
 
 							/*with wrong method*/
-							// subjLtHandRot.row(0) = lshpLt_X;
-							// subjLtHandRot.row(1) = lshpLt_Y;
-							// subjLtHandRot.col(2) = lshpLt_Z;
-
-							/*reverse X*/
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
-							subjLtHandRot.col(2) = lshpLt_Z;
+							subjLtHandRot.row(2) = lshpLt_Z;
+
+							/*reverse X*/
+							// subjLtHandRot.col(0) = lshpLt_X;
+							// subjLtHandRot.col(1) = lshpLt_Y;
+							// subjLtHandRot.col(2) = lshpLt_Z;
+							
 							//http://www.continuummechanics.org/rotationmatrix.html
 							//https://www.youtube.com/watch?v=lVjFhNv2N8o 7.7min
 							//http://www.songho.ca/opengl/gl_anglestoaxes.html
@@ -538,8 +533,11 @@ namespace mc_handover
 						if(it<=wp.cols())
 						{
 							refPos << wp(0,it), wp(1,it), wp(2,it);
-
 							handoverPos = curLEfPos + refPos - initRefPos;
+							
+							idt << RotX(90*(pi/180)) * RotY(90*(pi/180)) * RotZ(90*(pi/180));
+							handoverRot = idt.transpose()*subjLtHandRot;
+							// LOG_ERROR( idt.transpose() )
 
 							 /*robot constraint*/
 							if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
@@ -552,88 +550,13 @@ namespace mc_handover
 									if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
 									else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
 
-									if(handoverPos(2) < 1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
+									if(handoverPos(2) <1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
 									else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
 
-
 									/*handover pose*/
-
-									// /*xyz*/
-									// idt <<// x   y   z
-									// /*x*/	 0,  0,   1,
-									// /*y*/	 0,  -1,  0,
-									// /*z*/	 1,  0,   0;
-
-
-									// /*xzy*/
-									// idt <<// x   y   z
-									// /*x*/	 0, -1,  0,
-									// /*y*/	 1,  0,  0,
-									// /*z*/	 0,  0,  1;
-
-
-									// /*yxz*/
-									// idt <<// x   y   z
-									// /*x*/	 1,  0,   0,
-									// /*y*/	 0,  0,  -1,
-									// /*z*/	 0,  1,   0;
-
-
-									// /*yzx*/
-									// idt <<// x   y   z
-									// /*x*/	 0,  1,  0,
-									// /*y*/	 1,  0,  0,
-									// /*z*/	 0,  0,  -1;
-
-
-
-
-									// /*zxy*/
-									// idt <<// x   y   z
-									// /*x*/	-1,  0,  0,
-									// /*y*/	 0,  0,  1,
-									// /*z*/	 0,  1,  0;
-
-
-									// /*z(-x)y*/
-									// idt <<// x   y   z
-									// /*x*/	1,  0,  0,
-									// /*y*/	0,  0,  1,
-									// /*z*/	0, -1,  0;
-
-
-									/*zyx*/
-									idt <<// x   y   z
-									/*x*/	 0,  0,  1,
-									/*y*/	 0,  1,  0,
-									/*z*/	-1,  0,  0;
-
-
-									// /*zy(-x)*/
-									// idt <<// x   y   z
-									// /*x*/	 0,  0, -1,
-									// /*y*/	 0, -1,  0,
-									// /*z*/	-1,  0,  0;
-
-									LOG_ERROR(x.transpose())
-									handoverRot = idt*subjLtHandRot;
-									// handoverRot = idt*subjLtHandRot.transpose();
-
-
-									// handoverRot = ltRotW*subjLtHandRot;//reverse X
-									// handoverRot = ltRotW*subjLtHandRot.transpose();//reverse Y, Z & wrong method
-
-									sva::PTransformd new_pose(handoverRot,handoverPos);
+									sva::PTransformd new_pose(handoverRot, handoverPos);
 									ctl.oriTaskL->orientation(new_pose.rotation());
 									ctl.posTaskL->position(new_pose.translation());
-
-
-									// Eigen::Matrix3d my_angles = ctl.oriTaskL->orientation();
-									// LOG_WARNING("my XYZ angles  " <<
-									// (180/pi)*atan2(my_angles(2,1), my_angles(2,2)) << " "<<
-									// (180/pi)*atan2(-my_angles(2,0), sqrt( pow( my_angles(2,1),2) + pow(my_angles(2,2),2) ) ) << " "<<
-									// (180/pi)*atan2(my_angles(1,0), my_angles(0,0)) )
-
 							 	}
 							 }
 
@@ -826,3 +749,11 @@ namespace mc_handover
 // ctl.posTaskL->position(new_pose.translation());
 // // ctl.oriTaskL->orientation(togo_);
 // // ctl.posTaskL->position(handoverPos);
+
+
+
+// Eigen::Matrix3d my_angles = ctl.oriTaskL->orientation();
+// LOG_WARNING("my XYZ angles  " <<
+// (180/pi)*atan2(my_angles(2,1), my_angles(2,2)) << " "<<
+// (180/pi)*atan2(-my_angles(2,0), sqrt( pow( my_angles(2,1),2) + pow(my_angles(2,2),2) ) ) << " "<<
+// (180/pi)*atan2(my_angles(1,0), my_angles(0,0)) )
