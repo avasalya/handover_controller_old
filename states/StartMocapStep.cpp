@@ -121,10 +121,10 @@ namespace mc_handover
 					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 				} ),
 				mc_rtc::gui::Button( "pos2", [this, &ctl](){
-					ctl.posTaskL->position({0.4,0.6,1.3});
+					ctl.posTaskL->position({0.4,0.45,1.3});
 					ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 
-					ctl.posTaskR->position({0.4,-0.6,1.3});
+					ctl.posTaskR->position({0.4,-0.45,1.3});
 					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 				} ),
 				mc_rtc::gui::Button( "pos3", [this, &ctl](){
@@ -153,6 +153,20 @@ namespace mc_handover
 					ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 
 					ctl.posTaskR->position({0.3,-0.5,1.0});
+					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
+				} ),
+				mc_rtc::gui::Button( "pos7", [this, &ctl](){
+					ctl.posTaskL->position({0.1,0.4,1.24});
+					ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
+
+					ctl.posTaskR->position({0.5,-0.3,0.8});
+					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
+				} ),
+				mc_rtc::gui::Button( "pos8", [this, &ctl](){
+					ctl.posTaskL->position({0.3,0.5,1.0});
+					ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
+
+					ctl.posTaskR->position({0.4,-0.45,1.3});
 					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 				} )
 				);
