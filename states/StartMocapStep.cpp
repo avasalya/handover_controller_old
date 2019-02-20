@@ -439,7 +439,13 @@ namespace mc_handover
 							)
 						{
 							/*get unit vectors XYZ of subject LEFT hand*/
+
+							// x <<abs( markersPos[lShapeLtC].col(i)(0)-markersPos[lShapeLtA].col(i)(0) ),
+							// 	abs( markersPos[lShapeLtC].col(i)(1)-markersPos[lShapeLtA].col(i)(1) ),
+							// 	abs( markersPos[lShapeLtC].col(i)(2)-markersPos[lShapeLtA].col(i)(2) );
+
 							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
+							
 							y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
 							
 							lshpLt_X = x/x.norm();
@@ -457,6 +463,14 @@ namespace mc_handover
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
 							subjLtHandRot.col(2) = lshpLt_Z;
+							//http://www.continuummechanics.org/rotationmatrix.html
+							//https://www.youtube.com/watch?v=lVjFhNv2N8o 7.7min
+							//http://www.songho.ca/opengl/gl_anglestoaxes.html
+
+							/*try below methods*/
+							//https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+							//http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
+							//http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
 						}
 						
 						/*prediction_ tuner*/
@@ -543,7 +557,70 @@ namespace mc_handover
 
 
 									/*handover pose*/
-									handoverRot = ltRotW*subjLtHandRot;//reverse X
+
+									// /*xyz*/
+									// idt <<// x   y   z
+									// /*x*/	 0,  0,   1,
+									// /*y*/	 0,  -1,  0,
+									// /*z*/	 1,  0,   0;
+
+
+									// /*xzy*/
+									// idt <<// x   y   z
+									// /*x*/	 0, -1,  0,
+									// /*y*/	 1,  0,  0,
+									// /*z*/	 0,  0,  1;
+
+
+									// /*yxz*/
+									// idt <<// x   y   z
+									// /*x*/	 1,  0,   0,
+									// /*y*/	 0,  0,  -1,
+									// /*z*/	 0,  1,   0;
+
+
+									// /*yzx*/
+									// idt <<// x   y   z
+									// /*x*/	 0,  1,  0,
+									// /*y*/	 1,  0,  0,
+									// /*z*/	 0,  0,  -1;
+
+
+
+
+									// /*zxy*/
+									// idt <<// x   y   z
+									// /*x*/	-1,  0,  0,
+									// /*y*/	 0,  0,  1,
+									// /*z*/	 0,  1,  0;
+
+
+									// /*z(-x)y*/
+									// idt <<// x   y   z
+									// /*x*/	1,  0,  0,
+									// /*y*/	0,  0,  1,
+									// /*z*/	0, -1,  0;
+
+
+									/*zyx*/
+									idt <<// x   y   z
+									/*x*/	 0,  0,  1,
+									/*y*/	 0,  1,  0,
+									/*z*/	-1,  0,  0;
+
+
+									// /*zy(-x)*/
+									// idt <<// x   y   z
+									// /*x*/	 0,  0, -1,
+									// /*y*/	 0, -1,  0,
+									// /*z*/	-1,  0,  0;
+
+									LOG_ERROR(x.transpose())
+									handoverRot = idt*subjLtHandRot;
+									// handoverRot = idt*subjLtHandRot.transpose();
+
+
+									// handoverRot = ltRotW*subjLtHandRot;//reverse X
 									// handoverRot = ltRotW*subjLtHandRot.transpose();//reverse Y, Z & wrong method
 
 									sva::PTransformd new_pose(handoverRot,handoverPos);
