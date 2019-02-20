@@ -90,14 +90,14 @@ namespace mc_handover
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
-			Eigen::Vector3d p_; 
-			Eigen::Quaterniond q, q1, q2, q3, q_;
+			Eigen::Vector3d p_r, p_l; 
+			Eigen::Quaterniond ql, qr, q1l, q1r;
 
 			/*Eigen::Matrix3d::Identity();*/
 			Eigen::Matrix3d curRotLeftEfMarker;
 			Eigen::Matrix3d curRotLeftEf;
 			Eigen::Matrix3d rotSubj;
-			Eigen::Matrix3d idt, subjLtHandRot,subjRtHandRot, handoverRot, ltRotW;
+			Eigen::Matrix3d idt, subjLtHandRot,subjRtHandRot, handoverRot, ltRotW, rtRotW;
 
 			Eigen::Vector3d x, y, z, lshpLt_X, lshpLt_Y, lshpLt_Z;
 			Eigen::Vector3d x_, y_, z_, lshpRt_X, lshpRt_Y, lshpRt_Z;
