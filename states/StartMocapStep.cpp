@@ -477,14 +477,14 @@ namespace mc_handover
 
 
 					/*move EF when subject is approaches object 1st time*/
-					// if( oneTime && (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
-					// {
-					// 	ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
-					// 	ctl.posTaskL->position(p_l);
+					if( oneTime && (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
+					{
+						ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
+						ctl.posTaskL->position(p_l);
 
-					// 	ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
-					// 	ctl.posTaskR->position(p_r);
-					// }
+						// ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
+						// ctl.posTaskR->position(p_r);
+					}
 
 
 					if( oneTime
@@ -621,8 +621,8 @@ namespace mc_handover
 
 									/*handover pose*/
 									sva::PTransformd new_pose(handoverRot, handoverPos);
-									// ctl.oriTaskL->orientation(new_pose.rotation());
-									// ctl.posTaskL->position(new_pose.translation());
+									ctl.oriTaskL->orientation(new_pose.rotation());
+									ctl.posTaskL->position(new_pose.translation());
 								}
 							}
 
