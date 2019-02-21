@@ -406,7 +406,7 @@ namespace mc_handover
 				
 				ctl.oriTaskL->orientation(idt); 
 				
-				auto err= sva::rotationError(subjLtHandRot, idt, 1e-8);
+				Vector3d err= sva::rotationError(subjLtHandRot, idt, 1e-8);
 				
 				LOG_SUCCESS("XYZ degrees "<< (180/pi)*err.transpose())
 				
@@ -478,7 +478,10 @@ namespace mc_handover
 
 					/*move EF when subject is approaches object 1st time*/
 					if( oneTime && (markersPos[fingerSubjLt].col(i)-markersPos[object].col(i)).norm()<0.5 )
-					{
+					{	
+						// idt << RotX(90*(pi/180)) * RotY(90*(pi/180)) * RotZ(90*(pi/180));
+						// ctl.oriTaskL->orientation(idt.transpose());
+						
 						ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 						ctl.posTaskL->position(p_l);
 
@@ -519,7 +522,7 @@ namespace mc_handover
 							// subjLtHandRot.col(1) = lshpLt_Y;
 							// subjLtHandRot.row(2) = lshpLt_Z;
 
-							/*reverse X*/
+							/*reverse Z*/
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
 							subjLtHandRot.col(2) = lshpLt_Z;
@@ -602,7 +605,8 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 							
 							idt << RotX(90*(pi/180)) * RotY(90*(pi/180)) * RotZ(90*(pi/180));
-							handoverRot = idt.transpose()*subjLtHandRot;
+							handoverRot = idt.transpose()*subjLtHandRot.transpose();
+							// handoverRot = subjLtHandRot.transpose();
 							// LOG_ERROR( idt.transpose() )
 
 							 /*robot constraint*/
@@ -623,6 +627,9 @@ namespace mc_handover
 									sva::PTransformd new_pose(handoverRot, handoverPos);
 									ctl.oriTaskL->orientation(new_pose.rotation());
 									ctl.posTaskL->position(new_pose.translation());
+
+									// ctl.oriTaskR->orientation(new_pose.rotation());
+									// ctl.posTaskR->position(new_pose.translation());
 								}
 							}
 
