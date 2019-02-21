@@ -515,7 +515,7 @@ namespace mc_handover
 							lshpLt_Y = y/y.norm();
 							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);//X.cross(Y)=Z
 
-							// lshpLt_X = lshpLt_Z.cross(lshpLt_Y);// new posture when efl is near chest
+							lshpLt_X = lshpLt_Z.cross(lshpLt_Y);// new posture when efl is near chest
 
 							// /*with wrong method*/
 							// subjLtHandRot.col(0) = lshpLt_X;
@@ -535,6 +535,16 @@ namespace mc_handover
 							//https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
 							//http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
 							//http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
+
+
+
+							// curLshpPos << markersPos[lShapeLtC].col(i); 
+							// X_0_Lshp =sva::PTransformd(subjLtHandRot, curLshpPos);
+							// init_efLPose = sva::PTransformd(idt.transpose(),{0,0,0});
+							// X_Lshp_efL =  init_efLPose * X_0_Lshp.inv();
+							// handoverRot = X_Lshp_efL.rotation();
+
+
 						}
 						
 						/*prediction_ tuner*/
@@ -545,22 +555,22 @@ namespace mc_handover
 						/*get robot ef current pose*/
 						curRotLeftEf = ltHand.rotation();
 						curPosLeftEf = ltHand.translation();
-						// sva::PTransformd R_X_efL(curPosLeftEf);
-						sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf);
+						sva::PTransformd R_X_efL(curPosLeftEf);
+						// sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf);
 
 						/*get robot ef marker(s) current pose*/
 						auto efLGripperPos = 0.25*( markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +
 							markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1) );
 						curPosLeftEfMarker << efLGripperPos;
-						// sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
-						sva::PTransformd M_X_efLMarker(curRotLeftEf, curPosLeftEfMarker);
+						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+						// sva::PTransformd M_X_efLMarker(curRotLeftEf, curPosLeftEfMarker);
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
 						{
-							// rotSubj = Eigen::Matrix3d::Identity();
-							// sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
-							sva::PTransformd M_X_Subj(subjLtHandRot, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+							rotSubj = Eigen::Matrix3d::Identity();
+							sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+							// sva::PTransformd M_X_Subj(subjLtHandRot, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
 
 							Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
 
@@ -605,9 +615,10 @@ namespace mc_handover
 							handoverPos = curLEfPos + refPos - initRefPos;
 							
 							idt << RotX(90*(pi/180)) * RotY(90*(pi/180)) * RotZ(90*(pi/180));
-							handoverRot = idt.transpose()*subjLtHandRot.transpose();
-							// handoverRot = subjLtHandRot.transpose();
 							// LOG_ERROR( idt.transpose() )
+							handoverRot = idt.transpose()*subjLtHandRot.transpose();
+
+
 
 							 /*robot constraint*/
 							if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 

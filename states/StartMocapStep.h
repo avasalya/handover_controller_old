@@ -57,6 +57,7 @@ namespace mc_handover
 			sva::PTransformd Subj_X_efL;
 			sva::PTransformd ltHand, rtHand;
 			
+			
 			std::vector<sva::PTransformd> S_X_efL;
 			std::vector<Eigen::MatrixXd> markersPos;
 			std::vector<Eigen::Vector3d> Markers;
@@ -86,7 +87,15 @@ namespace mc_handover
 			// int fingerSubjRt{14};
 			// int lShapeRtA{15}, lShapeRtB{16}, lShapeRtC{17}, lShapeRtD{18};
 
-			
+
+
+			sva::PTransformd X_0_Lshp;
+			sva::PTransformd X_Lshp_efL;
+			sva::PTransformd init_efLPose;
+			Eigen::Vector3d curLshpPos;
+
+
+
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
 			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
