@@ -58,9 +58,11 @@ namespace mc_handover
 			sva::PTransformd X_R_efL;
 			sva::PTransformd X_M_Subj;
 			sva::PTransformd X_M_efLMarker;
-
+			sva::PTransformd X_R_M;
 			sva::PTransformd ltHand, rtHand;
+			sva::PTransformd X_e_l, X_M_lLtshp, X_R_efL_const;
 			
+			Eigen::Vector3d curPosLtLshp;
 			
 			std::vector<sva::PTransformd> S_X_efL;
 			std::vector<Eigen::MatrixXd> markersPos;
@@ -94,19 +96,8 @@ namespace mc_handover
 			double DegToRad = pi/180;
 			double RadToDeg = 180/pi;
 
-			sva::PTransformd X_M_Lshp;
-			Eigen::Vector3d curLshpPos;
 
 
-			sva::PTransformd X_R_M;
-			sva::PTransformd X_M_LtA, X_M_LtB, X_M_LtC, X_M_LtD;
-			sva::PTransformd X_R_LtA, X_R_LtB, X_R_LtC, X_R_LtD;
-
-
-			Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-
-			Eigen::Vector3d u, v, w, w_;
-			Eigen::Matrix3d G, F, U;
 
 
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
@@ -115,10 +106,9 @@ namespace mc_handover
 			Eigen::Vector3d p_r, p_l; 
 			Eigen::Quaterniond ql, qr, q1l, q1r;
 
-			/*Eigen::Matrix3d::Identity();*/
-			Eigen::Matrix3d curRotLeftEfMarker;
-			Eigen::Matrix3d curRotLeftEf;
-			Eigen::Matrix3d rotSubj;
+			Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
+			Eigen::Matrix3d curRotLeftEf, curRotLeftEfMarker;
+			Eigen::Matrix3d initRotLtLshp;
 			Eigen::Matrix3d idt, subjLtHandRot,subjRtHandRot, handoverRot, ltRotW, rtRotW;
 
 			Eigen::Vector3d x, y, z, lshpLt_X, lshpLt_Y, lshpLt_Z;

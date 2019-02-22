@@ -511,33 +511,18 @@ namespace mc_handover
 							markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1) );
 						curPosLeftEfMarker << efLGripperPos;
 
-						
-
-						// X_R_efL = sva::PTransformd(curPosLeftEf);
-						// X_R_efL = sva::PTransformd(curRotLeftEf, curPosLeftEf);
 						X_R_efL = sva::PTransformd(ltRotW, curPosLeftEf);
-						// X_R_efL = sva::PTransformd(q1l.toRotationMatrix().transpose(), curPosLeftEf);
-
-
-						// X_M_efLMarker = sva::PTransformd(curPosLeftEfMarker);
-						// X_M_efLMarker = sva::PTransformd(curRotLeftEf, curPosLeftEfMarker);
 						X_M_efLMarker = sva::PTransformd(ltRotW, curPosLeftEfMarker);
-						// X_M_efLMarker = sva::PTransformd(q1l.toRotationMatrix().transpose(), curPosLeftEfMarker);
-
 						X_R_M = X_M_efLMarker.inv() * X_R_efL;
-						
+
 						/*check subj hand's relative orientation*/
 						if(!oneTime
 							&&	Markers[lShapeLtA](0)!=0 && Markers[lShapeLtA](0)< 20
 							&& 	Markers[lShapeLtB](0)!=0 && Markers[lShapeLtB](0)< 20
 							&& 	Markers[lShapeLtC](0)!=0 && Markers[lShapeLtC](0)< 20
 							&& 	Markers[lShapeLtD](0)!=0 && Markers[lShapeLtD](0)< 20
-							&& 	Markers[wristLtEfA](0)!=0 && Markers[wristLtEfA](0)< 20
-							&& 	Markers[wristLtEfB](0)!=0 && Markers[wristLtEfB](0)< 20
 							)
 						{
-							/*************************************Method 1******************************************/
-
 							// /*get unit vectors XYZ of subject LEFT hand*/
 							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
 							y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
@@ -551,133 +536,32 @@ namespace mc_handover
 							subjLtHandRot.col(1) = lshpLt_Y;
 							subjLtHandRot.col(2) = lshpLt_Z;
 
-							curLshpPos << markersPos[lShapeLtC].col(i);
-							X_M_Lshp =sva::PTransformd(subjLtHandRot, curLshpPos);
 
-							LOG_SUCCESS(X_R_M.rotation()<<"\n")
-							LOG_ERROR(X_M_Lshp.rotation()<<"\n")
-							// LOG_INFO(X_R_efL.inv().rotation()<<"\n")
-							// LOG_INFO(q1l.toRotationMatrix().transpose()<<"\n")
+							// LOG_SUCCESS(X_R_M.rotation()<<"\n")
+							// LOG_ERROR(subjLtHandRot<<"\n")
 
 							/*just like old only Z good*/
-							// handoverRot = q1l.toRotationMatrix().transpose() * X_M_Lshp.rotation() * X_R_M.rotation();
+							// handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot * X_R_M.rotation();
+							
 							/*just like old only Z bad*/
-							handoverRot = q1l.toRotationMatrix().transpose() * X_M_Lshp.rotation().transpose() * X_R_M.rotation();
-
-
-							// handoverRot = X_R_efL.inv().rotation() * X_M_Lshp.rotation().transpose() * X_R_M.rotation();
-							// handoverRot = X_R_efL.inv().rotation() * X_M_Lshp.rotation() * X_R_M.rotation();
-
-
-							// handoverRot = X_R_efL.rotation().transpose() * subjLtHandRot * X_R_M.rotation();
-							// handoverRot = X_R_efL.inv().rotation().transpose() * X_M_Lshp.rotation().transpose() * X_R_M.rotation();
-
-
-							handoverRot = handoverRot;
-
-
-							/************************************************************************************/
-
-
-
-							/*****************************Method 2***************************************************/
-
-							// X_M_LtA = sva::PTransformd(idtMat, markersPos[lShapeLtA].col(i));
-							// X_M_LtB = sva::PTransformd(idtMat, markersPos[lShapeLtB].col(i));
-							// X_M_LtC = sva::PTransformd(idtMat, markersPos[lShapeLtC].col(i));
-							// X_M_LtD = sva::PTransformd(idtMat, markersPos[lShapeLtD].col(i));
-							
-							// X_R_LtA = X_M_LtA * X_R_M;
-							// X_R_LtB = X_M_LtB * X_R_M;
-							// X_R_LtC = X_M_LtC * X_R_M;
-							// X_R_LtD = X_M_LtD * X_R_M;
-							
-							// /*get unit vectors XYZ of subject LEFT hand*/
-							// x = X_R_LtA.translation() - X_R_LtC.translation();
-							// y = X_R_LtD.translation() - X_R_LtC.translation();
-
-							// lshpLt_X = x/x.norm();
-							// lshpLt_Y = y/y.norm();
-							// lshpLt_Z = lshpLt_X.cross(lshpLt_Y);
-
-							// // /*Eulier RyRzRx {left, up, forward}*/ //reverse Z
-							// subjLtHandRot.col(0) = lshpLt_X;
-							// subjLtHandRot.col(1) = lshpLt_Y;
-							// subjLtHandRot.col(2) = lshpLt_Z;
-							// LOG_SUCCESS(subjLtHandRot<<"\n")
+							// handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot.transpose() * X_R_M.rotation();
 
 							
-							// handoverRot = X_R_efL.inv().rotation() * subjLtHandRot * X_R_M.rotation();
-
-							// // handoverRot = X_R_efL.rotation().transpose() * subjLtHandRot * X_R_M.rotation();
-
-							// // handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot.transpose() * X_R_M.rotation();
-
-							/************************************************************************************/
-
-
-
-							/***********************************Method 3*************************************/
-							//https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-
-							// // X_M_LtA = sva::PTransformd(idtMat, markersPos[wristLtEfA].col(i));
-							// // X_M_LtB = sva::PTransformd(idtMat, markersPos[wristLtEfB].col(i));
-
-							// // X_M_LtC = sva::PTransformd(idtMat, markersPos[lShapeLtA].col(i));
-							// // X_M_LtD = sva::PTransformd(idtMat, markersPos[lShapeLtC].col(i));
-
-
-							// X_M_LtA = sva::PTransformd(idtMat, markersPos[lShapeLtA].col(i));
-							// X_M_LtB = sva::PTransformd(idtMat, markersPos[lShapeLtB].col(i));
-							// X_M_LtC = sva::PTransformd(idtMat, markersPos[lShapeLtC].col(i));
-							// X_M_LtD = sva::PTransformd(idtMat, markersPos[lShapeLtD].col(i));
+							/*just like old only Z bad*/
+							curPosLtLshp = markersPos[lShapeLtC].col(i);
+							X_M_lLtshp = sva::PTransformd(subjLtHandRot.transpose(), curPosLtLshp);
+							X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p_l);
 							
-							// X_R_LtA = X_M_LtA * X_R_M;
-							// X_R_LtB = X_M_LtB * X_R_M;
-							// X_R_LtC = X_M_LtC * X_R_M;
-							// X_R_LtD = X_M_LtD * X_R_M;
-							
-							// x =  X_R_LtD.translation() - X_R_LtC.translation();
-							// y =  X_R_LtA.translation() - X_R_LtC.translation();
+							X_e_l =  X_R_efL_const.inv() * X_M_lLtshp * X_R_M;
+							// X_e_l = X_R_efL.inv() * X_M_lLtshp * X_R_M;
 
-							// x = x/x.norm();
-							// y = y/y.norm();
-
-							// u = (y.dot(x) * y) / (y.dot(x) * y).norm();
-							// v = (x - y.dot(x) * y) / (x - y.dot(x) * y).norm();
-							// w_ = y.cross(x);
-
-							// G.col(0) << y.dot(x),  -w_.norm(),	 0;
-							// G.col(1) << w_.norm(),	y.dot(x),	 0; 
-							// G.col(2) << 0,  		0,			 1;
-
-							// // LOG_INFO(G<<"\n");
-
-							// w = x.cross(y);
-
-							// F.col(0) = u;
-							// F.col(1) = v;
-							// F.col(2) = w;
-
-							// // LOG_SUCCESS(F<<"\n");
-							
-							// F = F.transpose();
-
-							// U =  F.transpose() * G * F;
-
-							// // LOG_ERROR(U<<"\n");
-							
-							// handoverRot = U; ///*idtMat;*/ U/*.transpose()*/;
-
-							/************************************************************************************/
-
+							handoverRot = X_e_l.rotation();
 						}
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
 						{
-							// rotSubj = Eigen::Matrix3d::Identity();
-							// X_M_Subj = sva::PTransformd(rotSubj, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+							// X_M_Subj = sva::PTransformd(idtMat, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
 							X_M_Subj = sva::PTransformd(handoverRot, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
 
 							X_efL_Subj = X_R_efL.inv()*X_M_Subj*X_M_efLMarker.inv()*X_R_efL;
