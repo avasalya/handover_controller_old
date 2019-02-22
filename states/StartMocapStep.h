@@ -91,11 +91,10 @@ namespace mc_handover
 			// int fingerSubjRt{14};
 			// int lShapeRtA{15}, lShapeRtB{16}, lShapeRtC{17}, lShapeRtD{18};
 
+			double DegToRad = pi/180;
+			double RadToDeg = 180/pi;
 
-
-			sva::PTransformd X_0_Lshp;
-			sva::PTransformd X_Lshp_efL;
-			sva::PTransformd init_efLPose;
+			sva::PTransformd X_M_Lshp;
 			Eigen::Vector3d curLshpPos;
 
 
@@ -106,7 +105,7 @@ namespace mc_handover
 
 			Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 
-			Eigen::Vector3d u, v, w;
+			Eigen::Vector3d u, v, w, w_;
 			Eigen::Matrix3d G, F, U;
 
 
