@@ -54,7 +54,11 @@ namespace mc_handover
 			/*mocap*/
 			bool Flag_CORTEX{true}; // default True for MOCAP
 
-			sva::PTransformd Subj_X_efL;
+			sva::PTransformd X_efL_Subj;
+			sva::PTransformd X_R_efL;
+			sva::PTransformd X_M_Subj;
+			sva::PTransformd X_M_efLMarker;
+
 			sva::PTransformd ltHand, rtHand;
 			
 			
@@ -94,6 +98,16 @@ namespace mc_handover
 			sva::PTransformd init_efLPose;
 			Eigen::Vector3d curLshpPos;
 
+
+			sva::PTransformd X_R_M;
+			sva::PTransformd X_M_LtA, X_M_LtB, X_M_LtC, X_M_LtD;
+			sva::PTransformd X_R_LtA, X_R_LtB, X_R_LtC, X_R_LtD;
+
+
+			Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
+
+			Eigen::Vector3d u, v, w;
+			Eigen::Matrix3d G, F, U;
 
 
 			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
