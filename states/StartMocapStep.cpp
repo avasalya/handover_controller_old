@@ -515,17 +515,15 @@ namespace mc_handover
 							lshpLt_Y = y/y.norm();
 							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);//X.cross(Y)=Z
 
-							lshpLt_X = lshpLt_Z.cross(lshpLt_Y);// new posture when efl is near chest
-
 							// /*with wrong method*/
 							// subjLtHandRot.col(0) = lshpLt_X;
 							// subjLtHandRot.col(1) = lshpLt_Y;
 							// subjLtHandRot.row(2) = lshpLt_Z;
 
-							/*reverse Z*/
-							subjLtHandRot.col(0) = lshpLt_X;
-							subjLtHandRot.col(1) = lshpLt_Y;
-							subjLtHandRot.col(2) = lshpLt_Z;
+							// /*reverse Z*/
+							// subjLtHandRot.col(0) = lshpLt_X;
+							// subjLtHandRot.col(1) = lshpLt_Y;
+							// subjLtHandRot.col(2) = lshpLt_Z;
 							
 							//http://www.continuummechanics.org/rotationmatrix.html
 							//https://www.youtube.com/watch?v=lVjFhNv2N8o 7.7min
@@ -537,12 +535,18 @@ namespace mc_handover
 							//http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
 
 
+							/*Eulier RyRzRx {left, up, forward}*/
+							subjLtHandRot.col(0) = lshpLt_Y;
+							subjLtHandRot.col(1) = lshpLt_Z;
+							subjLtHandRot.col(2) = lshpLt_X;
 
-							// curLshpPos << markersPos[lShapeLtC].col(i); 
-							// X_0_Lshp =sva::PTransformd(subjLtHandRot, curLshpPos);
-							// init_efLPose = sva::PTransformd(idt.transpose(),{0,0,0});
-							// X_Lshp_efL =  init_efLPose * X_0_Lshp.inv();
-							// handoverRot = X_Lshp_efL.rotation();
+							curLshpPos << markersPos[lShapeLtC].col(i); 
+							X_0_Lshp =sva::PTransformd(subjLtHandRot, curLshpPos);
+
+							idt << RotX(90*(pi/180)) * RotZ(90*(pi/180)) * RotY(90*(pi/180));
+							init_efLPose = sva::PTransformd(idt.transpose(),{0,0,0});
+							X_Lshp_efL =  init_efLPose * X_0_Lshp.inv();
+							handoverRot = X_Lshp_efL.rotation();
 
 
 						}
@@ -555,22 +559,22 @@ namespace mc_handover
 						/*get robot ef current pose*/
 						curRotLeftEf = ltHand.rotation();
 						curPosLeftEf = ltHand.translation();
-						sva::PTransformd R_X_efL(curPosLeftEf);
-						// sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf);
+						// sva::PTransformd R_X_efL(curPosLeftEf);
+						sva::PTransformd R_X_efL(curRotLeftEf, curPosLeftEf);
 
 						/*get robot ef marker(s) current pose*/
 						auto efLGripperPos = 0.25*( markersPos[wristLtEfA].col((i-t_observe)+1) + markersPos[wristLtEfB].col((i-t_observe)+1) +
 							markersPos[gripperLtEfA].col((i-t_observe)+1) + markersPos[gripperLtEfB].col((i-t_observe)+1) );
 						curPosLeftEfMarker << efLGripperPos;
-						sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
-						// sva::PTransformd M_X_efLMarker(curRotLeftEf, curPosLeftEfMarker);
+						// sva::PTransformd M_X_efLMarker(curPosLeftEfMarker);
+						sva::PTransformd M_X_efLMarker(curRotLeftEf, curPosLeftEfMarker);
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
 						for(int j=1;j<=t_observe; j++)
 						{
-							rotSubj = Eigen::Matrix3d::Identity();
-							sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
-							// sva::PTransformd M_X_Subj(subjLtHandRot, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+							// rotSubj = Eigen::Matrix3d::Identity();
+							// sva::PTransformd M_X_Subj(rotSubj, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+							sva::PTransformd M_X_Subj(handoverRot, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
 
 							Subj_X_efL = R_X_efL.inv()*M_X_Subj*M_X_efLMarker.inv()*R_X_efL;
 
@@ -614,10 +618,20 @@ namespace mc_handover
 							refPos << wp(0,it), wp(1,it), wp(2,it);
 							handoverPos = curLEfPos + refPos - initRefPos;
 							
-							idt << RotX(90*(pi/180)) * RotY(90*(pi/180)) * RotZ(90*(pi/180));
-							// LOG_ERROR( idt.transpose() )
-							handoverRot = idt.transpose()*subjLtHandRot.transpose();
+							// idt << RotX(90*(pi/180)) * RotY(90*(pi/180)) * RotZ(90*(pi/180));
+							// handoverRot = idt.transpose()*subjLtHandRot.transpose();
 
+
+							/*Eulier RyRzRx {left, up, forward}*/
+							// idt << RotX(90*(pi/180)) * RotZ(90*(pi/180)) * RotY(90*(pi/180));
+
+							// handoverRot = /*idt.transpose()**/X_0_Lshp.rotation();
+							
+							// handoverRot = idt.transpose()*subjLtHandRot;
+							
+							// handoverRot = idt.transpose()*subjLtHandRot.transpose();
+
+							// handoverRot = subjLtHandRot;
 
 
 							 /*robot constraint*/
@@ -627,7 +641,7 @@ namespace mc_handover
 							{
 								if(motion)
 								{
-									/*control head*/ //***** USE GAZE TASK **********//
+									/*control head*/
 									if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
 									else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
 
