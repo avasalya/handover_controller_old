@@ -45,8 +45,8 @@ namespace mc_handover
 			qr = {0.95, 0.086, -0.25, -0.15};
 			
 			//for mocap_temp
-			q1l  = {0.64, -0.01, -0.76, -0.06};
-			q1r  = {0.64, -0.01, -0.76, -0.06};
+			q1l = {0.64, -0.01, -0.76, -0.06};
+			q1r = {0.64, -0.01, -0.76, -0.06};
 			
 
 			p_l<< 0.3,0.3,1.1;
@@ -514,6 +514,7 @@ namespace mc_handover
 						X_R_efL = sva::PTransformd(ltRotW, curPosLeftEf);
 						X_M_efLMarker = sva::PTransformd(ltRotW, curPosLeftEfMarker);
 						X_R_M = X_M_efLMarker.inv() * X_R_efL;
+						X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p_l);
 
 						/*check subj hand's relative orientation*/
 						if(!oneTime
@@ -523,39 +524,41 @@ namespace mc_handover
 							&& 	Markers[lShapeLtD](0)!=0 && Markers[lShapeLtD](0)< 20
 							)
 						{
-							// /*get unit vectors XYZ of subject LEFT hand*/
-							x = markersPos[lShapeLtA].col(i)-markersPos[lShapeLtC].col(i);//vCA=X
-							y = markersPos[lShapeLtD].col(i)-markersPos[lShapeLtC].col(i);//vCD=Y
+							curPosLtLshp = markersPos[lShapeLtC].col(i);
+
+							/*get unit vectors XYZ of subject LEFT hand*/
+							x = markersPos[lShapeLtA].col(i) - markersPos[lShapeLtC].col(i);//vCA=X
+							y = markersPos[lShapeLtD].col(i) - markersPos[lShapeLtC].col(i);//vCD=Y
 
 							lshpLt_X = x/x.norm();
 							lshpLt_Y = y/y.norm();
 							lshpLt_Z = lshpLt_X.cross(lshpLt_Y);//X.cross(Y)=Z
 
-							/*reverse Z*/
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
-							subjLtHandRot.col(2) = lshpLt_Z;
+							
+							/*just like old only Z bad*/
+							// subjLtHandRot.col(2) = lshpLt_Z/lshpLt_Z.norm();
+							
+							/*wrong method*/
+							subjLtHandRot.row(2) = lshpLt_Z/lshpLt_Z.norm();
 
-
-							// LOG_SUCCESS(X_R_M.rotation()<<"\n")
 							// LOG_ERROR(subjLtHandRot<<"\n")
 
-							/*just like old only Z good*/
+							/*just like old only Z good*/ /*wrong method*/
 							// handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot * X_R_M.rotation();
+							X_M_lLtshp = sva::PTransformd(subjLtHandRot, curPosLtLshp);
 							
 							/*just like old only Z bad*/
 							// handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot.transpose() * X_R_M.rotation();
+							// X_M_lLtshp = sva::PTransformd(subjLtHandRot.transpose(), curPosLtLshp);
 
-							
-							/*just like old only Z bad*/
-							curPosLtLshp = markersPos[lShapeLtC].col(i);
-							X_M_lLtshp = sva::PTransformd(subjLtHandRot.transpose(), curPosLtLshp);
-							X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p_l);
-							
+
 							X_e_l =  X_R_efL_const.inv() * X_M_lLtshp * X_R_M;
 							// X_e_l = X_R_efL.inv() * X_M_lLtshp * X_R_M;
+							// LOG_SUCCESS(X_e_l.rotation()<<"\n")
 
-							handoverRot = X_e_l.rotation();
+							handoverRot = X_e_l.rotation();// * idt;
 						}
 
 						/*subj marker(s) pose w.r.t to robot EF frame*/
