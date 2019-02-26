@@ -524,6 +524,9 @@ namespace mc_handover
 							&& 	Markers[lShapeLtD](0)!=0 && Markers[lShapeLtD](0)< 20
 							)
 						{
+							// sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+							// BodyW.rotation();
+
 							curPosLtLshp = markersPos[lShapeLtC].col(i);
 
 							/*get unit vectors XYZ of subject LEFT hand*/
@@ -537,25 +540,13 @@ namespace mc_handover
 							subjLtHandRot.col(0) = lshpLt_X;
 							subjLtHandRot.col(1) = lshpLt_Y;
 							
-							/*just like old only Z bad*/
-							// subjLtHandRot.col(2) = lshpLt_Z/lshpLt_Z.norm();
-							
-							/*wrong method*/
+							/*convert to 2D rotation method*/
 							subjLtHandRot.row(2) = lshpLt_Z/lshpLt_Z.norm();
+							// LOG_ERROR(subjLtHandRot<<"\n\n")
 
-							// LOG_ERROR(subjLtHandRot<<"\n")
-
-							/*just like old only Z good*/ /*wrong method*/
-							// handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot * X_R_M.rotation();
 							X_M_lLtshp = sva::PTransformd(subjLtHandRot, curPosLtLshp);
 							
-							/*just like old only Z bad*/
-							// handoverRot = q1l.toRotationMatrix().transpose() * subjLtHandRot.transpose() * X_R_M.rotation();
-							// X_M_lLtshp = sva::PTransformd(subjLtHandRot.transpose(), curPosLtLshp);
-
-
-							X_e_l =  X_R_efL_const.inv() * X_M_lLtshp * X_R_M;
-							// X_e_l = X_R_efL.inv() * X_M_lLtshp * X_R_M;
+							X_e_l =  X_R_efL_const.inv() * X_M_lLtshp;// * X_R_M;
 							// LOG_SUCCESS(X_e_l.rotation()<<"\n")
 
 							handoverRot = X_e_l.rotation();// * idt;
