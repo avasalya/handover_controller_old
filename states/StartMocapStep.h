@@ -118,8 +118,8 @@ namespace mc_handover
 			Eigen::Matrix3d curRotLeftEf, curRotLeftEfMarker;
 			Eigen::Matrix3d curRotRightEf, curRotRightEfMarker;
 
-			Eigen::Matrix3d subjLtHandRot, handoverLtRot, ltRotW;
-			Eigen::Matrix3d subjRtHandRot, handoverRtRot, rtRotW;
+			Eigen::Matrix3d subjLtHandRot, handoverRotLt, ltRotW;
+			Eigen::Matrix3d subjRtHandRot, handoverRotRt, rtRotW;
 
 			Eigen::Vector3d x, y, lshpLt_X, lshpLt_Y, lshpLt_Z;
 			Eigen::Vector3d x_, y_, lshpRt_X, lshpRt_Y, lshpRt_Z;

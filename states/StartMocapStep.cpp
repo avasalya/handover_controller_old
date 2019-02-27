@@ -107,11 +107,11 @@ namespace mc_handover
 					ctl.oriTaskR->orientation(qr.toRotationMatrix().transpose());
 				}),
 				mc_rtc::gui::Button( "pos0", [this, &ctl](){
-					ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 					ctl.posTaskL->position(p_l);
+					ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 
-					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 					ctl.posTaskR->position(p_r);
+					ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 				} ),
 				mc_rtc::gui::Button( "pos1", [this, &ctl](){
 					ctl.posTaskL->position({0.24,0.3,0.8});
@@ -261,8 +261,8 @@ namespace mc_handover
 				// mc_rtc::gui::Trajectory("obseve subj pos", {{0, 1, 0}, 0.01, mc_rtc::gui::LineStyle::Solid},
 				// 	[this, &ctl]() -> const vector<sva::PTransformd>& { return S_X_efL; }),
 
-				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{1,1,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
-					[this, &ctl]() -> const vector<Eigen::Vector3d>& { return predictedPositionsLt; } ),
+				// mc_rtc::gui::Trajectory("subj knuckle marker pos", {{1,1,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
+				// 	[this, &ctl]() -> const vector<Eigen::Vector3d>& { return predictedPositionsLt; } ),
 
 				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); }),
@@ -623,7 +623,7 @@ namespace mc_handover
 							X_e_l_lt =  X_R_efL_const.inv() * X_M_Ltlshp;// * X_R_M_lt;
 							// LOG_SUCCESS(X_e_l_lt.rotation()<<"\n")
 
-							handoverLtRot = X_e_l_lt.rotation();// * idt;
+							handoverRotLt = X_e_l_lt.rotation();// * idt;
 						}
 
 
@@ -660,7 +660,7 @@ namespace mc_handover
 							X_e_l_rt =  X_R_efL_const.inv() * X_M_Rtlshp;// * X_R_M_rt;
 							// LOG_SUCCESS(X_e_l_rt.rotation()<<"\n")
 
-							handoverRtRot = X_e_l_rt.rotation();// * idt;
+							handoverRotRt = X_e_l_rt.rotation();// * idt;
 						}
 
 
@@ -669,7 +669,7 @@ namespace mc_handover
 						for(int j=1;j<=t_observe; j++)
 						{
 							// X_M_SubjL = sva::PTransformd(idtMat, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
-							X_M_SubjL = sva::PTransformd(handoverLtRot, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
+							X_M_SubjL = sva::PTransformd(handoverRotLt, markersPos[fingerSubjLt].middleCols((i-t_observe)+j,i));
 
 							X_efL_Subj = X_R_efL.inv() * X_M_SubjL * X_M_efLMarker.inv() * X_R_efL;
 
@@ -679,7 +679,7 @@ namespace mc_handover
 
 
 							// X_M_SubjR = sva::PTransformd(idtMat, markersPos[fingerSubjRt].middleCols((i-t_observe)+j,i));
-							X_M_SubjR = sva::PTransformd(handoverRtRot, markersPos[fingerSubjRt].middleCols((i-t_observe)+j,i));
+							X_M_SubjR = sva::PTransformd(handoverRotRt, markersPos[fingerSubjRt].middleCols((i-t_observe)+j,i));
 
 							X_efR_Subj = X_R_efR.inv() * X_M_SubjR * X_M_efRMarker.inv() * X_R_efR;
 
@@ -711,7 +711,6 @@ namespace mc_handover
 						wpLt = get<0>(wp_efL_Subj);
 
 						initRefPosLt << wpLt(0,it), wpLt(1,it), wpLt(2,it);
-						// initRefPos << ltHand.translation();
 
 
 
@@ -729,11 +728,10 @@ namespace mc_handover
 						wpRt = get<0>(wp_efL_Subj);
 
 						initRefPosRt << wpRt(0,it), wpRt(1,it), wpRt(2,it);
-						// initRefPos << ltHand.translation();
-
 
 
 						collected = true;
+
 					}//t_observe
 
 
@@ -744,15 +742,13 @@ namespace mc_handover
 						it+= (int)tuner(2);//40+(int)t_predict/t_observe;
 
 						auto curLEfPos = ltHand.translation();
-						auto curREfPos = rtHand.translation();
-
 						if(it<=wpLt.cols())
 						{
 							refPosLt << wpLt(0,it), wpLt(1,it), wpLt(2,it);
 							handoverPosLt = curLEfPos + refPosLt - initRefPosLt;
 							
 							// idt << RotX(90*DegToRad) * RotY(90*DegToRad) * RotZ(90*DegToRad);
-							// handoverLtRot = idt.transpose()*subjLtHandRot.transpose();
+							// handoverRotLt = idt.transpose()*subjLtHandRot.transpose();
 
 							 /*robot constraint*/
 							if((handoverPosLt(0)>= 0.20) && (handoverPosLt(0)<= 0.7) && 
@@ -769,18 +765,48 @@ namespace mc_handover
 									else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
 
 									/*handover pose*/
-									sva::PTransformd new_poseLt(handoverLtRot, handoverPosLt);
+									sva::PTransformd new_poseLt(handoverRotRt, handoverPosLt);
 									ctl.oriTaskL->orientation(new_poseLt.rotation());
 									ctl.posTaskL->position(new_poseLt.translation());
-
-									// ctl.oriTaskR->orientation(new_poseLt.rotation());
-									// ctl.posTaskR->position(new_poseLt.translation());
 								}
 							}
-
-							if(it==wpLt.cols())
-								{ collected  = false; }
 						}
+						
+
+						auto curREfPos = rtHand.translation();						
+						if(it<=wpRt.cols())
+						{
+							refPosRt << wpRt(0,it), wpRt(1,it), wpRt(2,it);
+							handoverPosRt = curREfPos + refPosRt - initRefPosRt;
+							
+							// idt << RotX(90*DegToRad) * RotY(90*DegToRad) * RotZ(90*DegToRad);
+							// handoverRotRt = idt.transpose()*subjRtHandRot.transpose();
+
+							 /*robot constraint*/
+							if((handoverPosRt(0)>= 0.20) && (handoverPosRt(0)<= 0.7) && 
+								(handoverPosRt(1)<= 0.00) && (handoverPosRt(1)>= -0.7) &&
+								(handoverPosRt(2)>= 0.90) && (handoverPosRt(2)<= 1.5))
+							{
+								if(motionRt)
+								{
+									/*control head*/
+									if(handoverPosRt(1) <-.45){ctl.set_joint_pos("HEAD_JOINT0",  -0.4);} //y //+ve to move head left
+									else{ctl.set_joint_pos("HEAD_JOINT0",  0.0); }//-ve to move head right
+
+									if(handoverPosRt(2) <1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
+									else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
+
+									/*handover pose*/
+									sva::PTransformd new_poseRt(handoverRotRt, handoverPosRt);
+									ctl.oriTaskR->orientation(new_poseRt.rotation());
+									ctl.posTaskR->position(new_poseRt.translation());
+								}
+							}
+						}
+
+						if( ( it==wpLt.cols() ) || ( it==wpRt.cols() ) )
+							{ collected = false; }
+
 					}//collected
 
 
@@ -840,8 +866,6 @@ namespace mc_handover
 						/*new threshold*/
 						auto newLeftTh = lFload + leftTh;
 
-
-
 						/* MAY BE check torque too ???? */
 						if( (abs(lFpull[idx]) > newLeftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
 						{
@@ -865,16 +889,16 @@ namespace mc_handover
 					if( ( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2 ) )
 					{
 						/*open empty gripper when subject come near to robot*/
-						if( (!openGripper) && (leftForce.norm()<1.0) )
+						if( (!openGripperLt) && (leftForce.norm()<1.0) )
 						{
 							lFzero = leftForce; //this has Fintertia too
 							open_gripperL();
 							LOG_WARNING("opening gripper with left Force Norm "<< leftForce.norm())
-							openGripper = true;
+							openGripperLt = true;
 						}
 
 						/*close gripper*/
-						if( (openGripper) && (!closeGripperLt) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
+						if( (openGripperLt) && (!closeGripperLt) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
 						{
 							close_gripperL();
 							motionLt=false; //when subject hand is very close to efL
@@ -930,7 +954,7 @@ namespace mc_handover
 						if(restartHandover)
 						{
 							restartHandover=false;
-							openGripper=false;
+							openGripperLt=false;
 							closeGripperLt=false;
 
 							dum1=true;
@@ -939,10 +963,11 @@ namespace mc_handover
 							cout<<"/*******restarting handover*******/"<<endl;
 						}
 					}
+
 					/*iterator*/
 					i+= 1;
+				
 				}// checkNonZeroLt && checkNonZeroRt
-
 
 			}// startCapture
 
@@ -971,8 +996,8 @@ namespace mc_handover
 // 	Eigen::Vector3d er_the = (RadToDeg)*sva::rotationError(from_rot,to_rot);
 // LOG_ERROR(er_the.transpose())
 
-// Eigen::Matrix3d handoverLtRot = sva::RotX(er_the(0)) * sva::RotY(er_the(1)) * sva::RotZ(er_the(2));
-// sva::PTransformd new_pose(handoverLtRot,handoverPos);
+// Eigen::Matrix3d handoverRotLt = sva::RotX(er_the(0)) * sva::RotY(er_the(1)) * sva::RotZ(er_the(2));
+// sva::PTransformd new_pose(handoverRotLt,handoverPos);
 // ctl.oriTaskL->orientation(new_pose.rotation());
 // ctl.posTaskL->position(new_pose.translation());
 // // ctl.oriTaskL->orientation(togo_);
