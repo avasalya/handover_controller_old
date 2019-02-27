@@ -36,10 +36,10 @@ namespace mc_handover
 			void teardown(mc_control::fsm::Controller&) override;
 
 			int fps{200};
-			int t_predict;
-			int t_observe;
-			int it;
-			Eigen::Vector3d tuner;
+			int t_predict, t_predictRt;
+			int t_observe, t_observeRt;
+			int it, it_rt;
+			Eigen::Vector3d tuner, tunerRt;
 
 			/*mocap_simulaton*/
 			double pt;
@@ -52,22 +52,23 @@ namespace mc_handover
 			int e{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{true}; // default True for MOCAP
+			bool Flag_CORTEX{false}; // default True for MOCAP
 
-			sva::PTransformd X_efL_Subj;
-			sva::PTransformd X_R_efL;
-			sva::PTransformd X_M_Subj;
-			sva::PTransformd X_M_efLMarker;
-			sva::PTransformd X_R_M;
 			sva::PTransformd ltHand, rtHand;
-			sva::PTransformd X_e_l, X_M_lLtshp, X_R_efL_const;
+			sva::PTransformd X_efL_Subj, X_efR_Subj;
+			sva::PTransformd X_R_efL, X_R_efR;
+			sva::PTransformd X_M_SubjL, X_M_SubjR;
+			sva::PTransformd X_M_efLMarker, X_M_efRMarker;
+			sva::PTransformd X_R_M_lt, X_R_M_rt;
+			sva::PTransformd X_e_l_lt, X_M_Ltlshp, X_R_efL_const;
+			sva::PTransformd X_e_l_rt, X_M_Rtlshp, X_R_efR_const;
 			
-			Eigen::Vector3d curPosLtLshp;
+			Eigen::Vector3d curPosLtLshp, curPosRtLshp;
 			
-			std::vector<sva::PTransformd> S_X_efL;
+			std::vector<sva::PTransformd> X_S_efL, X_S_efR;
 			std::vector<Eigen::MatrixXd> markersPos;
 			std::vector<Eigen::Vector3d> Markers;
-			std::vector<Eigen::Vector3d> predictedPositions;
+			std::vector<Eigen::Vector3d> predictedPositionsLt, predictedPositionsRt;
 			
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
 			std::vector<double> lFloadx, lFloady, lFloadz;
@@ -77,7 +78,7 @@ namespace mc_handover
 
 			int body{0};
 
-			int maxMarkers{14};//17
+			int maxMarkers{19};//14,19
 
 			int wristLtEfA{0}, wristLtEfB{1};
 			int gripperLtEfA{2}, gripperLtEfB{3};
@@ -90,33 +91,43 @@ namespace mc_handover
 			int fingerSubjLt{9};
 			int lShapeLtA{10}, lShapeLtB{11}, lShapeLtC{12}, lShapeLtD{13};
 
-			// int fingerSubjRt{14};
-			// int lShapeRtA{15}, lShapeRtB{16}, lShapeRtC{17}, lShapeRtD{18};
+			int fingerSubjRt{14};
+			int lShapeRtA{15}, lShapeRtB{16}, lShapeRtC{17}, lShapeRtD{18};
 
 			double DegToRad = pi/180;
 			double RadToDeg = 180/pi;
+			double PI = 3.14;
 
 
+			bool checkNonZeroLt, checkNonZeroRt;
 
 
+			Eigen::Vector3d randPos;
+			
+			Eigen::Vector3d curPosLeftEf, curPosRightEf;
+			Eigen::Vector3d curPosLeftEfMarker, curPosRightEfMarker;
 
-			Eigen::Vector3d curPosLeftEf, curPosLeftEfMarker;
-			Eigen::Vector3d randPos, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
+			Eigen::Vector3d initPosSubjLt, ithPosSubjLt, avgVelSubjLt, predictPosLt;
+			Eigen::Vector3d initPosSubjRt, ithPosSubjRt, avgVelSubjRt, predictPosRt;
 
 			Eigen::Vector3d p_r, p_l; 
 			Eigen::Quaterniond ql, qr, q1l, q1r;
 
-			Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
+			Eigen::Matrix3d idt, idtMat = Eigen::Matrix3d::Identity();
+
 			Eigen::Matrix3d curRotLeftEf, curRotLeftEfMarker;
-			Eigen::Matrix3d initRotLtLshp;
-			Eigen::Matrix3d idt, subjLtHandRot,subjRtHandRot, handoverRot, ltRotW, rtRotW;
+			Eigen::Matrix3d curRotRightEf, curRotRightEfMarker;
 
-			Eigen::Vector3d x, y, z, lshpLt_X, lshpLt_Y, lshpLt_Z;
-			Eigen::Vector3d x_, y_, z_, lshpRt_X, lshpRt_Y, lshpRt_Z;
+			Eigen::Matrix3d subjLtHandRot, handoverLtRot, ltRotW;
+			Eigen::Matrix3d subjRtHandRot, handoverRtRot, rtRotW;
 
-			Eigen::MatrixXd curVelSubj, wp, newPosSubj;
+			Eigen::Vector3d x, y, lshpLt_X, lshpLt_Y, lshpLt_Z;
+			Eigen::Vector3d x_, y_, lshpRt_X, lshpRt_Y, lshpRt_Z;
 
-			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
+			Eigen::MatrixXd curVelSubjLt, wpLt, newPosSubjLt;
+			Eigen::MatrixXd curVelSubjRt, wpRt, newPosSubjRt;
+
+			std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj, wp_efR_Subj;
 
 
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
@@ -140,16 +151,18 @@ namespace mc_handover
 
 			Eigen::Vector3d move, target;
 			Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
-			Eigen::Vector3d refPos, refPosPrev, refVel, refAcc, initRefPos, handoverPos, handoverPosPrev;
+			
+			Eigen::Vector3d refPosLt, handoverPosLt, initRefPosLt;
+			Eigen::Vector3d refPosRt, handoverPosRt, initRefPosRt;
 
 			/*mocap*/
 			bool startCapture{false};
 			bool collected{false};
-			bool motion{true};
+			bool motionLt{true}, motionRt{true};
 
 			bool restartHandover{false};
-			bool openGripper{false};
-			bool closeGripper{false};
+			bool openGripperLt{false}, openGripperRt{false};
+			bool closeGripperLt{false}, closeGripperRt{false};
 			bool readyToGrasp{false};
 
 			bool dum1{true};
@@ -160,7 +173,8 @@ namespace mc_handover
 			bool option2{false};
 			bool option3{false};
 
-			bool oneTime{true};
+			bool leftHandReady{true};
+			bool rightHandReady{true};
 
 			/*cortex*/
 			sBodyDefs* pBodyDefs{NULL};
