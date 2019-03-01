@@ -52,7 +52,7 @@ namespace mc_handover
 			int e{0};
 
 			/*mocap*/
-			bool Flag_CORTEX{false}; // default True for MOCAP
+			bool Flag_CORTEX{true}; // default True for MOCAP
 
 			sva::PTransformd ltHand, rtHand;
 			sva::PTransformd X_efL_Subj, X_efR_Subj;
@@ -65,6 +65,8 @@ namespace mc_handover
 			
 			Eigen::Vector3d curPosLtLshp, curPosRtLshp;
 			
+			Eigen::Vector3d objectPos;
+
 			std::vector<sva::PTransformd> X_S_efL, X_S_efR;
 			std::vector<Eigen::MatrixXd> markersPos;
 			std::vector<Eigen::Vector3d> Markers;
@@ -73,8 +75,13 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
 			std::vector<double> lFloadx, lFloady, lFloadz;
 			Eigen::Vector3d efLAce, lFinert, lFzero, lFload, lFpull, leftForce, leftTh;
+
+			std::vector<Eigen::Vector3d> efRPos, efRVel;
+			std::vector<double> rFloadx, rFloady, rFloadz;
+			Eigen::Vector3d efRAce, rFinert, rFzero, rFload, rFpull, rightForce, rightTh;
 			
-			double efLMass, lFNormAtClose;// lHandMass{1.1}, objMass{0.175};
+			double efLMass, lFNormAtClose;
+			double efRMass, rFNormAtClose;
 
 			int body{0};
 
@@ -147,7 +154,7 @@ namespace mc_handover
 			std::vector<bool> handsWrenchDir;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
-			Eigen::VectorXd baseTh = Eigen::VectorXd::Zero(12);			
+			Eigen::VectorXd baseTh = Eigen::VectorXd::Zero(12);
 
 			Eigen::Vector3d move, target;
 			Eigen::Vector3d initialCom = Eigen::Vector3d::Zero();
