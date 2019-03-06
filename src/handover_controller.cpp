@@ -31,6 +31,11 @@ namespace mc_handover
 			mc_rbdyn::Collision("LARM_LINK6", "LLEG_LINK2", 0.05,0.01, 0.),
 			mc_rbdyn::Collision("LARM_LINK7", "LLEG_LINK2", 0.05,0.01, 0.),
 
+			mc_rbdyn::Collision("LARM_LINK6", "RARM_LINK6", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("LARM_LINK6", "RARM_LINK7", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("LARM_LINK7", "RARM_LINK6", 0.05,0.01, 0.),
+			mc_rbdyn::Collision("LARM_LINK7", "RARM_LINK7", 0.05,0.01, 0.),
+
 			mc_rbdyn::Collision("RARM_LINK3", "BODY", 0.1, 0.05, 0.),
 			mc_rbdyn::Collision("RARM_LINK4", "BODY", 0.1, 0.05, 0.),
 			mc_rbdyn::Collision("RARM_LINK5", "BODY", 0.1, 0.05, 0.),
@@ -42,7 +47,6 @@ namespace mc_handover
 			mc_rbdyn::Collision("RARM_LINK5", "RLEG_LINK2", 0.05,0.01, 0.),
 			mc_rbdyn::Collision("RARM_LINK6", "RLEG_LINK2", 0.05,0.01, 0.),
 			mc_rbdyn::Collision("RARM_LINK7", "RLEG_LINK2", 0.05,0.01, 0.),
-
 		});
 
 		LOG_SUCCESS("mc_handover_controller init done")

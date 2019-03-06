@@ -353,13 +353,16 @@ namespace mc_handover
 			Markers.resize(maxMarkers);
 			markersPos.resize(maxMarkers);
 			
+			for(int m=0; m<maxMarkers; m++)
+				{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
+
 			newPosSubjLt = Eigen::MatrixXd::Zero(3, t_observe);
 			newPosSubjRt = Eigen::MatrixXd::Zero(3, t_observe);
 
 			efLPos.resize(3);
-			efLVel.resize(2);
-
 			efRPos.resize(3);
+
+			efLVel.resize(2);
 			efRVel.resize(2);
 
 			predictedPositionsLt.resize(1);
@@ -367,10 +370,6 @@ namespace mc_handover
 
 			X_S_efL.resize(t_observe);
 			X_S_efR.resize(t_observe);
-
-			for(int m=0; m<maxMarkers; m++)
-				{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
-
 
 			/*initial force threshold*/
 			leftTh = thresh.segment(3,3);
@@ -441,7 +440,7 @@ namespace mc_handover
 			if(startCapture)
 			{
 				/*get markers position FrameByFrame*/
-				if(Flag_CORTEX)
+				if(Flag_CORTEX && !Flag_CORTEX_only)
 				{
 					for(int m=0; m<maxMarkers; m++)
 					{
@@ -451,6 +450,28 @@ namespace mc_handover
 						FrameofData.BodyData[body].Markers[m][2]; // Z
 					}
 				}
+
+				if(Flag_CORTEX_only)
+				{
+					Markers[wristLtEfA] << 0.208955, 0.350982, 0.552377;
+					Markers[wristLtEfB] << 0.15638, 0.352496, 0.547814;
+					Markers[gripperLtEfA] << 0.217815, 0.334505, 0.432962;
+					Markers[gripperLtEfB] << 0.162401,  0.33451, 0.42898;
+
+					Markers[wristRtEfA] << 0.14048, -0.309184, 0.550067;
+					Markers[wristRtEfB] << 0.198771, -0.308889,  0.555116;
+					Markers[gripperRtEfA] << 0.148997, -0.29622, 0.418868;
+					Markers[gripperRtEfB] << 0.202506, -0.293441, 0.425241;
+
+					for(int m=0; m<maxMarkers-8; m++)
+					{
+						Markers[m+8] <<
+						FrameofData.BodyData[body].Markers[m][0], // X
+						FrameofData.BodyData[body].Markers[m][1], // Y
+						FrameofData.BodyData[body].Markers[m][2]; // Z
+					}
+				}
+
 				else /*simulation*/
 				{
 					for(int m=0; m<maxMarkers; m++)
@@ -485,8 +506,10 @@ namespace mc_handover
 				if( checkNonZeroLt && checkNonZeroRt && (Markers[object](0)!=0) && (Markers[object](0)<20) )
 				{
 					for(int m=0; m<maxMarkers; m++)
-						{ markersPos[m].col(i) << Markers[m]; }
-					// cout << "Markers[4] " << Markers[4].transpose()<<endl;
+					{
+						// cout << "i "<<i<< " Markers["<<m<<"] " << Markers[m].transpose()<<endl;
+						markersPos[m].col(i) << Markers[m];
+					}
 
 					/*direction vectors, projections and area*/
 					auto lEf_wA_wB = markersPos[wristLtEfA].col(i)-markersPos[wristLtEfB].col(i);
@@ -522,7 +545,7 @@ namespace mc_handover
 					auto rEf_area_wAB_O  = 0.5*rEf_wA_wB.norm()*rEf_wA_O.norm()*sin(rEf_wAB_theta_wAO);
 					auto rEf_area_wAB_f  = 0.5*rEf_wA_wB.norm()*rEf_wA_lf.norm()*sin(rEf_wAB_theta_wAf);
 
-
+					/*for GUI*/
 					objectPos = markersPos[object].col(i);
 
 					/*move EF when subject approaches object 1st time*/
@@ -539,15 +562,15 @@ namespace mc_handover
 
 
 					if( leftHandReady
-						&& ( roundf( (ctl.posTaskL->speed().norm()) * 100 )/100 <= 0.01 ) 
-						&& ( roundf( (ctl.oriTaskL->speed().norm()) * 100 )/100 <= 0.01 ) )
+						&& ( round( (ctl.posTaskL->speed().norm()) * 100 )/100 <= 0.01 ) 
+						&& ( round( (ctl.oriTaskL->speed().norm()) * 100 )/100 <= 0.01 ) )
 						{
 							leftHandReady=false;
 						}
 
 					if( rightHandReady
-						&& ( roundf( (ctl.posTaskR->speed().norm()) * 100 )/100 <= 0.01 ) 
-						&& ( roundf( (ctl.oriTaskR->speed().norm()) * 100 )/100 <= 0.01 ) )
+						&& ( round( (ctl.posTaskR->speed().norm()) * 100 )/100 <= 0.01 ) 
+						&& ( round( (ctl.oriTaskR->speed().norm()) * 100 )/100 <= 0.01 ) )
 						{
 							rightHandReady=false;
 						}
@@ -806,167 +829,290 @@ namespace mc_handover
 					}//collected
 
 
-					// /*gripper control*/
-					// auto close_gripperL = [&]()
-					// {
-					// 	auto gripper = ctl.grippers["l_gripper"].get();
-					// 	gripper->setTargetQ({closeGrippers});
-					// };
-					// auto open_gripperL = [&]()
-					// {
-					// 	auto gripper = ctl.grippers["l_gripper"].get();
-					// 	gripper->setTargetQ({openGrippers});
-					// };
+					/*gripper control*/
+					auto close_gripperL = [&]()
+					{
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({closeGrippers});
+					};
+					auto open_gripperL = [&]()
+					{
+						auto gripper = ctl.grippers["l_gripper"].get();
+						gripper->setTargetQ({openGrippers});
+					};
 
-					// auto close_gripperR = [&]()
-					// {
-					// 	auto gripper = ctl.grippers["r_gripper"].get();
-					// 	gripper->setTargetQ({closeGrippers});
-					// };
-					// auto open_gripperR = [&]()
-					// {
-					// 	auto gripper = ctl.grippers["r_gripper"].get();
-					// 	gripper->setTargetQ({openGrippers});
-					// };
+					auto close_gripperR = [&]()
+					{
+						auto gripper = ctl.grippers["r_gripper"].get();
+						gripper->setTargetQ({closeGrippers});
+					};
+					auto open_gripperR = [&]()
+					{
+						auto gripper = ctl.grippers["r_gripper"].get();
+						gripper->setTargetQ({openGrippers});
+					};
 
 
-					// /*Force sensor*/
-					// leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-					// rightForce = ctl.robot().forceSensor("ReftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-					// // LOG_ERROR("leftWrenchWithoutGravity " <<leftForce.transpose() << " norm "<< leftForce.norm() )
-					
+					/*Force sensor*/
+					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+					rightForce = ctl.robot().forceSensor("ReftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+					// LOG_ERROR("leftWrenchWithoutGravity " <<leftForce.transpose() << " norm "<< leftForce.norm() )
 					
 
 
 					// /*force control*/
-					// auto checkLtForce = [&](const char *axis_name, int idx)
-					// {
-					// 	/*get acceleration of lHand*/
-					// 	if(i>3)
-					// 	{
-					// 		for(int g=1; g<=3; g++)
-					// 		{
-					// 			efLPos[3-g] = 0.25*(
-					// 				markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
-					// 				markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
-					// 				);
-					// 		}
-					// 		efLVel[0] = (efLPos[1]-efLPos[0])*fps;
-					// 		efLVel[1] = (efLPos[2]-efLPos[1])*fps;
-					// 		efLAce = (efLVel[1]-efLVel[0])*fps;
+					auto checkLtForce = [&](const char *axis_name, int idx)
+					{
+						/*get acceleration of lHand*/
+						if(i>3)
+						{
+							for(int g=1; g<=3; g++)
+							{
+								efLPos[3-g] = 0.25*(
+									markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
+									markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
+									);
+							}
+							efLVel[0] = (efLPos[1]-efLPos[0])*fps;
+							efLVel[1] = (efLPos[2]-efLPos[1])*fps;
+							efLAce = (efLVel[1]-efLVel[0])*fps;
 
-					// 		efLMass = lFload.norm()/9.8; //lHandMass + objMass;
-					// 		lFinert = efLMass*efLAce; //inertial Force at efL
+							efLMass = lFload.norm()/9.8; //lHandMass + objMass;
+							lFinert = efLMass*efLAce; //inertial Force at efL
 
-					// 		lFpull[0] = abs(leftForce[0])-abs(lFinert[0]); //-abs(lFzero[0]);
-					// 		lFpull[1] = abs(leftForce[1])-abs(lFinert[1]); //-abs(lFzero[1]);
-					// 		lFpull[2] = abs(leftForce[2])-abs(lFinert[2]); //-abs(lFzero[2]);
-					// 	}
+							lFpull[0] = abs(leftForce[0])-abs(lFinert[0]); //-abs(lFzero[0]);
+							lFpull[1] = abs(leftForce[1])-abs(lFinert[1]); //-abs(lFzero[1]);
+							lFpull[2] = abs(leftForce[2])-abs(lFinert[2]); //-abs(lFzero[2]);
+						}
 
-					// 	/*new threshold*/
-					// 	auto newLeftTh = lFload + leftTh;
+						/*new threshold*/
+						auto newLeftTh = lFload + leftTh;
 
-					// 	/* MAY BE check torque too ???? */
-					// 	if( (abs(lFpull[idx]) > newLeftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
-					// 	{
-					// 		open_gripperL();
-					// 		restartHandover=true;
-					// 		readyToGrasp=false;
-					// 		dum1=false;
-					// 		if(dum3)
-					// 		{
-					// 			dum3=false;
-					// 			cout << "leftForces at Grasp "<< leftForce.transpose() <<endl;
-					// 			cout << "lFinert              "<< lFinert.transpose() << " object mass " << efLMass <<endl;
-					// 			LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << newLeftTh.transpose())
-					// 		}
-					// 	}
-					// 	return false;
-					// };
+						/* MAY BE check torque too ???? */
+						if( (abs(lFpull[idx]) > newLeftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
+						{
+							open_gripperL();
+							restartHandover=true;
+							readyToGrasp=false;
+							dum1=false;
+							if(dum3)
+							{
+								dum3=false;
+								cout << "leftForces at Grasp "<< leftForce.transpose() <<endl;
+								cout << "lFinert              "<< lFinert.transpose() << " object mass " << efLMass <<endl;
+								LOG_SUCCESS("object returned, threshold on " << axis_name << " with left pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << newLeftTh.transpose())
+							}
+						}
+						return false;
+					};
 
-					// /*handover control*/
-					// auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					// if( ( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2 ) )
-					// {
-					// 	/*open empty gripper when subject come near to robot*/
-					// 	if( (!openGripperLt) && (leftForce.norm()<1.0) )
-					// 	{
-					// 		lFzero = leftForce; //this has Fintertia too
-					// 		open_gripperL();
-					// 		LOG_WARNING("opening gripper with left Force Norm "<< leftForce.norm())
-					// 		openGripperLt = true;
-					// 	}
+					auto checkRtForce = [&](const char *axis_name, int idx)
+					{
+						/*get acceleration of lHand*/
+						if(i>3)
+						{
+							for(int g=1; g<=3; g++)
+							{
+								efRPos[3-g] = 0.25*(
+									markersPos[wristRtEfA].col(i-g) + markersPos[wristRtEfB].col(i-g) +
+									markersPos[gripperRtEfA].col(i-g) + markersPos[gripperRtEfB].col(i-g)
+									);
+							}
+							efRVel[0] = (efRPos[1]-efRPos[0])*fps;
+							efRVel[1] = (efRPos[2]-efRPos[1])*fps;
+							efRAce = (efRVel[1]-efRVel[0])*fps;
 
-					// 	/*close gripper*/
-					// 	if( (openGripperLt) && (!closeGripperLt) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
-					// 	{
-					// 		close_gripperL();
-					// 		motionLt=false; //when subject hand is very close to efL
-					// 		closeGripperLt = true;
-					// 	}
+							efRMass = rFload.norm()/9.8; //lHandMass + objMass;
+							rFinert = efRMass*efRAce; //inertial Force at efL
+
+							rFpull[0] = abs(rightForce[0])-abs(rFinert[0]); //-abs(lFzero[0]);
+							rFpull[1] = abs(rightForce[1])-abs(rFinert[1]); //-abs(lFzero[1]);
+							rFpull[2] = abs(rightForce[2])-abs(rFinert[2]); //-abs(lFzero[2]);
+						}
+
+						/*new threshold*/
+						auto newRightTh = rFload + rightTh;
+
+						/* MAY BE check torque too ???? */
+						if( (abs(rFpull[idx]) > newRightTh[idx]) && ( (rEf_area_wAB_gA > rEf_area_wAB_f) || (rEf_area_wAB_gB > rEf_area_wAB_f) ) )
+						{
+							open_gripperR();
+							restartHandover=true;
+							readyToGrasp=false;
+							dum1=false;
+							if(dum3)
+							{
+								dum3=false;
+								cout << "rightForces at Grasp "<< rightForce.transpose() <<endl;
+								cout << "rFinert              "<< rFinert.transpose() << " object mass " << efRMass <<endl;
+								LOG_SUCCESS("object returned, threshold on " << axis_name << " with right pull forces " << rFpull.transpose()<< " reached on right hand with th1 " << newRightTh.transpose())
+							}
+						}
+						return false;
+					};
+
+
+					/*handover control*/
+					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
+					if( ( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2 ) )
+					{
+						/*open empty gripper when subject come near to robot*/
+						if( (!openGripperLt) && (leftForce.norm()<1.0) )
+						{
+							lFzero = leftForce; //this has Fintertia too
+							open_gripperL();
+							LOG_WARNING("opening gripper with left Force Norm "<< leftForce.norm())
+							openGripperLt = true;
+						}
+
+						/*close gripper*/
+						if( (openGripperLt) && (!closeGripperLt) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
+						{
+							close_gripperL();
+							motionLt=false; //when subject hand is very close to efL
+							closeGripperLt = true;
+						}
 						
-					// 	/*when closed WITH object*/
-					// 	if( dum2 && closeGripperLt && (leftForce.norm()>=2.0) )
-					// 	{
-					// 		lFNormAtClose = leftForce.norm();
-					// 		LOG_INFO(" object is inside gripper "<< leftForce.norm() )
-					// 		dum2 = false;
-					// 	}
+						/*when closed WITH object*/
+						if( dum2 && closeGripperLt && (leftForce.norm()>=2.0) )
+						{
+							lFNormAtClose = leftForce.norm();
+							LOG_INFO(" object is inside gripper "<< leftForce.norm() )
+							dum2 = false;
+						}
 
-					// 	/*check if object is being pulled*/
-					// 	if(readyToGrasp)
-					// 	{
-					// 		return checkLtForce("x-axis", 0) || checkLtForce("y-axis", 1) || checkLtForce("z-axis", 2);
-					// 	}
-					// }
+						/*check if object is being pulled*/
+						if(readyToGrasp)
+						{
+							return checkLtForce("x-axis", 0) || checkLtForce("y-axis", 1) || checkLtForce("z-axis", 2);
+						}
+					}
 
-					// /*restart handover*/
-					// if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
-					// {
-					// 	/*here comes only after object is grasped*/
-					// 	if( (closeGripperLt) && (!restartHandover) && (lFNormAtClose>=2.0) )
-					// 	{
-					// 		if(e%200==0)//wait xx sec
-					// 		{
-					// 			motionLt=true;
-					// 			readyToGrasp=true;
+					auto  gripperRtEf = (markersPos[gripperRtEfA].col(i)+markersPos[gripperRtEfB].col(i))/2;
+					if( ( (gripperRtEf-markersPos[fingerSubjRt].col(i) ).norm() <0.2 ) )
+					{
+						/*open empty gripper when subject come near to robot*/
+						if( (!openGripperRt) && (rightForce.norm()<1.0) )
+						{
+							rFzero = rightForce; //this has Fintertia too
+							open_gripperR();
+							LOG_WARNING("opening gripper with right Force Norm "<< rightForce.norm())
+							openGripperRt = true;
+						}
 
-					// 			lFload <<
-					// 			accumulate( lFloadx.begin(), lFloadx.end(), 0.0)/double(lFloadx.size()),
-					// 			accumulate( lFloady.begin(), lFloady.end(), 0.0)/double(lFloady.size()),
-					// 			accumulate( lFloadz.begin(), lFloadz.end(), 0.0)/double(lFloadz.size());
+						/*close gripper*/
+						if( (openGripperRt) && (!closeGripperRt) && (!restartHandover) && ( (rEf_area_wAB_gA > rEf_area_wAB_O) || (rEf_area_wAB_gB > rEf_area_wAB_O) ) )
+						{
+							close_gripperR();
+							motionRt=false; //when subject hand is very close to efR
+							closeGripperRt = true;
+						}
+						
+						/*when closed WITH object*/
+						if( dum2 && closeGripperRt && (rightForce.norm()>=2.0) )
+						{
+							rFNormAtClose = rightForce.norm();
+							LOG_INFO(" object is inside gripper "<< rightForce.norm() )
+							dum2 = false;
+						}
 
-					// 			// LOG_INFO("ready to grasp again, avg itr size "<< lFloadx.size())
+						/*check if object is being pulled*/
+						if(readyToGrasp)
+						{
+							return checkRtForce("x-axis", 0) || checkRtForce("y-axis", 1) || checkRtForce("z-axis", 2);
+						}
+					}
 
-					// 			/*clear vector memories*/
-					// 			lFloadx.clear(); lFloady.clear(); lFloadz.clear();
-					// 		}
-					// 		/*divide by 9.8 and you will get object mass*/
-					// 		else
-					// 		{
-					// 			lFloadx.push_back( abs( abs(leftForce[0])-abs(lFzero[0]) ) );
-					// 			lFloady.push_back( abs( abs(leftForce[1])-abs(lFzero[1]) ) );
-					// 			lFloadz.push_back( abs( abs(leftForce[2])-abs(lFzero[2]) ) );
-					// 		}
-					// 		e+=1;//cout << "e " << e << endl;
-					// 	}
 
-					// 	if(restartHandover)
-					// 	{
-					// 		restartHandover=false;
-					// 		openGripperLt=false;
-					// 		closeGripperLt=false;
+					/*restart handover*/
+					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
+					{
+						/*here comes only after object is grasped*/
+						if( (closeGripperLt) && (!restartHandover) && (lFNormAtClose>=2.0) )
+						{
+							if(el%200==0)//wait xx sec
+							{
+								motionLt=true;
+								readyToGrasp=true;
 
-					// 		dum1=true;
-					// 		dum2=true;
-					// 		dum3=true;
-					// 		cout<<"/*******restarting handover*******/"<<endl;
-					// 	}
-					// }
+								lFload <<
+								accumulate( lFloadx.begin(), lFloadx.end(), 0.0)/double(lFloadx.size()),
+								accumulate( lFloady.begin(), lFloady.end(), 0.0)/double(lFloady.size()),
+								accumulate( lFloadz.begin(), lFloadz.end(), 0.0)/double(lFloadz.size());
+
+								// LOG_INFO("ready to grasp again, avg itr size "<< lFloadx.size())
+
+								/*clear vector memories*/
+								lFloadx.clear(); lFloady.clear(); lFloadz.clear();
+							}
+							/*divide by 9.8 and you will get object mass*/
+							else
+							{
+								lFloadx.push_back( abs( abs(leftForce[0])-abs(lFzero[0]) ) );
+								lFloady.push_back( abs( abs(leftForce[1])-abs(lFzero[1]) ) );
+								lFloadz.push_back( abs( abs(leftForce[2])-abs(lFzero[2]) ) );
+							}
+							el+=1;//cout << "e " << e << endl;
+						}
+
+						if(restartHandover)
+						{
+							restartHandover=false;
+							openGripperLt=false;
+							closeGripperLt=false;
+
+							dum1=true;
+							dum2=true;
+							dum3=true;
+							cout<<"/*******restarting handover*******/"<<endl;
+						}
+					}
+
+					if( (gripperRtEf-markersPos[fingerSubjRt].col(i)).norm() > 0.50 )
+					{
+						/*here comes only after object is grasped*/
+						if( (closeGripperRt) && (!restartHandover) && (rFNormAtClose>=2.0) )
+						{
+							if(er%200==0)//wait xx sec
+							{
+								motionRt=true;
+								readyToGrasp=true;
+
+								rFload <<
+								accumulate( rFloadx.begin(), rFloadx.end(), 0.0)/double(rFloadx.size()),
+								accumulate( rFloady.begin(), rFloady.end(), 0.0)/double(rFloady.size()),
+								accumulate( rFloadz.begin(), rFloadz.end(), 0.0)/double(rFloadz.size());
+
+								// LOG_INFO("ready to grasp again, avg itr size "<< rFloadx.size())
+
+								/*clear vector memories*/
+								rFloadx.clear(); rFloady.clear(); rFloadz.clear();
+							}
+							/*divide by 9.8 and you will get object mass*/
+							else
+							{
+								rFloadx.push_back( abs( abs(rightForce[0])-abs(rFzero[0]) ) );
+								rFloady.push_back( abs( abs(rightForce[1])-abs(rFzero[1]) ) );
+								rFloadz.push_back( abs( abs(rightForce[2])-abs(rFzero[2]) ) );
+							}
+							er+=1;//cout << "e " << e << endl;
+						}
+
+						if(restartHandover)
+						{
+							restartHandover=false;
+							openGripperRt=false;
+							closeGripperRt=false;
+
+							dum1=true;
+							dum2=true;
+							dum3=true;
+							cout<<"/*******restarting handover*******/"<<endl;
+						}
+					}
 
 					/*iterator*/
 					i+= 1;
-				
 				}// checkNonZeroLt && checkNonZeroRt
 
 			}// startCapture
@@ -1027,3 +1173,24 @@ namespace mc_handover
 //https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
 //http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
 //http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
+
+
+
+
+
+
+// for(int m=0; m<maxMarkers; m++)
+// 	{ markersPos[m].col(i) << Markers[m]; }
+// if(D)
+// {
+// 	D = false;
+// 	cout <<"wristLtEfA "<< markersPos[wristLtEfA].col(i).transpose() <<endl;
+// 	cout <<"wristLtEfB "<< markersPos[wristLtEfB].col(i).transpose() <<endl;
+// 	cout <<"wristRtEfA "<< markersPos[wristRtEfA].col(i).transpose() <<endl;
+// 	cout <<"wristRtEfB "<< markersPos[wristRtEfB].col(i).transpose() <<endl;
+
+// 	cout <<"gripperLtEfA "<< markersPos[gripperLtEfA].col(i).transpose() <<endl;
+// 	cout <<"gripperLtEfB "<< markersPos[gripperLtEfB].col(i).transpose() <<endl;
+// 	cout <<"gripperRtEfA "<< markersPos[gripperRtEfA].col(i).transpose() <<endl;
+// 	cout <<"gripperRtEfB "<< markersPos[gripperRtEfB].col(i).transpose() <<endl;
+// }

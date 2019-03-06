@@ -49,10 +49,11 @@ namespace mc_handover
 			int i{1};
 			int j{1};
 			int s{0};
-			int e{0};
+			int el{0}, er{0};
 
 			/*mocap*/
 			bool Flag_CORTEX{true}; // default True for MOCAP
+			bool Flag_CORTEX_only{true}; // default True for using MOCAP without ROBOT_Markers
 
 			sva::PTransformd ltHand, rtHand;
 			sva::PTransformd X_efL_Subj, X_efR_Subj;
