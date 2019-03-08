@@ -1,18 +1,13 @@
 set(controller_SRC
   handover_controller.cpp
   handover_trajectories.cpp
-  handover_complianceTask.cpp
-  # helper_functions.cpp
- 
+  handover_approachObject.cpp
 )
 
 set(controller_HDR
   handover_controller.h
   handover_trajectories.h
-  handover_complianceTask.h
-  # helper_functions.h
-  # matplotlibcpp.h
- 
+  handover_approachObject.h 
 )
 
 

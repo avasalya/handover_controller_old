@@ -59,12 +59,12 @@ namespace mc_handover
 
 	struct CircularTrajectory
 	{
-	public:
-		CircularTrajectory();
-		CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial);
-		std::pair<Eigen::Vector3d, Eigen::Vector3d> pop();
-		void reset();
-	private:
+		public:
+			CircularTrajectory();
+			CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial);
+			std::pair<Eigen::Vector3d, Eigen::Vector3d> pop();
+			void reset();
+		private:
 		double r;
 		std::size_t nr_points;
 		Eigen::Vector3d x0;
@@ -74,7 +74,7 @@ namespace mc_handover
 
 	class HandoverTrajectoryTask
 	{
-	public:
+		public:
 		HandoverTrajectoryTask(mc_solver::QPSolver & solver);
 		~HandoverTrajectoryTask();
 
@@ -100,7 +100,6 @@ namespace mc_handover
 		std::shared_ptr<tasks::qp::TrajectoryTask> trajTask;
 
 		Eigen::Vector3d initPos, refVel, refAce;
-
 	};
 
 

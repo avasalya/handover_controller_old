@@ -229,6 +229,10 @@ namespace mc_handover
 
 
 
+
+
+
+
 	CircularTrajectory::CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial)
 	: r(radius), nr_points(nr_points), x0(initial)
 	{
@@ -307,10 +311,9 @@ namespace mc_handover
 
 
 	bool HandoverTrajectoryTask::update()
-	{			
-		
-			// cout << "pos.rows() " << pos.rows() <<endl;
-			// cout << "pos.cols() " << pos.cols() <<endl;
+	{
+		// cout << "pos.rows() " << pos.rows() <<endl;
+		// cout << "pos.cols() " << pos.cols() <<endl;
 
  		if(wp_index < pos.cols())
 		{
@@ -355,8 +358,9 @@ namespace mc_handover
 			refAce=Eigen::Vector3d::Zero();
 			return false;
 		}
-
 	}
+
+
 
 }// namespace mc_handover
 

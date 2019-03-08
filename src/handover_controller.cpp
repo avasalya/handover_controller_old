@@ -122,7 +122,6 @@ namespace mc_handover
 			// this->robot().forceSensor("RightHandForceSensor").wrenchWithoutGravity(this->robot());
 			this->robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(this->robot());
 		}
-		itr+=1;
 		return ret;
 	}
 
@@ -161,21 +160,6 @@ namespace mc_handover
 
 
 
-	//////////////
-	//
-	// Handover Controller printWrench
-	//
-	//////////////
-	bool HandoverController::publishWrench()
-	{
-		cout << "left hand forces " << wrenches.at("LeftHandForceSensor").force().transpose() <<  endl;
-		// cout << "right hand wrenches " << wrenches.at("RightHandForceSensor") <<  endl;
-
-		runOnce = false;
-		// this will make initial_COM to set on previous given pos
-		return true;  // always return true, to repeat state
-	}
-
 
 
 	//////////////
@@ -191,67 +175,67 @@ namespace mc_handover
 		ss << msg;
 		ss >> token;
 
-		if(token == "step1")
-		{
+		// if(token == "step1")
+		// {
 
-			MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
-			Eigen::Vector3d initPosR, initPosL;
-			sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
+		// 	MCController::set_joint_pos("HEAD_JOINT1",  0.4); //+ve to move head down
+		// 	Eigen::Vector3d initPosR, initPosL;
+		// 	sva::PTransformd BodyW = robot().mbc().bodyPosW[robot().bodyIndexByName("BODY")];
 
-			initPosR <<  0.30, -0.35, 0.3;
-			relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
-			solver().addTask(relEfTaskR);
+		// 	initPosR <<  0.30, -0.35, 0.3;
+		// 	relEfTaskR->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosR));
+		// 	solver().addTask(relEfTaskR);
 
 
-			initPosL <<  0.30, 0.35, 0.3;
-			relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
-			solver().addTask(relEfTaskL);
+		// 	initPosL <<  0.30, 0.35, 0.3;
+		// 	relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
+		// 	solver().addTask(relEfTaskL);
 			
-			return true;
-		}
+		// 	return true;
+		// }
 
 
 
-		if(token == "step2")
-		{ 
-			//set ef pose 
-			Eigen::Vector3d tL( 0.7, 0.35, .3 );
-			Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
-			sva::PTransformd dtrL(getCurRotL, tL);
-			relEfTaskL->set_ef_pose(dtrL);
+		// if(token == "step2")
+		// { 
+		// 	//set ef pose 
+		// 	Eigen::Vector3d tL( 0.7, 0.35, .3 );
+		// 	Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
+		// 	sva::PTransformd dtrL(getCurRotL, tL);
+		// 	relEfTaskL->set_ef_pose(dtrL);
 
 
-			Eigen::Vector3d tR( 0.7, -0.35, .3 );
-			Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
-			sva::PTransformd dtrR(getCurRotR, tR);
-			relEfTaskR->set_ef_pose(dtrR);
+		// 	Eigen::Vector3d tR( 0.7, -0.35, .3 );
+		// 	Eigen::Matrix3d getCurRotR =  relEfTaskR->get_ef_pose().rotation();
+		// 	sva::PTransformd dtrR(getCurRotR, tR);
+		// 	relEfTaskR->set_ef_pose(dtrR);
 
-			return true;
-		}
-
-
-
-		if(token == "robots")
-		{ 
-			std::string robotName =  this->robot().name();
-
-			cout << robotName <<  endl;
-
-			return true;
-		}
+		// 	return true;
+		// }
 
 
 
-		if(token == "surfaces")
-		{ 
-			surf =  this->robot().surfaces();
+		// if(token == "robots")
+		// { 
+		// 	std::string robotName =  this->robot().name();
 
-			for(auto elem : surf)
-			{
-				std::cout << elem.first << " " << elem.second << endl;
-			}
-			return true;
-		}
+		// 	cout << robotName <<  endl;
+
+		// 	return true;
+		// }
+
+
+
+		// if(token == "surfaces")
+		// { 
+		// 	surf =  this->robot().surfaces();
+
+		// 	for(auto elem : surf)
+		// 	{
+		// 		std::cout << elem.first << " " << elem.second << endl;
+		// 	}
+		// 	return true;
+		// }
 
 		// gripper control actions //
 
