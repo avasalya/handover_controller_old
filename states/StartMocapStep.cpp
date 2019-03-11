@@ -41,7 +41,6 @@ namespace mc_handover
 			//for mocap_temp
 			q1l = {0.64, -0.01, -0.76, -0.06};
 			q1r = {0.64, -0.01, -0.76, -0.06};
-			
 
 			p_l<< 0.3,0.3,1.1;
 			p_r<<0.3, -0.3,1.1;
@@ -368,11 +367,25 @@ namespace mc_handover
 
 
 
+					/*)))))))))))))))))))))))))))) continue from below (((((((((((((((((((((((((((*/
+
+
+					/*observe subject motion for t_observe period*/
+					if( ((approachObj->i)%(approachObj->t_observe)==0) )
+					{
+						/*hmmm WHAT SHOULD IT RETURN ?? */
+						auto collected = approachObj->predictionController(approachObj->efLGripperPos, subjRtHandReady, ltHand, ltRotW);
+					}
+					
+
 				
 
 
+
+
+
 					/*feed Ef pose*/
-					if( approachObj->predictionController(ltHand, ltRotW) )
+					if( approachObj->predictionController(approachObj->efLGripperPos, subjRtHandReady, ltHand, ltRotW) )
 					{
 						it+= (int)tuner(2);//40+(int)t_predict/t_observe;
 
