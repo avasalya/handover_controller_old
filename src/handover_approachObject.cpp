@@ -31,40 +31,23 @@ namespace mc_handover
 		it = (int)tuner(2);
 
 
-		std::vector<std::string> robotLtMarkers = {
-			"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB",
-		};
+		std::vector<std::string> robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};
+		std::vector<std::string> robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};
 
+		std::vector<std::string> lShapeLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtB", "lShapeLtC", "lShapeLtD"};
+		std::vector<std::string> lShapeRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};
 
-		std::vector<std::string> robotRtMarkers = {
-			"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"
-		};
-
-
-		std::vector<std::string> lShapeLtMarkers = {
-			"fingerSubjLt", "lShapeLtA", "lShapeLtB", "lShapeLtC", "lShapeLtD",
-		};
-
-		std::vector<std::string> lShapeRtMarkers = {
-			"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"
-		};
-
-		strMarkers.insert(strMarkers.begin(),robotLtMarkers.begin(),robotLtMarkers.end());
-		strMarkers.insert(strMarkers.begin(),robotRtMarkers.begin(),robotRtMarkers.end());
-		strMarkers.insert(strMarkers.end(),lShapeLtMarkers.begin(), lShapeLtMarkers.end());
-		strMarkers.insert(strMarkers.end(),lShapeRtMarkers.begin(), lShapeRtMarkers.end());
-
-		// for(auto it=strMarkers.begin(); it!=strMarkers.end(); ++it)
-		// cout << *it<<endl;
+		strMarkers.insert(strMarkers.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
+		strMarkers.insert(strMarkers.end(), robotRtMarkers.begin(), robotRtMarkers.end());
+		strMarkers.insert(strMarkers.end(), lShapeLtMarkers.begin(), lShapeLtMarkers.end());
+		strMarkers.insert(strMarkers.end(), lShapeRtMarkers.begin(), lShapeRtMarkers.end());
 	}
 
 
 	/*get markers position FrameByFrame*/
-
-	/*************************** make it short use loop to check *******************/
 	bool ApproachObject::checkFrameOfData(std::vector<Eigen::Vector3d>)
 	{
-		bool checkNonZero, checkNonZeroLt, checkNonZeroRt;
+		bool checkNonZero;
 
 		if(Flag_withoutRobot)
 		{
@@ -79,54 +62,12 @@ namespace mc_handover
 			Markers[gripperRtEfB] << 0.202506, -0.293441, 0.425241;
 		}
 
-		/*check for non zero frame only and store them*/
-
-		// checkNonZeroLt =
-		// Markers[wristLtEfA](0)!=0 && Markers[wristLtEfA](0)< 20 &&
-		// Markers[wristLtEfB](0)!=0 && Markers[wristLtEfB](0)< 20 &&
-
-		// Markers[gripperLtEfA](0)!=0 && Markers[gripperLtEfA](0)< 20 &&
-		// Markers[gripperLtEfB](0)!=0 && Markers[gripperLtEfB](0)< 20 &&
-
-		// Markers[fingerSubjLt](0)!=0 && Markers[fingerSubjLt](0)< 20;
-
-
-		// checkNonZeroRt =
-		// Markers[wristRtEfA](0)!=0 && Markers[wristRtEfA](0)< 20 &&
-		// Markers[wristRtEfB](0)!=0 && Markers[wristRtEfB](0)< 20 &&
-
-		// Markers[gripperRtEfA](0)!=0 && Markers[gripperRtEfA](0)< 20 &&
-		// Markers[gripperRtEfB](0)!=0 && Markers[gripperRtEfB](0)< 20 &&
-
-		// Markers[fingerSubjRt](0)!=0 && Markers[fingerSubjRt](0)< 20;
-
-
-		// checkLtLshape = 
-		// Markers[lShapeLtA](0)!=0 && Markers[lShapeLtA](0)< 20
-		// && 	Markers[lShapeLtB](0)!=0 && Markers[lShapeLtB](0)< 20
-		// && 	Markers[lShapeLtC](0)!=0 && Markers[lShapeLtC](0)< 20
-		// && 	Markers[lShapeLtD](0)!=0 && Markers[lShapeLtD](0)< 20;
-
-		// checkRtLshape = 
-		// Markers[lShapeRtA](0)!=0 && Markers[lShapeRtA](0)< 20
-		// && 	Markers[lShapeRtB](0)!=0 && Markers[lShapeRtB](0)< 20
-		// && 	Markers[lShapeRtC](0)!=0 && Markers[lShapeRtC](0)< 20
-		// && 	Markers[lShapeRtD](0)!=0 && Markers[lShapeRtD](0)< 20;
-
-
-		// checkNonZero = checkNonZeroRt && checkNonZeroLt && (Markers[object](0)!=0) && (Markers[object](0)<20)
-		// && checkLtLshape && checkRtLshape;
-
 		for(int i=0; i<Markers.size(); i++)
 		{
-			if( Markers[i](0)!=0 && Markers[i](0)<20 ) //if( Markers[i](0)!=0 && Markers[i](0)<20 )
-			{
-				checkNonzero = true;
-			}
+			if( Markers[i](0)>-10 && Markers[i](0)!=0 && Markers[i](0)<10 )
+				{ checkNonzero = true; }
 			else
-			{
-				checkNonzero = false;
-			}
+				{ checkNonzero = false; }
 		}
 		return checkNonZero;
 	}
@@ -136,6 +77,7 @@ namespace mc_handover
 
 	bool ApproachObject::handoverPresets()
 	{
+		/*check for non zero frame only and store them*/
 		if( checkFrameOfData(Markers) )
 		{
 			i+=1;
