@@ -233,43 +233,41 @@ namespace mc_handover
 
 
 
-	CircularTrajectory::CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial)
-	: r(radius), nr_points(nr_points), x0(initial)
-	{
-		reset();
-	}
+	// CircularTrajectory::CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial)
+	// : r(radius), nr_points(nr_points), x0(initial)
+	// {
+	// 	reset();
+	// }
 
-	std::pair<Eigen::Vector3d, Eigen::Vector3d> CircularTrajectory::pop()
-	{
-		std::pair<Eigen::Vector3d, Eigen::Vector3d> pair;
-		if(queue.empty())
-		{
-			Eigen::Vector3d zero = Eigen::Vector3d::Zero();
-			pair = {x0, zero};
-		}
-		else
-		{
-			pair = queue.front();
-			queue.pop();
-		}
-		return pair;
-	}
+	// std::pair<Eigen::Vector3d, Eigen::Vector3d> CircularTrajectory::pop()
+	// {
+	// 	std::pair<Eigen::Vector3d, Eigen::Vector3d> pair;
+	// 	if(queue.empty())
+	// 	{
+	// 		Eigen::Vector3d zero = Eigen::Vector3d::Zero();
+	// 		pair = {x0, zero};
+	// 	}
+	// 	else
+	// 	{
+	// 		pair = queue.front();
+	// 		queue.pop();
+	// 	}
+	// 	return pair;
+	// }
 
-	void CircularTrajectory::reset()
-	{
-		//Clear queue
-		std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > empty;
-		std::swap(empty, queue);
-		for(std::size_t i = 0; i < nr_points; ++i)
-		{
-			double theta = 2*M_PI*(double)i/(double)nr_points;
-			Eigen::Vector3d pos(0, cos(theta), sin(theta));
-			Eigen::Vector3d vel(0, -sin(theta), cos(theta));
-			queue.push({x0+r*pos, r*vel});
-		}
-	}
-
-
+	// void CircularTrajectory::reset()
+	// {
+	// 	//Clear queue
+	// 	std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > empty;
+	// 	std::swap(empty, queue);
+	// 	for(std::size_t i = 0; i < nr_points; ++i)
+	// 	{
+	// 		double theta = 2*M_PI*(double)i/(double)nr_points;
+	// 		Eigen::Vector3d pos(0, cos(theta), sin(theta));
+	// 		Eigen::Vector3d vel(0, -sin(theta), cos(theta));
+	// 		queue.push({x0+r*pos, r*vel});
+	// 	}
+	// }
 
 
 
@@ -281,84 +279,86 @@ namespace mc_handover
 
 
 
-	HandoverTrajectoryTask::HandoverTrajectoryTask(mc_solver::QPSolver & solver)
-	:solver(solver)
-	{
-		auto & robot = solver.robot();
-
-		positionTask = std::make_shared<tasks::qp::PositionTask>(solver.robots().mbs(), 0, "LARM_LINK6", robot.mbc().bodyPosW[robot.bodyIndexByName("LARM_LINK6")].translation());
-
-		Eigen::Vector3d dimW; dimW << 1, 1, 1;
-
-		trajTask = std::make_shared<tasks::qp::TrajectoryTask>(solver.robots().mbs(), 0, positionTask.get(), gainPos, gainVel, dimW, weight);
-		solver.addTask(trajTask.get());
-
-		/* Update position vector */
-		initPos = positionTask->position();
-		cout << "efL initial Pos " << initPos.transpose() << endl;
 
 
-		pos = Eigen::MatrixXd(3,tunParam2);
-		vel = Eigen::MatrixXd(3,tunParam2);
-		ace = Eigen::MatrixXd(3,tunParam2);
-	}
+	// HandoverTrajectoryTask::HandoverTrajectoryTask(mc_solver::QPSolver & solver)
+	// :solver(solver)
+	// {
+	// 	auto & robot = solver.robot();
+
+	// 	positionTask = std::make_shared<tasks::qp::PositionTask>(solver.robots().mbs(), 0, "LARM_LINK6", robot.mbc().bodyPosW[robot.bodyIndexByName("LARM_LINK6")].translation());
+
+	// 	Eigen::Vector3d dimW; dimW << 1, 1, 1;
+
+	// 	trajTask = std::make_shared<tasks::qp::TrajectoryTask>(solver.robots().mbs(), 0, positionTask.get(), gainPos, gainVel, dimW, weight);
+	// 	solver.addTask(trajTask.get());
+
+	// 	/* Update position vector */
+	// 	initPos = positionTask->position();
+	// 	cout << "efL initial Pos " << initPos.transpose() << endl;
 
 
-	HandoverTrajectoryTask::~HandoverTrajectoryTask()
-	{
-		solver.removeTask(trajTask.get());
-	}
+	// 	pos = Eigen::MatrixXd(3,tunParam2);
+	// 	vel = Eigen::MatrixXd(3,tunParam2);
+	// 	ace = Eigen::MatrixXd(3,tunParam2);
+	// }
 
 
-	bool HandoverTrajectoryTask::update()
-	{
-		// cout << "pos.rows() " << pos.rows() <<endl;
-		// cout << "pos.cols() " << pos.cols() <<endl;
+	// HandoverTrajectoryTask::~HandoverTrajectoryTask()
+	// {
+	// 	solver.removeTask(trajTask.get());
+	// }
 
- 		if(wp_index < pos.cols())
-		{
-			// cout << " Pos " << pos.col(wp_index).transpose() << endl;
 
-			//************ change initPos after every itr *****************8
+	// bool HandoverTrajectoryTask::update()
+	// {
+	// 	// cout << "pos.rows() " << pos.rows() <<endl;
+	// 	// cout << "pos.cols() " << pos.cols() <<endl;
 
-			positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
-			// positionTask->position(pos.col(wp_index) + initPos);
-			// positionTask->position(pos.col(wp_index));
+ // 		if(wp_index < pos.cols())
+	// 	{
+	// 		// cout << " Pos " << pos.col(wp_index).transpose() << endl;
 
-			trajTask->refVel(vel.col(wp_index));
-			refVel = vel.col(wp_index);
-			trajTask->refAccel(ace.col(wp_index));
-			refAce = ace.col(wp_index);
-			wp_index++;
-			// cout << "wp_index "<< wp_index <<endl;
+	// 		//************ change initPos after every itr *****************8
 
-			// cout << " Pos " << positionTask->position().transpose() << endl;
+	// 		positionTask->position(pos.col(wp_index) + initPos - pos.col(0));
+	// 		// positionTask->position(pos.col(wp_index) + initPos);
+	// 		// positionTask->position(pos.col(wp_index));
 
-			if(wp_index==tunParam2-1) //check if observation time is over then go to new observed pos
-			{
-				LOG_INFO("next iteration ")
-				wp_index = 0;
-				initPos = positionTask->position();
-				return true;
+	// 		trajTask->refVel(vel.col(wp_index));
+	// 		refVel = vel.col(wp_index);
+	// 		trajTask->refAccel(ace.col(wp_index));
+	// 		refAce = ace.col(wp_index);
+	// 		wp_index++;
+	// 		// cout << "wp_index "<< wp_index <<endl;
 
-			}
-			return false;
-		}
-		else
-		{	
-			LOG_WARNING(" nothing to do ")
-			// wpReady = true;
+	// 		// cout << " Pos " << positionTask->position().transpose() << endl;
 
-			positionTask->position(initPos);
+	// 		if(wp_index==tunParam2-1) //check if observation time is over then go to new observed pos
+	// 		{
+	// 			LOG_INFO("next iteration ")
+	// 			wp_index = 0;
+	// 			initPos = positionTask->position();
+	// 			return true;
 
-			trajTask->refVel(Eigen::Vector3d::Zero());
-			refVel=Eigen::Vector3d::Zero();
+	// 		}
+	// 		return false;
+	// 	}
+	// 	else
+	// 	{	
+	// 		LOG_WARNING(" nothing to do ")
+	// 		// wpReady = true;
+
+	// 		positionTask->position(initPos);
+
+	// 		trajTask->refVel(Eigen::Vector3d::Zero());
+	// 		refVel=Eigen::Vector3d::Zero();
 			
-			trajTask->refAccel(Eigen::Vector3d::Zero());
-			refAce=Eigen::Vector3d::Zero();
-			return false;
-		}
-	}
+	// 		trajTask->refAccel(Eigen::Vector3d::Zero());
+	// 		refAce=Eigen::Vector3d::Zero();
+	// 		return false;
+	// 	}
+	// }
 
 
 

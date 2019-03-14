@@ -57,50 +57,50 @@ namespace mc_handover
 	};
 
 
-	struct CircularTrajectory
-	{
-		public:
-			CircularTrajectory();
-			CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial);
-			std::pair<Eigen::Vector3d, Eigen::Vector3d> pop();
-			void reset();
-		private:
-		double r;
-		std::size_t nr_points;
-		Eigen::Vector3d x0;
-		std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > queue;
-	};
+	// struct CircularTrajectory
+	// {
+	// 	public:
+	// 		CircularTrajectory();
+	// 		CircularTrajectory(double radius, std::size_t nr_points, const Eigen::Vector3d& initial);
+	// 		std::pair<Eigen::Vector3d, Eigen::Vector3d> pop();
+	// 		void reset();
+	// 	private:
+	// 	double r;
+	// 	std::size_t nr_points;
+	// 	Eigen::Vector3d x0;
+	// 	std::queue<std::pair<Eigen::Vector3d, Eigen::Vector3d> > queue;
+	// };
 
 
-	class HandoverTrajectoryTask
-	{
-		public:
-		HandoverTrajectoryTask(mc_solver::QPSolver & solver);
-		~HandoverTrajectoryTask();
+	// class HandoverTrajectoryTask
+	// {
+	// 	public:
+	// 	HandoverTrajectoryTask(mc_solver::QPSolver & solver);
+	// 	~HandoverTrajectoryTask();
 
-		bool update();
+	// 	bool update();
 
-		long wp_index =0;
+	// 	long wp_index =0;
 
-		double gainPos	= 1e3;
-		double gainVel	= 1e2;
-		double weight	= 1e3;
+	// 	double gainPos	= 1e3;
+	// 	double gainVel	= 1e2;
+	// 	double weight	= 1e3;
 
-		int tunParam1{20}; //100ms
-		int tunParam2{200}; //1sec
+	// 	int tunParam1{20}; //100ms
+	// 	int tunParam2{200}; //1sec
 
-		Eigen::MatrixXd pos;
-		Eigen::MatrixXd vel;
-		Eigen::MatrixXd ace;
+	// 	Eigen::MatrixXd pos;
+	// 	Eigen::MatrixXd vel;
+	// 	Eigen::MatrixXd ace;
 
 
-		mc_solver::QPSolver & solver;
+	// 	mc_solver::QPSolver & solver;
 
-		std::shared_ptr<tasks::qp::PositionTask> positionTask;
-		std::shared_ptr<tasks::qp::TrajectoryTask> trajTask;
+	// 	std::shared_ptr<tasks::qp::PositionTask> positionTask;
+	// 	std::shared_ptr<tasks::qp::TrajectoryTask> trajTask;
 
-		Eigen::Vector3d initPos, refVel, refAce;
-	};
+	// 	Eigen::Vector3d initPos, refVel, refAce;
+	// };
 
 
 } // namespace mc_handover

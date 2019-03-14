@@ -101,6 +101,8 @@ namespace mc_handover
 			);
 	}
 
+
+
 	//////////////
 	//
 	// Handover Controller run
@@ -144,7 +146,7 @@ namespace mc_handover
 
 		result = getlogin_r(username, LOGIN_NAME_MAX);		
 		if (result)
-			{	perror("getlogin_r");	return EXIT_FAILURE;	}	
+			{	perror("getlogin_r");	return EXIT_FAILURE;	}
 		
 		if( strcmp(username, "hrp2user")==0 && strcmp(hostname, "hrp2012c")==0 )
 			{	Flag_ROBOT = true;	}
@@ -157,8 +159,6 @@ namespace mc_handover
 		
 		return EXIT_SUCCESS;
 	}
-
-
 
 
 

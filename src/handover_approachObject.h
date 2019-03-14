@@ -29,8 +29,7 @@
 #include <Tasks/QPTasks.h>
 
 #include "handover_controller.h"
-// #include "../states/StartMocapStep.h"
-
+#include "handover_trajectories.h"
 
 
 using namespace std;
@@ -40,6 +39,7 @@ namespace mc_handover
 {
 	struct ApproachObject
 	{
+	public:
 		ApproachObject();
 		~ApproachObject();
 
@@ -49,17 +49,16 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		bool predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotLtMarkers, double subjHandReady);
+		bool predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, double subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotLtMarkers);
 
 		void goToHandoverPose(const sva::PTransformd& robotEf, const std::shared_ptr<mc_tasks::OrientationTask>& oriTask, const std::shared_ptr<mc_tasks::PositionTask>& posTask);
 
 		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
 
-		Eigen::Vector3d p_r, p_l;
-		Eigen::Quaterniond ql, qr, q1l, q1r;
 
-		std::vector<Eigen::MatrixXd> markersPos;
-		std::vector<Eigen::Vector3d> Markers;
+		double closeGrippers{0.13};
+		double openGrippers{0.5};
+
 
 		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
 
@@ -68,15 +67,16 @@ namespace mc_handover
 
 		Eigen::Vector3d tuner;
 
-		int it;
 		int fps{200};
 		int t_predict;
 		int t_observe;
+		int it;
 
 		int i{1};
 		int e{0};
-
-		int body{0};
+		
+		std::vector<Eigen::MatrixXd> markersPos;
+		std::vector<Eigen::Vector3d> Markers;
 
 		int totalMarkers{19};//14, 19
 
@@ -131,8 +131,8 @@ namespace mc_handover
 		sva::PTransformd X_ef_Subj;
 		std::vector<sva::PTransformd> X_ef_S;
 		
-		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 		MCController * controller_ = nullptr;
+		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 
 		Eigen::MatrixXd newPosSubj, curVelSubj, wp;
 
@@ -142,10 +142,6 @@ namespace mc_handover
 		Eigen::Vector3d ithPosSubj, avgVelSubj, predictPos;
 		Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos, objectPos;
 
-
-
-		double closeGrippers{0.13};
-		double openGrippers{0.5};
 		
 		bool openGripper{false};
 		bool closeGripper{false};
@@ -161,5 +157,7 @@ namespace mc_handover
 		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull, Force;
 		double efMass, FNormAtClose;
 		std::vector<double> Floadx, Floady, Floadz;
-	};
+
+	};//strcut ApproachObject
+
 }//namespace mc_handover

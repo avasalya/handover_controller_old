@@ -42,9 +42,6 @@
 
 #include <typeinfo>
 
-#include "handover_trajectories.h"
-#include "handover_approachObject.h"
-
 
 using namespace std;
 using namespace Eigen;
@@ -79,12 +76,8 @@ namespace mc_handover
 		std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 		std::shared_ptr<mc_tasks::PositionTask> posTaskR;
 
-		std::shared_ptr<mc_handover::CircularTrajectory> cirTraj;
-		std::shared_ptr<mc_handover::HandoverTrajectoryTask>handoverTrajTask = nullptr;
-
-
 		bool getHostInfo();
-		bool Flag_ROBOT{false}; // default True for robot
+		bool Flag_ROBOT{false};
 		
 
 
