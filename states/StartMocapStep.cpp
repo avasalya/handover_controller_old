@@ -21,9 +21,8 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-
 			/*allocate memory*/
-			std::shared_ptr<mc_handover::ApproachObject> approachObj(std::make_shared<mc_handover::ApproachObject>());
+			approachObj = std::make_shared<mc_handover::ApproachObject>();
 			approachObj->initials();
 			maxMarkers = approachObj->totalMarkers;
 
@@ -194,8 +193,8 @@ namespace mc_handover
 			/*change prediction_ settings*/
 			ctl.gui()->addElement({"Handover", "tuner"},
 				mc_rtc::gui::ArrayInput("t_predict/t_observe", {"t_predict", "t_observe", "it"},
-					[this,&approachObj]() { return approachObj->tuner; }, 
-					[this,&approachObj](const Eigen::Vector3d & to){approachObj->tuner = to;cout<< "t_predict = " << approachObj->tuner(0)*1/fps<< "sec, t_observe = "<<approachObj->tuner(1)*1/fps<< "sec"<<endl;}));
+					[this]() { return approachObj->tuner; }, 
+					[this](const Eigen::Vector3d & to){approachObj->tuner = to;cout<< "t_predict = " << approachObj->tuner(0)*1/fps<< "sec, t_observe = "<<approachObj->tuner(1)*1/fps<< "sec"<<endl;}));
 
 			/*move object using cursor or simData*/
 			ctl.gui()->addElement({"Handover","move_object"},
@@ -207,7 +206,7 @@ namespace mc_handover
 						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
 					}),
 				// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-				mc_rtc::gui::Point3D("subj fing pos", [this,&ctl, &approachObj](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
+				mc_rtc::gui::Point3D("subj fing pos", [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
 				);
 
 			/*trajectory trail*/
@@ -217,7 +216,7 @@ namespace mc_handover
 				// 	[this, &ctl]() -> const vector<sva::PTransformd>& { return X_efL_S; }),
 
 				mc_rtc::gui::Trajectory("subj knuckle marker pos", {{1,1,0}, 0.01, mc_rtc::gui::LineStyle::Dotted},
-					[this, &approachObj]() -> const vector<Eigen::Vector3d>& { return approachObj->predictedPositions; } ),
+					[this]() -> const vector<Eigen::Vector3d>& { return approachObj->predictedPositions; } ),
 				
 				mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
 					[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
@@ -284,17 +283,14 @@ namespace mc_handover
 			// Cortex_Request("LiveMode", &pResponse, &nBytes);
 		
 
-			LOG_WARNING("***OK so far***")
 
 		}// start
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
-			std::shared_ptr<mc_handover::ApproachObject> approachObjFromLt(std::make_shared<mc_handover::ApproachObject>());
-
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-			
+						
 			/*hand pose*/
 			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
 			ltRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].rotation();
@@ -313,6 +309,7 @@ namespace mc_handover
 			target = initialCom + move;
 			comTask->com(target);
 
+			// LOG_WARNING("***OK so far***")
 
 			// /*Get non-stop MOCAP Frame*/
 			// getCurFrame = Cortex_GetCurrentFrame();

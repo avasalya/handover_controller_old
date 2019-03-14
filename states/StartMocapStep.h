@@ -63,8 +63,12 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			
 			
-			// std::shared_ptr<mc_handover::ApproachObject> approachObj;
+			// mc_handover::ApproachObject * approachObj;
 			// ApproachObject * approachObj = nullptr;
+
+			std::shared_ptr<mc_handover::ApproachObject> approachObj;
+			std::shared_ptr<mc_handover::ApproachObject> approachObjL;
+			std::shared_ptr<mc_handover::ApproachObject> approachObjR;
 
 
 		private:
