@@ -21,30 +21,36 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
-			/*initial F/T thresholds*/
-			thresh << 10, 10, 10, 6, 6, 6, 10, 10, 10, 6, 6, 6;
-
 			/*close grippers for safety*/
+			closeGrippers = approachObj->closeGrippers;
+			openGrippers = approachObj->openGrippers;
+
 			auto  gripperL = ctl.grippers["l_gripper"].get();
 			auto  gripperR = ctl.grippers["r_gripper"].get();
+
 			gripperL->setTargetQ({closeGrippers});
 			gripperR->setTargetQ({closeGrippers});
 
-			ltRotW << -0.138901, -0.0699416, 0.987833,
-			0.084922, 0.992987, 0.0822475,
-			-0.986658, 0.095313, -0.131987;
+			// ltRotW << -0.138901, -0.0699416, 0.987833,
+			// 0.084922, 0.992987, 0.0822475,
+			// -0.986658, 0.095313, -0.131987;
 
 			// initial orientation
-			ql = {0.95, 0.086, -0.25, -0.15};
-			qr = {0.95, 0.086, -0.25, -0.15};
+			ql = approachObj->ql;
+			qr = approachObj->qr;
 			
 			//for mocap_temp
-			q1l = {0.64, -0.01, -0.76, -0.06};
-			q1r = {0.64, -0.01, -0.76, -0.06};
+			q1l = approachObj->q1l;
+			q1r = approachObj->q1r;
 
-			p_l<< 0.3,0.3,1.1;
-			p_r<<0.3, -0.3,1.1;
+			p_l<< approachObj->p_l;
+			p_r<< approachObj->p_r;
 
+
+			LOG_ERROR("***OK so far***")
+
+			/*initial F/T thresholds*/
+			thresh << 10, 10, 10, 6, 6, 6, 10, 10, 10, 6, 6, 6;
 			/*initial force threshold*/
 			leftTh = thresh.segment(3,3);
 			rightTh = thresh.segment(9,3);
@@ -86,7 +92,7 @@ namespace mc_handover
 				{
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({openGrippers});
-					closeGripper = false; motion=true;
+					/*closeGripper = false; motion=true;*/
 				}),
 				mc_rtc::gui::Button("init*", [this, &ctl]()
 				{
@@ -294,6 +300,12 @@ namespace mc_handover
 			rtRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")].rotation();
 
 
+			/*Force sensor*/
+			leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+			rightForce=ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+			// LOG_ERROR("leftWrenchWithoutGravity " <<leftForce.transpose() << " norm "<< leftForce.norm() )
+
+
 			/*set com pose*/
 			target = initialCom + move;
 			comTask->com(target);
@@ -336,9 +348,8 @@ namespace mc_handover
 					FrameofData.BodyData[body].Markers[m][2]; // Z
 				}
 
-				if( approachObj->handoverPresets() )/* <----- this must returns true */
+				if( approachObj->handoverRun() )/* <----- this must returns true */
 				{
-
 					/*move EF when subject approaches object 1st time*/
 					if( subjRtHandReady && (approachObj->obj_rel_subjRtHand < 0.3) )
 					{
@@ -365,222 +376,30 @@ namespace mc_handover
 					}
 
 
-
-
-					/*)))))))))))))))))))))))))))) continue from below (((((((((((((((((((((((((((*/
-
-
 					/*observe subject motion for t_observe period*/
 					if( ((approachObj->i)%(approachObj->t_observe)==0) )
 					{
-						/*hmmm WHAT SHOULD IT RETURN ?? */
-						auto collected = approachObj->predictionController(approachObj->efLGripperPos, subjRtHandReady, ltHand, ltRotW);
+						approachObj->collected = approachObj->predictionController(ltHand, ltRotW, approachObj->lShapeLtMarkers, approachObj->robotLtMarkers, subjRtHandReady);
+
+						LOG_WARNING("i " << approachObj->i)
 					}
-					
-
-				
-
-
-
 
 
 					/*feed Ef pose*/
-					if( approachObj->predictionController(approachObj->efLGripperPos, subjRtHandReady, ltHand, ltRotW) )
+					if( approachObj->collected )
 					{
-						it+= (int)tuner(2);//40+(int)t_predict/t_observe;
+						approachObj->goToHandoverPose(ltHand, ctl.oriTaskL, ctl.posTaskL);
+					}
 
-						auto curLEfPos = ltHand.translation();
-
-						if(it<=wp.cols())
-						{
-							refPos << wp(0,it), wp(1,it), wp(2,it);
-							handoverPos = curLEfPos + refPos - initRefPos;
-							
-							// idt << RotX(90*DegToRad) * RotY(90*DegToRad) * RotZ(90*DegToRad);
-							// handoverRot = idt.transpose()*subjLtHandRot.transpose();
-
-							 /*robot constraint*/
-							if((handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) && 
-								(handoverPos(1)>= 0.05) && (handoverPos(1)<= 0.7) &&
-								(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5))
-							{
-								if(motion)
-								{
-									/*control head*/
-									if(handoverPos(1) >.45){ctl.set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-									else{ctl.set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
-
-									if(handoverPos(2) <1.1){ctl.set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
-									else{ctl.set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
-
-									/*handover pose*/
-									sva::PTransformd new_pose(handoverRot, handoverPos);
-									ctl.oriTaskL->orientation(new_pose.rotation());
-									ctl.posTaskL->position(new_pose.translation());
-
-									// ctl.oriTaskR->orientation(new_pose.rotation());
-									// ctl.posTaskR->position(new_pose.translation());
-								}
-							}
-
-							if(it==wp.cols())
-								{ collected  = false; }
-						}
-					}//collected
-
-
-					/*gripper control*/
-					auto close_gripperL = [&]()
-					{
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({closeGrippers});
-					};
-					auto open_gripperL = [&]()
-					{
-						auto gripper = ctl.grippers["l_gripper"].get();
-						gripper->setTargetQ({openGrippers});
-					};
-
-
-					/*Force sensor*/
-					leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-					// LOG_ERROR("leftWrenchWithoutGravity " <<leftForce.transpose() << " norm "<< leftForce.norm() )
 					
-					/*force control*/
-					auto checkForce = [&](const char *axis_name, int idx)
-					{
-						/*get acceleration of lHand*/
-						if(i>3)
-						{
-							for(int g=1; g<=3; g++)
-							{
-								efLPos[3-g] = 0.25*(
-									markersPos[wristLtEfA].col(i-g) + markersPos[wristLtEfB].col(i-g) +
-									markersPos[gripperLtEfA].col(i-g) + markersPos[gripperLtEfB].col(i-g)
-									);
-							}
-							efLVel[0] = (efLPos[1]-efLPos[0])*fps;
-							efLVel[1] = (efLPos[2]-efLPos[1])*fps;
-							efLAce = (efLVel[1]-efLVel[0])*fps;
-
-							efLMass = lFload.norm()/9.8; //lHandMass + objMass;
-							lFinert = efLMass*efLAce; //inertial Force at efL
-
-							lFpull[0] = abs(leftForce[0])-abs(lFinert[0]); //-abs(lFzero[0]);
-							lFpull[1] = abs(leftForce[1])-abs(lFinert[1]); //-abs(lFzero[1]);
-							lFpull[2] = abs(leftForce[2])-abs(lFinert[2]); //-abs(lFzero[2]);
-						}
-
-						/*new threshold*/
-						auto newLeftTh = lFload + leftTh;
+					/*force based handover control*/
+					auto taskOK = approachObj->handoverForceController(leftForce, leftTh, "l_gripper", approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
 
 
+				}// handoverRun
 
-						/* MAY BE check torque too ???? */
-						if( (abs(lFpull[idx]) > newLeftTh[idx]) && ( (lEf_area_wAB_gA > lEf_area_wAB_f) || (lEf_area_wAB_gB > lEf_area_wAB_f) ) )
-						{
-							open_gripperL();
-							restartHandover=true;
-							readyToGrasp=false;
-							dum1=false;
-							if(dum3)
-							{
-								dum3=false;
-								cout << "leftForces at Grasp "<< leftForce.transpose() <<endl;
-								cout << "lFinert              "<< lFinert.transpose() << " object mass " << efLMass <<endl;
-								LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << lFpull.transpose()<< " reached on left hand with th1 " << newLeftTh.transpose())
-							}
-						}
-						return false;
-					};
-
-
-					/*handover control*/
-					auto  gripperLtEf = (markersPos[gripperLtEfA].col(i)+markersPos[gripperLtEfB].col(i))/2;
-					if( ( (gripperLtEf-markersPos[fingerSubjLt].col(i) ).norm() <0.2 ) )
-					{
-						/*open empty gripper when subject come near to robot*/
-						if( (!openGripper) && (leftForce.norm()<1.0) )
-						{
-							lFzero = leftForce; //this has Fintertia too
-							open_gripperL();
-							LOG_WARNING("opening gripper with left Force Norm "<< leftForce.norm())
-							openGripper = true;
-						}
-
-						/*close gripper*/
-						if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (lEf_area_wAB_gA > lEf_area_wAB_O) || (lEf_area_wAB_gB > lEf_area_wAB_O) ) )
-						{
-							close_gripperL();
-							motion=false; //when subject hand is very close to efL
-							closeGripper = true;
-						}
-						
-						/*when closed WITH object*/
-						if( dum2 && closeGripper && (leftForce.norm()>=2.0) )
-						{
-							lFNormAtClose = leftForce.norm();
-							LOG_INFO(" object is inside gripper "<< leftForce.norm() )
-							dum2 = false;
-						}
-
-						/*check if object is being pulled*/
-						if(readyToGrasp)
-						{
-							return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
-						}
-					}
-
-
-					/*restart handover*/
-					if( (gripperLtEf-markersPos[fingerSubjLt].col(i)).norm() > 0.50 )
-					{
-						/*here comes only after object is grasped*/
-						if( (closeGripper) && (!restartHandover) && (lFNormAtClose>=2.0) )
-						{
-							if(e%200==0)//wait xx sec
-							{
-								motion=true;
-								readyToGrasp=true;
-
-								lFload <<
-								accumulate( lFloadx.begin(), lFloadx.end(), 0.0)/double(lFloadx.size()),
-								accumulate( lFloady.begin(), lFloady.end(), 0.0)/double(lFloady.size()),
-								accumulate( lFloadz.begin(), lFloadz.end(), 0.0)/double(lFloadz.size());
-
-								// LOG_INFO("ready to grasp again, avg itr size "<< lFloadx.size())
-
-								/*clear vector memories*/
-								lFloadx.clear(); lFloady.clear(); lFloadz.clear();
-							}
-							/*divide by 9.8 and you will get object mass*/
-							else
-							{
-								lFloadx.push_back( abs( abs(leftForce[0])-abs(lFzero[0]) ) );
-								lFloady.push_back( abs( abs(leftForce[1])-abs(lFzero[1]) ) );
-								lFloadz.push_back( abs( abs(leftForce[2])-abs(lFzero[2]) ) );
-							}
-							e+=1;//cout << "e " << e << endl;
-						}
-
-						if(restartHandover)
-						{
-							restartHandover=false;
-							openGripper=false;
-							closeGripper=false;
-
-							dum1=true;
-							dum2=true;
-							dum3=true;
-							cout<<"/*******restarting handover*******/"<<endl;
-						}
-					}
-
-
-
-
-				}// handoverPresets
 			}return false;// startCapture
+
 		}// run
 
 
@@ -590,8 +409,8 @@ namespace mc_handover
 
 			ctl.solver().removeTask(comTask);
 			
-			ctl.solver().removeTask(ctl.chestPosTask);
-			ctl.solver().removeTask(ctl.chestOriTask);
+			ctl.solver().removeTask(chestPosTask);
+			ctl.solver().removeTask(chestOriTask);
 
 			ctl.solver().removeTask(ctl.posTaskL);
 			ctl.solver().removeTask(ctl.oriTaskL);
@@ -603,7 +422,6 @@ namespace mc_handover
 		}
 
 	} // namespace states
-
 } // namespace mc_handover
 
 

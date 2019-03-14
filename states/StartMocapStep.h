@@ -5,7 +5,6 @@
 
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/fsm/State.h>
-// #include <SpaceVecAlg/SpaceVecAlg>
 
 
 #include <mc_rbdyn/Robot.h>
@@ -28,20 +27,16 @@ namespace mc_handover
 
 		public:
 			void configure(const mc_rtc::Configuration&) override {}
-
 			void start(mc_control::fsm::Controller&) override;
-
 			bool run(mc_control::fsm::Controller&) override;
-
 			void teardown(mc_control::fsm::Controller&) override;
 			
-			/*keep here*/
 			double pi = 3.14;
 			double DegToRad = pi/180;
 			double RadToDeg = 180/pi;
 			
-			double closeGrippers = 0.13;
-			double openGrippers = 0.5;
+			double closeGrippers;
+			double openGrippers;
 
 			int fps{200};
 			int maxMarkers, markersCount, until;
@@ -58,15 +53,17 @@ namespace mc_handover
 			Eigen::Vector3d p_r, p_l;
 			Eigen::Quaterniond ql, qr, q1l, q1r;
 			
+			Eigen::Vector3d leftForce, rightForce;
+
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
+
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
+			
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
 
 
 		private:
-			/*Keep here*/
-			/*cortex*/
 			sBodyDefs* pBodyDefs{NULL};
 			sBodyDef* pBody{NULL};
 			sFrameOfData* getCurFrame{NULL};
@@ -87,8 +84,6 @@ namespace mc_handover
 			bool subjLtHandReady{true};
 
 		};
-
-
 	} // namespace states
 } // namespace mc_handover
 
