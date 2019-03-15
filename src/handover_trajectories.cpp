@@ -180,51 +180,74 @@ namespace mc_handover
 
 
 
+
 	Eigen::Vector3d HandoverTrajectory::takeAverage(Eigen::MatrixXd m)
 	{
-		std::vector<double> vx, vy, vz;
-		double avgx=0, avgy=0, avgz=0;
+		std::vector<double> v[m.rows()];
+		double avg[2];//avg[m.rows()];
 
 		Eigen::Vector3d mean;
 
-		for(int i=1;i<=m.cols();i++)
+		for(int j=0; j<m.rows(); j++)
 		{
-			//ignore 1st value
-			if( (m(0,i)>-2) && (m(0,i)<2) )
+			for(int i=0;i<m.cols();i++)
 			{
-				vx.push_back(m(0,i));
+				v[j].push_back(m(j,i));
+			// cout << v[j].at(i) << endl;
+				avg[j]+=v[j].at(i);
 			}
-			else
-			{
-				vx.push_back(0.3);	
-			}
-
-			if( (m(1,i)>-2) && (m(1,i)<2) )
-			{
-				vy.push_back(m(1,i));
-			}
-			else
-			{
-				vy.push_back(0.3);	
-			}
-			
-			if( (m(2,i)>-2) && (m(2,i)<2) )
-			{
-				vz.push_back(m(2,i));
-			}
-			else
-			{
-				vz.push_back(0.3);	
-			}		
+		// cout << avg[j]/v[j].size() << endl;
+			mean(j)= avg[j]/v[j].size();
 		}
-
-		avgx = accumulate( vx.begin(), vx.end(), 0.0)/vx.size(); 
-		avgy = accumulate( vy.begin(), vy.end(), 0.0)/vy.size(); 
-		avgz = accumulate( vz.begin(), vz.end(), 0.0)/vz.size(); 
-
-		mean << avgx, avgy, avgz;
+		// cout<<"mean velocity " << mean.transpose()<<endl;
 		return mean;
 	}
+
+	// Eigen::Vector3d HandoverTrajectory::takeAverage(Eigen::MatrixXd m)
+	// {
+	// 	std::vector<double> vx, vy, vz;
+	// 	double avgx=0, avgy=0, avgz=0;
+
+	// 	Eigen::Vector3d mean;
+
+	// 	for(int i=1;i<=m.cols();i++)
+	// 	{
+	// 		//ignore 1st value
+	// 		if( (m(0,i)>-2) && (m(0,i)<2) )
+	// 		{
+	// 			vx.push_back(m(0,i));
+	// 		}
+	// 		else
+	// 		{
+	// 			vx.push_back(0.3);	
+	// 		}
+
+	// 		if( (m(1,i)>-2) && (m(1,i)<2) )
+	// 		{
+	// 			vy.push_back(m(1,i));
+	// 		}
+	// 		else
+	// 		{
+	// 			vy.push_back(0.3);	
+	// 		}
+			
+	// 		if( (m(2,i)>-2) && (m(2,i)<2) )
+	// 		{
+	// 			vz.push_back(m(2,i));
+	// 		}
+	// 		else
+	// 		{
+	// 			vz.push_back(0.3);	
+	// 		}		
+	// 	}
+
+	// 	avgx = accumulate( vx.begin(), vx.end(), 0.0)/vx.size(); 
+	// 	avgy = accumulate( vy.begin(), vy.end(), 0.0)/vy.size(); 
+	// 	avgz = accumulate( vz.begin(), vz.end(), 0.0)/vz.size(); 
+
+	// 	mean << avgx, avgy, avgz;
+	// 	return mean;
+	// }
 
 
 

@@ -61,14 +61,15 @@ namespace mc_handover
 
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
-			
-			
-			// mc_handover::ApproachObject * approachObj;
-			// ApproachObject * approachObj = nullptr;
 
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
-			std::shared_ptr<mc_handover::ApproachObject> approachObjL;
-			std::shared_ptr<mc_handover::ApproachObject> approachObjR;
+			
+			std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rLt;
+			std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rRt;
+
+			std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rRt;
+			std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rLt;
+			
 
 
 		private:
@@ -88,8 +89,8 @@ namespace mc_handover
 			double del{0};
 
 			bool startCapture{false};
-			bool subjRtHandReady{true};
-			bool subjLtHandReady{true};
+			bool subjRtHandReady{false};
+			bool subjLtHandReady{false};
 
 		};
 	} // namespace states

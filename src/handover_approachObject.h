@@ -49,11 +49,12 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		bool predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, double subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotLtMarkers);
+		bool predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, bool subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
 
-		void goToHandoverPose(const sva::PTransformd& robotEf, const std::shared_ptr<mc_tasks::OrientationTask>& oriTask, const std::shared_ptr<mc_tasks::PositionTask>& posTask);
+		bool goToHandoverPose(const sva::PTransformd& robotEf, const std::shared_ptr<mc_tasks::OrientationTask>& oriTask, const std::shared_ptr<mc_tasks::PositionTask>& posTask);
 
 		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+
 
 
 		double closeGrippers{0.13};
@@ -72,7 +73,7 @@ namespace mc_handover
 		int t_observe;
 		int it;
 
-		int i{1};
+		int i{0};
 		int e{0};
 		
 		std::vector<Eigen::MatrixXd> markersPos;
@@ -110,7 +111,6 @@ namespace mc_handover
 		double ef_area_wAB_f;
 
 		double obj_rel_subjLtHand, obj_rel_subjRtHand;
-		double subjHandReady;
 
 		Eigen::Matrix3d curRotEf, curRotLink6;
 
@@ -129,14 +129,12 @@ namespace mc_handover
 		Eigen::Matrix3d subjHandRot, handoverRot;
 		
 		sva::PTransformd X_ef_Subj;
-		std::vector<sva::PTransformd> X_ef_S;
 		
 		MCController * controller_ = nullptr;
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 
 		Eigen::MatrixXd newPosSubj, curVelSubj, wp;
 
-		std::vector<Eigen::Vector3d> predictedPositions;
 		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
 		Eigen::Vector3d ithPosSubj, avgVelSubj, predictPos;
