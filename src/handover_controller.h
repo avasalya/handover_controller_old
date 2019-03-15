@@ -23,6 +23,7 @@
 #include <mc_tasks/OrientationTask.h>
 #include <mc_tasks/ComplianceTask.h>
 #include <mc_tasks/PostureTask.h>
+#include <mc_tasks/LookAtTask.h>
 
 #include <Tasks/QPContactConstr.h>
 #include <Tasks/QPTasks.h>

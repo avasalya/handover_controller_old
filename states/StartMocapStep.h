@@ -62,6 +62,8 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 
+			std::shared_ptr<mc_tasks::LookAtTask> headTask;
+			
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
 			
 			std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rLt;

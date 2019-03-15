@@ -93,6 +93,13 @@ namespace mc_handover
 
 
 
+			/*HeadTask*/
+			Eigen::Vector3d headVector(1., 0, 0);
+			Eigen::Vector3d headTarget(0.,0.3,1.);
+			headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK0", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.)); ctl.solver().addTask(headTask);
+
+
+
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "randomPos"},
 				mc_rtc::gui::Button("open_gripperL & set flags", [this, &ctl]()
@@ -213,7 +220,7 @@ namespace mc_handover
 						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
 					}),
 				// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
-				mc_rtc::gui::Point3D("subj fing pos", [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
+				mc_rtc::gui::Point3D("object position", [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
 				);
 
 			/*trajectory trail*/
@@ -383,6 +390,8 @@ namespace mc_handover
 						approachObj->collected = approachObj->predictionController(p1l, q1l, subjRtHandReady, ltHand, ltRotW, approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
 					}
 
+					/*Head Pose*/
+					headTask->target(approachObj->objectPos);
 
 					/*feed Ef pose*/
 					if( subjRtHandReady && approachObj->collected )
@@ -394,8 +403,8 @@ namespace mc_handover
 					// LOG_WARNING("***OK 1***")
 					// LOG_WARNING("***OK 2***")
 					
-					// /*force based handover control*/
-					// taskOK = approachObj-->handoverForceController(leftForce, leftTh, "l_gripper", approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
+					/*force based handover control*/
+					taskOK = approachObj->handoverForceController(leftForce, leftTh, "l_gripper", approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
 
 
 				}// handoverRun

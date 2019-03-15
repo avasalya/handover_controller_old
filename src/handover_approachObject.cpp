@@ -7,7 +7,6 @@ namespace mc_handover
 	
 
 
-
 	/*allocate memory*/
 	void ApproachObject::initials()
 	{
@@ -226,20 +225,6 @@ namespace mc_handover
 				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5)
 				)
 			{
-				/*head pos*/
-				if(	(handoverPos(1)>= 0.00) && (handoverPos(1)<= 0.7) )
-				{
-					if(handoverPos(1) >.45){controller_->set_joint_pos("HEAD_JOINT0",  0.8);} //y //+ve to move head left
-					else{controller_->set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
-				}
-				else if( (handoverPos(1)<= 0.00) && (handoverPos(1)>= -0.7) )
-				{
-					if(handoverPos(1) <-.45){controller_->set_joint_pos("HEAD_JOINT0",  -0.4);} //y //+ve to move head left
-					else{controller_->set_joint_pos("HEAD_JOINT0",  0.); }//-ve to move head right
-				}
-				if(handoverPos(2) <1.1){controller_->set_joint_pos("HEAD_JOINT1",  0.6);} //z //+ve to move head down
-				else{controller_->set_joint_pos("HEAD_JOINT1",  -0.4);} //-ve to move head up
-
 				/*handover pose*/
 				sva::PTransformd new_pose(handoverRot, handoverPos);
 				oriTask->orientation(new_pose.rotation());
