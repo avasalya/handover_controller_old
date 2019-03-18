@@ -7,10 +7,11 @@
 #include <mc_control/fsm/State.h>
 
 
+#include "Tasks/QPTasks.h"
+
 #include <mc_rbdyn/Robot.h>
 
 #include "../cortex/cortex.h"
-
 
 #include "handover_approachObject.h"
 
@@ -34,6 +35,7 @@ namespace mc_handover
 			bool run(mc_control::fsm::Controller&) override;
 			void teardown(mc_control::fsm::Controller&) override;
 			
+
 			double pi = 3.14;
 			double DegToRad = pi/180;
 			double RadToDeg = 180/pi;
@@ -43,6 +45,7 @@ namespace mc_handover
 			int fps{200};
 			int maxMarkers, markersCount, until;
 			int body{0};
+
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
@@ -56,6 +59,8 @@ namespace mc_handover
 			Eigen::Quaterniond ql, qr, q1l, q1r;
 			
 			Eigen::Vector3d leftForce, rightForce;
+
+			std::shared_ptr<tasks::qp::JointsSelector> jointsSelector;
 
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
@@ -72,7 +77,6 @@ namespace mc_handover
 			std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rRt;
 			std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rLt;
 			
-
 
 		private:
 			sBodyDefs* pBodyDefs{NULL};
@@ -153,3 +157,9 @@ Matrix3x3 MakeMatrix( Vector3 X, Vector3 Y )
 //v′i=vicosθ+(k×vi)sinθ+k(k⋅vi)(1−cosθ)
 
 */
+
+
+/*selectActiveJoints*/
+// jointsSelector = std::make_shared<tasks::qp::JointsSelector>(
+// tasks::qp::JointsSelector::ActiveJoints(ctl.robots().mbs(), ctl.robots().robotIndex(), headTask.get(), activeJointsName));
+

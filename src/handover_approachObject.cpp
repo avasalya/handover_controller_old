@@ -240,10 +240,6 @@ namespace mc_handover
 
 	bool ApproachObject::handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName)
 	{
-		// robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};
-		// lShapeLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtB", "lShapeLtC", "lShapeLtD"};
-		// markersPos[markers_name_index[robotMarkersName[0]]]
-
 		/*direction vectors, projections and area*/
 		ef_wA_O  = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - objectPos;
 		ef_wA_wB = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[1]]].col(i);
@@ -294,8 +290,8 @@ namespace mc_handover
 				efVel[1] = (efPos[2]-efPos[1])*fps;
 				efAce = (efVel[1]-efVel[0])*fps;
 
-				efMass = Fload.norm()/9.8; //lHandMass + objMass;
-				Finert = efMass*efAce; //inertial Force at efL
+				efMass = Fload.norm()/9.8; //HandMass + objMass;
+				Finert = efMass*efAce; //inertial Force at ef
 
 				Fpull[0] = abs(handForce[0])-abs(Finert[0]); //-abs(Fzero[0]);
 				Fpull[1] = abs(handForce[1])-abs(Finert[1]); //-abs(Fzero[1]);

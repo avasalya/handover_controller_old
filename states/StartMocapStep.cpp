@@ -21,17 +21,19 @@ namespace mc_handover
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
 
+
 			/*allocate memory*/
 			approachObj = std::make_shared<mc_handover::ApproachObject>();
-
-			// approachObj_sRt_rLt = std::make_shared<mc_handover::ApproachObject>();
-			// approachObj_sRt_rRt = std::make_shared<mc_handover::ApproachObject>();
-
-			// approachObj_sLt_rRt = std::make_shared<mc_handover::ApproachObject>();
-			// approachObj_sLt_rLt = std::make_shared<mc_handover::ApproachObject>();
-
 			approachObj->initials();
 			maxMarkers = approachObj->totalMarkers;
+
+
+			/*copy pointers*/
+			approachObj_sRt_rLt = approachObj;
+			approachObj_sRt_rRt = approachObj;
+
+			approachObj_sLt_rRt = approachObj;
+			approachObj_sLt_rLt = approachObj;
 
 
 			/*close grippers for safety*/
@@ -96,8 +98,13 @@ namespace mc_handover
 			/*HeadTask*/
 			Eigen::Vector3d headVector(1., 0, 0);
 			Eigen::Vector3d headTarget(0.,0.3,1.);
-			headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK0", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.)); ctl.solver().addTask(headTask);
-
+			std::vector<std::string> activeJointsName = {"HEAD_JOINT0", "HEAD_JOINT1"};
+			headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK0", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.));
+			ctl.solver().addTask(headTask);
+			
+			// std::map<std::string, std::vector<std::array<int, 2>>> activeDofs;
+			headTask->selectActiveJoints(ctl.solver(), activeJointsName/*, activeDofs*/);
+			
 
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
@@ -361,8 +368,11 @@ namespace mc_handover
 
 				if( approachObj->handoverRun() )
 				{
+					LOG_ERROR(approachObj_sRt_rLt->obj_rel_subjRtHand);
+					LOG_INFO(approachObj->obj_rel_subjRtHand);
+
 					/*move EF when subject approaches object 1st time*/
-					if( !subjRtHandReady && (approachObj->obj_rel_subjRtHand < 0.2) )
+					if( !subjRtHandReady && (approachObj_sRt_rLt->obj_rel_subjRtHand < 0.2) )
 					{
 						ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 						ctl.posTaskL->position(p1l);
@@ -373,7 +383,7 @@ namespace mc_handover
 							subjRtHandReady=true;
 						}
 					}
-					// else if( !subjLtHandReady && (approachObj->obj_rel_subjLtHand < 0.2) )
+					// else if( !subjLtHandReady && (approachObj_sLt_rRt->obj_rel_subjLtHand < 0.2) )
 					// {
 					// 	ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 					// 	ctl.posTaskR->position(p1r);
@@ -387,32 +397,28 @@ namespace mc_handover
 					/*observe subject motion for t_observe period*/
 					if( ((approachObj->i)%(approachObj->t_observe)==0) )
 					{
-						approachObj->collected = approachObj->predictionController(p1l, q1l, subjRtHandReady, ltHand, ltRotW, approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
+						approachObj->collected = approachObj_sRt_rLt->predictionController(p1l, q1l, subjRtHandReady, ltHand, ltRotW, approachObj_sRt_rLt->lShapeLtMarkers, approachObj_sRt_rLt->robotLtMarkers);
 					}
+
 
 					/*Head Pose*/
 					headTask->target(approachObj->objectPos);
 
+
 					/*feed Ef pose*/
 					if( subjRtHandReady && approachObj->collected )
 					{
-						taskOK = approachObj->goToHandoverPose(ltHand, ctl.oriTaskL, ctl.posTaskL);
+						taskOK = approachObj_sRt_rLt->goToHandoverPose(ltHand, ctl.oriTaskL, ctl.posTaskL);
 					}
 
-					// LOG_ERROR("***OK 0***")
-					// LOG_WARNING("***OK 1***")
-					// LOG_WARNING("***OK 2***")
-					
+
 					/*force based handover control*/
-					taskOK = approachObj->handoverForceController(leftForce, leftTh, "l_gripper", approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
+					taskOK = approachObj_sRt_rLt->handoverForceController(leftForce, leftTh, "l_gripper", approachObj_sRt_rLt->lShapeLtMarkers, approachObj_sRt_rLt->robotLtMarkers);
 
 
 				}// handoverRun
-
 			}
-
 			return false;// startCapture
-
 		}// run
 
 
