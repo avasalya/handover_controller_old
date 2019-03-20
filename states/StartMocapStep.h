@@ -34,7 +34,7 @@ namespace mc_handover
 			void start(mc_control::fsm::Controller&) override;
 			bool run(mc_control::fsm::Controller&) override;
 			void teardown(mc_control::fsm::Controller&) override;
-			
+
 
 			double pi = 3.14;
 			double DegToRad = pi/180;
@@ -43,7 +43,7 @@ namespace mc_handover
 			bool taskOK;
 
 			int fps{200};
-			int maxMarkers, markersCount, until;
+			int maxMarkers, markersCount, until, b_;
 			int body{0};
 
 
@@ -51,38 +51,36 @@ namespace mc_handover
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
-			
+
 			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;
 
 			Eigen::Vector3d p1r, p1l;
 			Eigen::Quaterniond ql, qr, q1l, q1r;
-			
+
+			Eigen::Vector3d initPosL, initPosR;
+			Eigen::Matrix3d initOriL, initOriR;
+
 			Eigen::Vector3d leftForce, rightForce;
 
-			std::shared_ptr<tasks::qp::JointsSelector> jointsSelector;
-
+			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
+			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
+			std::shared_ptr<mc_tasks::LookAtTask> headTask;
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
-			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
-			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
-
-			std::shared_ptr<mc_tasks::LookAtTask> headTask;
-			
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
-			
-			std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rLt;
-			std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rRt;
+			// std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rLt;
+			// std::shared_ptr<mc_handover::ApproachObject> approachObj_sRt_rRt;
+			// std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rRt;
+			// std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rLt;
 
-			std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rRt;
-			std::shared_ptr<mc_handover::ApproachObject> approachObj_sLt_rLt;
-			
 
 		private:
 			sBodyDefs* pBodyDefs{NULL};
 			sBodyDef* pBody{NULL};
 			sFrameOfData* getCurFrame{NULL};
 			sFrameOfData FrameofData;
+			// sBodyData* BodyData{NULL};
 
 			std::vector<int> bodyMarkers;
 
@@ -91,6 +89,7 @@ namespace mc_handover
 			int nBytes;
 			int totalBodies;
 			int retval = RC_Okay;
+			int c{0};
 
 			double del{0};
 

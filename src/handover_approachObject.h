@@ -43,6 +43,8 @@ namespace mc_handover
 		ApproachObject();
 		~ApproachObject();
 
+		// ApproachObject(const ApproachObject & );
+
 		void initials();
 
 		bool checkFrameOfData(std::vector<Eigen::Vector3d>);
@@ -76,29 +78,15 @@ namespace mc_handover
 		int i{0};
 		int e{0};
 		
+		int totalMarkers{19};//14, 19
+		
 		std::vector<Eigen::MatrixXd> markersPos;
 		std::vector<Eigen::Vector3d> Markers;
 
-		int totalMarkers{19};//14, 19
-
-		int wristLtEfA{0}, wristLtEfB{1};
-		int gripperLtEfA{2}, gripperLtEfB{3};
-
-		int wristRtEfA{4}, wristRtEfB{5};
-		int gripperRtEfA{6}, gripperRtEfB{7};
-
-		int object{8};
-
-		int fingerSubjLt{9};
-		int lShapeLtA{10}, lShapeLtB{11}, lShapeLtC{12}, lShapeLtD{13};
-
-		int fingerSubjRt{14};
-		int lShapeRtA{15}, lShapeRtB{16}, lShapeRtC{17}, lShapeRtD{18};
-
-		std::vector<std::string> strMarkersName, robotLtMarkers, lShapeLtMarkers, robotRtMarkers, lShapeRtMarkers;
+		std::vector<std::string> strMarkersBodyName, strMarkersName, robotLtMarkers, lShapeLtMarkers, robotRtMarkers, lShapeRtMarkers;
 		std::map<std::string, double> markers_name_index; 
 
-		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_lf;
+		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
 		double ef_wAB_theta_wAO;
 		double ef_wAB_theta_wAgA;

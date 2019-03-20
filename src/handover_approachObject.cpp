@@ -6,26 +6,31 @@ namespace mc_handover
 	{ cout<<"object created " <<endl; }
 	
 
+	// ApproachObject::ApproachObject(const ApproachObject & )
 
 	/*allocate memory*/
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
+
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};
 
-		lShapeLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtB", "lShapeLtC", "lShapeLtD"};
 		lShapeRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};
+		// lShapeLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtB", "lShapeLtC", "lShapeLtD"};
+		lShapeLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), "object");
-		strMarkersName.insert(strMarkersName.end(), lShapeLtMarkers.begin(), lShapeLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), lShapeRtMarkers.begin(), lShapeRtMarkers.end());
-
+		strMarkersName.insert(strMarkersName.end(), lShapeLtMarkers.begin(), lShapeLtMarkers.end());
 
 		for(unsigned int k=0; k<strMarkersName.size(); k++)
 			markers_name_index[strMarkersName[k]] = k;
+
+		// strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "6mars_obj_subj_right_hand", "5mars_subj_left_hand"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "6mars_obj_subj_right_hand", "4mars_subj_left_hand"};
 
 
 		Markers.resize(totalMarkers);
@@ -54,20 +59,22 @@ namespace mc_handover
 
 		if(Flag_withoutRobot)
 		{
-			Markers[wristLtEfA] << 0.208955, 0.350982, 0.552377;
-			Markers[wristLtEfB] << 0.15638, 0.352496, 0.547814;
-			Markers[gripperLtEfA] << 0.217815, 0.334505, 0.432962;
-			Markers[gripperLtEfB] << 0.162401,  0.33451, 0.42898;
+			/*robot left markers*/
+			Markers[0] << 0.208955, 0.350982, 0.552377;
+			Markers[1] << 0.15638, 0.352496, 0.547814;
+			Markers[2] << 0.217815, 0.334505, 0.432962;
+			Markers[3] << 0.162401,  0.33451, 0.42898;
 
-			Markers[wristRtEfA] << 0.14048, -0.309184, 0.550067;
-			Markers[wristRtEfB] << 0.198771, -0.308889,  0.555116;
-			Markers[gripperRtEfA] << 0.148997, -0.29622, 0.418868;
-			Markers[gripperRtEfB] << 0.202506, -0.293441, 0.425241;
+			/*robot right markers*/
+			Markers[4] << 0.14048, -0.309184, 0.550067;
+			Markers[5] << 0.198771, -0.308889,  0.555116;
+			Markers[6] << 0.148997, -0.29622, 0.418868;
+			Markers[7] << 0.202506, -0.293441, 0.425241;
 		}
 
 		for(unsigned int k=0; k<strMarkersName.size(); k++)
 		{
-			// LOG_WARNING(k<<" "<<strMarkersName[k]<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
+			// LOG_WARNING(k<<" "<<strMarkersName[k])//<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
 
 			if( Markers[k](0)>-10 && Markers[k](0)!=0 && Markers[k](0)<10 )
 				{ checkNonZero = true; }
@@ -90,11 +97,12 @@ namespace mc_handover
 				{ markersPos[m].col(i) << Markers[m]; }
 
 			/*for GUI*/
-			objectPos = markersPos[object].col(i);
+			objectPos = markersPos[ markers_name_index[ strMarkersName[8] ] ].col(i);
 
 			/*move EF when subject approaches object 1st time*/
-			obj_rel_subjLtHand = ( markersPos[lShapeLtC].col(i) - objectPos ).norm();
-			obj_rel_subjRtHand = ( markersPos[lShapeRtC].col(i) - objectPos ).norm();
+			obj_rel_subjRtHand = ( markersPos[ markers_name_index[ strMarkersName[12] ] ].col(i) - objectPos ).norm();
+			// obj_rel_subjLtHand = ( markersPos[ markers_name_index[ strMarkersName[17] ] ].col(i) - objectPos ).norm();
+			obj_rel_subjLtHand = ( markersPos[ markers_name_index[ strMarkersName[16] ] ].col(i) - objectPos ).norm();
 
 			return true;
 		}
@@ -135,11 +143,17 @@ namespace mc_handover
 		/*check subj hand's relative orientation*/
 		if(subjHandReady)
 		{
-			curPosLshp = markersPos[markers_name_index[lShpMarkersName[3]]].col(i); //markersPos[lShapeLtC].col(i);
 
 			/*get unit vectors XYZ of subject LEFT hand*/
+			auto sizeStr = lShpMarkersName.size();
+			
+			// curPosLshp = markersPos[markers_name_index[lShpMarkersName[3]]].col(i); //markersPos[lShapeLtC].col(i);
+			curPosLshp = markersPos[markers_name_index[lShpMarkersName[sizeStr-2]]].col(i); //markersPos[lShapeLtC].col(i);
+
+			// y = markersPos[markers_name_index[lShpMarkersName[4]]].col(i) - curPosLshp;//vCD=Y
+			y = markersPos[markers_name_index[lShpMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
+			
 			x = markersPos[markers_name_index[lShpMarkersName[1]]].col(i) - curPosLshp;//vCA=X
-			y = markersPos[markers_name_index[lShpMarkersName[4]]].col(i) - curPosLshp;//vCD=Y
 
 			lshp_X = x/x.norm();
 			lshp_Y = y/y.norm();
@@ -233,7 +247,7 @@ namespace mc_handover
 		}
 		if(it==wp.cols())
 		{ collected  = false; }
-		return false;
+		return true;
 	}
 
 
@@ -245,17 +259,17 @@ namespace mc_handover
 		ef_wA_wB = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[1]]].col(i);
 		ef_wA_gA = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[2]]].col(i);
 		ef_wA_gB = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[3]]].col(i);
-		ef_wA_lf = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[lShpMarkersName[0]]].col(i);
+		ef_wA_f  = markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[lShpMarkersName[0]]].col(i);
 
 		ef_wAB_theta_wAO = acos( ef_wA_wB.dot(ef_wA_O)/( ef_wA_wB.norm()*ef_wA_O.norm() ) );
 		ef_wAB_theta_wAgA = acos( ef_wA_wB.dot(ef_wA_gA)/( ef_wA_wB.norm()*ef_wA_gA.norm() ) );
 		ef_wAB_theta_wAgB = acos( ef_wA_wB.dot(ef_wA_gB)/( ef_wA_wB.norm()*ef_wA_gB.norm() ) );
-		ef_wAB_theta_wAf = acos( ef_wA_wB.dot(ef_wA_lf)/( ef_wA_wB.norm()*ef_wA_lf.norm() ) );
+		ef_wAB_theta_wAf = acos( ef_wA_wB.dot(ef_wA_f)/( ef_wA_wB.norm()*ef_wA_f.norm() ) );
 
 		ef_area_wAB_O  = 0.5*ef_wA_wB.norm()*ef_wA_O.norm()*sin(ef_wAB_theta_wAO);
 		ef_area_wAB_gA = 0.5*ef_wA_wB.norm()*ef_wA_gA.norm()*sin(ef_wAB_theta_wAgA);
 		ef_area_wAB_gB = 0.5*ef_wA_wB.norm()*ef_wA_gB.norm()*sin(ef_wAB_theta_wAgB);
-		ef_area_wAB_f  = 0.5*ef_wA_wB.norm()*ef_wA_lf.norm()*sin(ef_wAB_theta_wAf);
+		ef_area_wAB_f  = 0.5*ef_wA_wB.norm()*ef_wA_f.norm()*sin(ef_wAB_theta_wAf);
 
 
 		/*gripper control*/
@@ -338,8 +352,8 @@ namespace mc_handover
 			if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
 			{
 				close_gripper();
-				motion=false; //when subject hand is very close to efL
 				closeGripper = true;
+				motion=false; //when subject hand is very close to efL
 			}
 			
 			/*when closed WITH object*/

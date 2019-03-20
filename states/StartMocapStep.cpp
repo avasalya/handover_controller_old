@@ -28,12 +28,14 @@ namespace mc_handover
 			maxMarkers = approachObj->totalMarkers;
 
 
+			// approachObj_sRt_rLt = std::make_shared<mc_handover::ApproachObject>();
+			
 			/*copy pointers*/
-			approachObj_sRt_rLt = approachObj;
-			approachObj_sRt_rRt = approachObj;
+			// approachObj_sRt_rLt = approachObj;
+			// approachObj_sRt_rRt = approachObj;
 
-			approachObj_sLt_rRt = approachObj;
-			approachObj_sLt_rLt = approachObj;
+			// approachObj_sLt_rRt = approachObj;
+			// approachObj_sLt_rLt = approachObj;
 
 
 			/*close grippers for safety*/
@@ -83,6 +85,10 @@ namespace mc_handover
 			ctl.oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskL);
 
+			LOG_INFO("leftEf pos " << ctl.posTaskL->position().transpose() << "\n"
+				"leftEf ori " << ctl.oriTaskL->orientation() << "\n")
+			initPosL = ctl.posTaskL->position();
+			initOriL = ctl.oriTaskL->orientation();
 
 
 			/*EfR pos Task*/
@@ -93,18 +99,20 @@ namespace mc_handover
 			ctl.oriTaskR = make_shared<mc_tasks::OrientationTask>("RARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(ctl.oriTaskR);
 
+			LOG_INFO("rightEf pos " << ctl.posTaskR->position().transpose() << "\n"
+				"rightEf ori " << ctl.oriTaskR->orientation() << "\n")
+			initPosR = ctl.posTaskR->position();
+			initOriR = ctl.oriTaskR->orientation();
 
 
 			/*HeadTask*/
 			Eigen::Vector3d headVector(1., 0, 0);
 			Eigen::Vector3d headTarget(0.,0.3,1.);
 			std::vector<std::string> activeJointsName = {"HEAD_JOINT0", "HEAD_JOINT1"};
-			headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK0", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.));
+			headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK1", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.));
 			ctl.solver().addTask(headTask);
-			
-			// std::map<std::string, std::vector<std::array<int, 2>>> activeDofs;
-			headTask->selectActiveJoints(ctl.solver(), activeJointsName/*, activeDofs*/);
-			
+			headTask->selectActiveJoints(ctl.solver(), activeJointsName);
+
 
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
@@ -302,14 +310,13 @@ namespace mc_handover
 			printf("\n*** start live mode ***\n");
 			Cortex_Request("LiveMode", &pResponse, &nBytes);
 
-
 		}// start
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
-						
+
 			/*hand pose*/
 			ltHand = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK7")];
 			ltRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("LARM_LINK6")].rotation();
@@ -352,27 +359,42 @@ namespace mc_handover
 			{
 				/*get markers position FrameByFrame*/
 				if(approachObj->Flag_withoutRobot)
-				{ until = 8; }
+				{ b_ = 2; c = 8; }
 				else
-				{ until = 0; }
+				{ b_ = 0; c = 0; }
 
-
-				markersCount = maxMarkers-until;
-				for(int m=0; m<markersCount; m++)
+				for(int b=b_; b<totalBodies; b++)
 				{
-					approachObj->Markers[m+until] <<
-					FrameofData.BodyData[body].Markers[m][0], // X
-					FrameofData.BodyData[body].Markers[m][1], // Y
-					FrameofData.BodyData[body].Markers[m][2]; // Z
+					/*make sure mocap template body marker's index are correct*/
+					pBody = &pBodyDefs->BodyDefs[b];
+					if(pBody->szName == approachObj->strMarkersBodyName[b])
+					{
+						/*LOG_INFO("body name: "<<pBody->szName<<"\n"<<
+							" pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
+							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" )*/
+
+						for(int m=0; m<pBody->nMarkers; m++)
+						{
+							approachObj->Markers[c] <<
+							FrameofData.BodyData[b].Markers[m][0], // X
+							FrameofData.BodyData[b].Markers[m][1], // Y
+							FrameofData.BodyData[b].Markers[m][2]; // Z
+							c+=1;
+						}
+					}
+					else
+					{ LOG_ERROR("approachObj->strMarkersBodyName[b] "<<approachObj->strMarkersBodyName[b]<<"\n"<<
+						"pBody->szName "<<pBody->szName<<"\n"<< 
+						"pBody->nMarkers: " << pBody->nMarkers<<"\n"<< 
+						 " & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 				}
 
-				if( approachObj->handoverRun() )
-				{
-					LOG_ERROR(approachObj_sRt_rLt->obj_rel_subjRtHand);
-					LOG_INFO(approachObj->obj_rel_subjRtHand);
 
+				// LOG_SUCCESS("nUnidentifiedMarkers "<<FrameofData.nUnidentifiedMarkers)
+				if( approachObj->handoverRun() && (FrameofData.nUnidentifiedMarkers==0) )
+				{
 					/*move EF when subject approaches object 1st time*/
-					if( !subjRtHandReady && (approachObj_sRt_rLt->obj_rel_subjRtHand < 0.2) )
+					if( !subjRtHandReady && (approachObj->obj_rel_subjRtHand < 0.2) )
 					{
 						ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
 						ctl.posTaskL->position(p1l);
@@ -383,7 +405,7 @@ namespace mc_handover
 							subjRtHandReady=true;
 						}
 					}
-					// else if( !subjLtHandReady && (approachObj_sLt_rRt->obj_rel_subjLtHand < 0.2) )
+					// else if( !subjLtHandReady && (approachObj->obj_rel_subjLtHand < 0.2) )
 					// {
 					// 	ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
 					// 	ctl.posTaskR->position(p1r);
@@ -394,26 +416,40 @@ namespace mc_handover
 					// 	}
 					// }
 
-					/*observe subject motion for t_observe period*/
-					if( ((approachObj->i)%(approachObj->t_observe)==0) )
-					{
-						approachObj->collected = approachObj_sRt_rLt->predictionController(p1l, q1l, subjRtHandReady, ltHand, ltRotW, approachObj_sRt_rLt->lShapeLtMarkers, approachObj_sRt_rLt->robotLtMarkers);
-					}
-
 
 					/*Head Pose*/
 					headTask->target(approachObj->objectPos);
 
 
-					/*feed Ef pose*/
-					if( subjRtHandReady && approachObj->collected )
+
+					/*observe subject motion for t_observe period*/
+					if( ((approachObj->i)%(approachObj->t_observe)==0) )
 					{
-						taskOK = approachObj_sRt_rLt->goToHandoverPose(ltHand, ctl.oriTaskL, ctl.posTaskL);
+						approachObj->collected = approachObj->predictionController(p1l, q1l, subjRtHandReady, ltHand, ltRotW, approachObj->lShapeRtMarkers, approachObj->robotLtMarkers);
+					}
+
+
+
+					/*feed Ef pose*/
+					if( approachObj->collected )
+					{
+						if(	subjRtHandReady && (approachObj->objectPos(1)> 0.15) && (approachObj->objectPos(1)<= 0.7) )
+						{
+							taskOK = approachObj->goToHandoverPose(ltHand, ctl.oriTaskL, ctl.posTaskL);
+							ctl.posTaskR->position(initPosR);
+							ctl.oriTaskR->orientation(initOriR);
+						}
+						else if( subjLtHandReady && (approachObj->objectPos(1)>= -0.7) && (approachObj->objectPos(1)<= 0.15) )
+						{
+							taskOK = approachObj->goToHandoverPose(rtHand, ctl.oriTaskR, ctl.posTaskR);
+							ctl.posTaskL->position(initPosL);
+							ctl.oriTaskL->orientation(initOriL);
+						}
 					}
 
 
 					/*force based handover control*/
-					taskOK = approachObj_sRt_rLt->handoverForceController(leftForce, leftTh, "l_gripper", approachObj_sRt_rLt->lShapeLtMarkers, approachObj_sRt_rLt->robotLtMarkers);
+					taskOK = approachObj->handoverForceController(leftForce, leftTh, "l_gripper", approachObj->lShapeRtMarkers, approachObj->robotLtMarkers);
 
 
 				}// handoverRun
@@ -482,3 +518,22 @@ namespace mc_handover
 //https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
 //http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
 //http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
+
+
+
+
+	// LOG_INFO(approachObj->obj_rel_subjRtHand);
+	// LOG_ERROR(approachObj->obj_rel_subjRtHand);
+
+	// approachObj->obj_rel_subjRtHand = approachObj->obj_rel_subjRtHand;
+
+	// LOG_WARNING(approachObj->obj_rel_subjRtHand);
+
+
+	// approachObj->dum1 = false;
+	// LOG_ERROR(approachObj->dum1);
+	// LOG_INFO(approachObj->dum1);
+
+	// approachObj->dum1 = true;
+	// LOG_SUCCESS(approachObj_sLt_rRt->dum1);
+	// LOG_INFO(approachObj->dum1);
