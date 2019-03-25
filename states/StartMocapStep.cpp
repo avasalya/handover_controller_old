@@ -456,37 +456,49 @@ namespace mc_handover
 						{
 							if( (approachObj->objectPos(1)> 0.15) && (approachObj->objectPos(1)<= 0.7) )
 							{
-								// if(approachObj->obj_rel_subjLtHand<0.2)
-								// {
-								// 	LOG_WARNING(" object in subj left hand approaching Positive Y")
-								// 	approachObj->useRobotLeftHand = approachObj->predictionController(p1l, q1l, "NO_subjLtHandReady", ltHand, ltRotW, approachObj->lShapeLtMarkers, approachObj->robotLtMarkers, BodyW);
-								// }
-								// else
-								// {
-									approachObj->useRobotLeftHand = approachObj->predictionController(p1l, q1l, "subjRtHandReady", ltHand, ltRotW, approachObj->lShapeRtMarkers, approachObj->robotLtMarkers, BodyW);
-								// }
+								if(!approachObj->useRobotLeftHand)
+								{
+									ctl.oriTaskL->orientation(q1l.toRotationMatrix().transpose());
+									ctl.posTaskL->position(p1l);
+								}
+
+								if(approachObj->obj_rel_subjLtHand<0.2)
+								{
+									LOG_WARNING(" object in subj left hand approaching Positive Y")
+									approachObj->useRobotLeftHand = approachObj->predictionController(p1l, q1l, "NO_subjLtHandReady", ltHand, ltRotW, approachObj->lShapeLtMarkers, approachObj->robotLtMarkers);
+								}
+								else
+								{
+									approachObj->useRobotLeftHand = approachObj->predictionController(p1l, q1l, "subjRtHandReady", ltHand, ltRotW, approachObj->lShapeRtMarkers, approachObj->robotLtMarkers);
+								}
 
 								approachObj->useRobotRightHand = false;
-								// ctl.posTaskR->position(initPosR);
-								// ctl.oriTaskR->orientation(initOriR);
+								ctl.posTaskR->position(initPosR);
+								ctl.oriTaskR->orientation(initOriR);
 								// ctl.oriTaskR->orientation(initOriR.transpose());
 
 							}
 							else if( (approachObj->objectPos(1)>= -0.7) && (approachObj->objectPos(1)<= 0.15) )
 							{
-								// if(approachObj->obj_rel_subjRtHand<0.2)
-								// {
-								// 	LOG_INFO(" object in subj right hand approaching negative Y")
-								// 	approachObj->useRobotRightHand = approachObj->predictionController(p1r, q1r, "NO_subjRtHandReady", rtHand, rtRotW, approachObj->lShapeRtMarkers, approachObj->robotRtMarkers, BodyW);
-								// }
-								// else
-								// {
-									approachObj->useRobotRightHand = approachObj->predictionController(p1r, q1r, "subjLtHandReady", rtHand, rtRotW, approachObj->lShapeLtMarkers, approachObj->robotRtMarkers, BodyW);
-								// }
+								if(!approachObj->useRobotRightHand)
+								{
+									ctl.oriTaskR->orientation(q1r.toRotationMatrix().transpose());
+									ctl.posTaskR->position(p1r);
+								}
+
+								if(approachObj->obj_rel_subjRtHand<0.2)
+								{
+									LOG_INFO(" object in subj right hand approaching negative Y")
+									approachObj->useRobotRightHand = approachObj->predictionController(p1r, q1r, "NO_subjRtHandReady", rtHand, rtRotW, approachObj->lShapeRtMarkers, approachObj->robotRtMarkers);
+								}
+								else
+								{
+									approachObj->useRobotRightHand = approachObj->predictionController(p1r, q1r, "subjLtHandReady", rtHand, rtRotW, approachObj->lShapeLtMarkers, approachObj->robotRtMarkers);
+								}
 
 								approachObj->useRobotLeftHand = false;
-								// ctl.posTaskL->position(initPosL);
-								// ctl.oriTaskL->orientation(initOriL);
+								ctl.posTaskL->position(initPosL);
+								ctl.oriTaskL->orientation(initOriL);
 								// ctl.oriTaskL->orientation(initOriL.transpose());
 
 							}

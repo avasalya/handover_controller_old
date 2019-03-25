@@ -107,7 +107,7 @@ namespace mc_handover
 
 
 	
-	bool ApproachObject::predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, std::string subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName, sva::PTransformd BodyW)
+	bool ApproachObject::predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, std::string subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName)
 	{
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
@@ -150,10 +150,11 @@ namespace mc_handover
 		{
 			subjHandRot.col(0) = lshp_X;
 			subjHandRot.col(1) = lshp_Y;
-			
-			/*convert to 2D rotation method*/
-			subjHandRot.row(2) = lshp_Z/lshp_Z.norm();
+			subjHandRot.row(2) = lshp_Z/lshp_Z.norm(); /*convert to 2D rotation method*/
 			// LOG_ERROR(subjHandRot<<"\n\n")
+
+			X_M_lshp = sva::PTransformd(subjHandRot, curPosLshp);
+			X_e_l =  X_R_ef_const.inv() * X_M_lshp /** X_R_M*/;
 		}
 		else if(subjHandReady == "subjLtHandReady")
 		{
@@ -161,27 +162,20 @@ namespace mc_handover
 			subjHandRot.row(1) = lshp_Y;			
 			subjHandRot.row(2) = lshp_Z/lshp_Z.norm();
 			// LOG_ERROR(subjHandRot<<"\n\n")
+
+			X_M_lshp = sva::PTransformd(subjHandRot, curPosLshp);
+			X_e_l =  X_R_ef_const.inv() * X_M_lshp /** X_R_M*/;
 		}
 		else
 		{
-			subjHandRot = curRotEf*q.toRotationMatrix().transpose();
+			X_e_l =  X_R_ef_const.inv();
 		}
 		
-		X_M_lshp = sva::PTransformd(subjHandRot, curPosLshp);
-		X_e_l =  X_R_ef_const.inv() * X_M_lshp;// * X_R_M;
-		// handoverRot = X_e_l.rotation()*BodyW.rotation();
-		handoverRot = X_e_l.rotation();
-
-
-
 		
-		// X_M_lshp = sva::PTransformd(subjHandRot, curPosLshp);
-		// X_e_l =  X_R_ef_const.inv() * X_M_lshp;// * X_R_M;
-		// // LOG_SUCCESS(X_e_l.rotation()<<"\n")
-
-		// handoverRot = X_e_l.rotation();// * idtMat;
-		// // handoverRot = X_e_l.rotation()*BodyW.rotation();
-		// // cout <<handoverRot<<endl;
+		// LOG_SUCCESS(X_e_l.rotation()<<"\n")
+		handoverRot = X_e_l.rotation() /**BodyW.rotation()*/;
+		
+		// cout <<handoverRot<<endl;
 
 
 		/*subj marker(s) pose w.r.t to robot EF frame*/
