@@ -51,23 +51,24 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		bool predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, bool subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		bool predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, std::string subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName, sva::PTransformd BodyW);
 
-		bool goToHandoverPose(const sva::PTransformd& robotEf, const std::shared_ptr<mc_tasks::OrientationTask>& oriTask, const std::shared_ptr<mc_tasks::PositionTask>& posTask);
+		bool goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::shared_ptr<mc_tasks::PositionTask>& posTask);
 
-		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
 
 
 		double closeGrippers{0.13};
 		double openGrippers{0.5};
 
-
 		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
 
-		bool motion{true};
-		bool collected{false};
+		bool useRobotLeftHand{false};
+		bool useRobotRightHand{false};
 
+		bool motion{true};
+		
 		Eigen::Vector3d tuner;
 
 		int fps{200};
@@ -98,7 +99,7 @@ namespace mc_handover
 		double ef_area_wAB_gB;
 		double ef_area_wAB_f;
 
-		double obj_rel_subjLtHand, obj_rel_subjRtHand;
+		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand, subj_rel_ef;
 
 		Eigen::Matrix3d curRotEf, curRotLink6;
 
@@ -126,7 +127,7 @@ namespace mc_handover
 		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
 		Eigen::Vector3d ithPosSubj, avgVelSubj, predictPos;
-		Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos, objectPos;
+		Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos, objectPos, fingerPos, gripperEf;
 
 		
 		bool openGripper{false};
