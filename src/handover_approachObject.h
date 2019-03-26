@@ -51,7 +51,7 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		bool predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, std::string subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		bool predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
 
 		bool goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask);
 
@@ -111,11 +111,11 @@ namespace mc_handover
 		sva::PTransformd X_M_efMarker;
 		sva::PTransformd X_R_M;
 		sva::PTransformd X_M_Subj;
-		sva::PTransformd X_R_ef_const;
-		sva::PTransformd X_e_l, X_M_lshp;
+		// sva::PTransformd X_R_ef_const;
+		// sva::PTransformd X_e_l, X_M_lshp;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-		Eigen::Matrix3d subjHandRot, handoverRot;
+		// Eigen::Matrix3d subjHandRot, handoverRot;
 		
 		sva::PTransformd X_ef_Subj;
 		

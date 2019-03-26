@@ -71,12 +71,6 @@ namespace mc_handover
 		std::map<std::string, sva::ForceVecd> wrenches;
 		sva::ForceVecd wrenchLt, wrenchRt;
 		
-		std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
-		std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
-
-		std::shared_ptr<mc_tasks::PositionTask> posTaskL;
-		std::shared_ptr<mc_tasks::PositionTask> posTaskR;
-
 		bool getHostInfo();
 		bool Flag_ROBOT{false};
 		

@@ -113,7 +113,7 @@ namespace mc_handover
 
 
 	
-	bool ApproachObject::predictionController(Eigen::Vector3d p, Eigen::Quaterniond q, std::string subjHandReady, const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName)
+	bool ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName)
 	{
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
@@ -137,7 +137,6 @@ namespace mc_handover
 		X_R_ef = sva::PTransformd(curRotLink6, curPosEf);
 		X_M_efMarker = sva::PTransformd(curRotLink6, curPosEfMarker);
 		X_R_M = X_M_efMarker.inv() * X_R_ef;
-		X_R_ef_const = sva::PTransformd(q.toRotationMatrix(), p);
 
 
 		/*get unit vectors XYZ of subject LEFT hand*/
@@ -150,45 +149,12 @@ namespace mc_handover
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
-		
-		/*check subj hand's relative orientation*/
-		if(subjHandReady == "subjRtHandReady")
-		{
-			subjHandRot.col(0) = lshp_X;
-			subjHandRot.col(1) = lshp_Y;
-			subjHandRot.row(2) = lshp_Z/lshp_Z.norm(); /*convert to 2D rotation method*/
-			// LOG_ERROR(subjHandRot<<"\n\n")
-
-			X_M_lshp = sva::PTransformd(subjHandRot, curPosLshp);
-			X_e_l =  X_R_ef_const.inv() * X_M_lshp /** X_R_M*/;
-		}
-		else if(subjHandReady == "subjLtHandReady")
-		{
-			subjHandRot.row(0) = lshp_X;
-			subjHandRot.row(1) = lshp_Y;			
-			subjHandRot.row(2) = lshp_Z/lshp_Z.norm();
-			// LOG_ERROR(subjHandRot<<"\n\n")
-
-			X_M_lshp = sva::PTransformd(subjHandRot, curPosLshp);
-			X_e_l =  X_R_ef_const.inv() * X_M_lshp /** X_R_M*/;
-		}
-		else
-		{
-			X_e_l =  X_R_ef_const.inv();
-		}
-		
-		
-		// LOG_SUCCESS(X_e_l.rotation()<<"\n")
-		handoverRot = X_e_l.rotation() /**BodyW.rotation()*/;
-		
-		// cout <<handoverRot<<endl;
-
 
 		/*subj marker(s) pose w.r.t to robot EF frame*/
 		for(int j=1;j<=t_observe; j++)
 		{
 			X_M_Subj =
-			sva::PTransformd(/*idtMat*/handoverRot, markersPos[markers_name_index[lShpMarkersName[0]]].col((i-t_observe)+j));
+			sva::PTransformd(idtMat/*handoverRot*/, markersPos[markers_name_index[lShpMarkersName[0]]].col((i-t_observe)+j));
 
 			X_ef_Subj = X_R_ef.inv()*X_M_Subj*X_M_efMarker.inv()*X_R_ef;
 
@@ -237,13 +203,10 @@ namespace mc_handover
 				)
 			{
 				/*handover pose*/
-				// sva::PTransformd new_pose(handoverRot, handoverPos);
-				// oriTask->orientation(new_pose.rotation());
-				// posTask->position(new_pose.translation());
-				
 				vecOriTask->targetVector(lshp_Z);
 				posTask->position(handoverPos);
 				// posTask->position(objectPos);
+				// cout << "objectPos - handoverPos " << (objectPos-handoverPos).transpose() <<endl;
 			}
 		}
 		if(it==wp.cols())

@@ -41,7 +41,7 @@ namespace mc_handover
 			double RadToDeg = 180/pi;
 
 			bool restartEverything{false};
-			bool Flag_CORTEX{false};
+			bool Flag_CORTEX{true};
 			bool taskOK;
 
 
@@ -60,26 +60,30 @@ namespace mc_handover
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
-			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
-			Eigen::Vector3d leftTh, rightTh;
+			Eigen::Vector3d headVector, headTarget, bodyVector, targetVector, initBodyVector, initTargetVector;
+			Eigen::Vector3d initPosL, initPosR, p1l, p1r;
 
 			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;
 
-			Eigen::Vector3d p1r, p1l;
-			Eigen::Quaterniond ql, qr, q1l, q1r;
-
-			Eigen::Vector3d initPosL, initPosR;
-			Eigen::Matrix3d initOriL, initOriR;
-
+			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
+			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
+
+			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
+			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
+
+			// std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
+			// std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
 			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
 			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;
 			
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
+
 			std::shared_ptr<mc_tasks::LookAtTask> headTask;
+
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
