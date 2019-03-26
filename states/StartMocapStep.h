@@ -40,9 +40,9 @@ namespace mc_handover
 			double DegToRad = pi/180;
 			double RadToDeg = 180/pi;
 
-
+			bool restartEverything{false};
+			bool Flag_CORTEX{false};
 			bool taskOK;
-			bool Flag_CORTEX{true};
 
 
 			/*mocap_simulaton*/
@@ -74,6 +74,9 @@ namespace mc_handover
 
 			Eigen::Vector3d leftForce, rightForce;
 
+			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
+			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;
+			
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 			std::shared_ptr<mc_tasks::LookAtTask> headTask;

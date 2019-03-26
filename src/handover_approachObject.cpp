@@ -6,6 +6,12 @@ namespace mc_handover
 	{ cout<<"object created " <<endl; }
 
 
+
+	ApproachObject::~ApproachObject()
+	{ cout<<"object deleted " <<endl; }
+
+
+
 	/*allocate memory*/
 	void ApproachObject::initials()
 	{
@@ -182,7 +188,7 @@ namespace mc_handover
 		for(int j=1;j<=t_observe; j++)
 		{
 			X_M_Subj =
-			sva::PTransformd( handoverRot, markersPos[markers_name_index[lShpMarkersName[0]]].col((i-t_observe)+j));
+			sva::PTransformd(/*idtMat*/handoverRot, markersPos[markers_name_index[lShpMarkersName[0]]].col((i-t_observe)+j));
 
 			X_ef_Subj = X_R_ef.inv()*X_M_Subj*X_M_efMarker.inv()*X_R_ef;
 
@@ -211,7 +217,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::shared_ptr<mc_tasks::PositionTask>& posTask)
+	bool ApproachObject::goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask)
 	{
 		it+= (int)tuner(2);
 
@@ -231,9 +237,12 @@ namespace mc_handover
 				)
 			{
 				/*handover pose*/
-				sva::PTransformd new_pose(handoverRot, handoverPos);
-				oriTask->orientation(new_pose.rotation());
-				posTask->position(new_pose.translation());
+				// sva::PTransformd new_pose(handoverRot, handoverPos);
+				// oriTask->orientation(new_pose.rotation());
+				// posTask->position(new_pose.translation());
+				
+				vecOriTask->targetVector(lshp_Z);
+				posTask->position(handoverPos);
 				// posTask->position(objectPos);
 			}
 		}
