@@ -39,10 +39,10 @@ namespace mc_handover
 			double pi = 3.14;
 			double DegToRad = pi/180;
 			double RadToDeg = 180/pi;
+			double closeGrippers{0.13};
+			double openGrippers{0.5};
 
-			bool restartEverything{false};
 			bool Flag_CORTEX{true};
-			bool taskOK;
 
 
 			/*mocap_simulaton*/
@@ -54,8 +54,8 @@ namespace mc_handover
 
 
 			int fps{200};
-			int maxMarkers, markersCount, until, b_;
 			int body{0};
+			int maxMarkers, markersCount, until, b_;
 
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
@@ -73,9 +73,6 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
 
-			// std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
-			// std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
-
 			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
 			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;
 			
@@ -87,6 +84,11 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
+
+			std::shared_ptr<mc_control::MCController> ctlG;
+
+			std::vector<std::string> lShpMarkersName, robotMarkersName;
+
 
 		private:
 			sBodyDefs* pBodyDefs{NULL};
@@ -108,6 +110,11 @@ namespace mc_handover
 			bool startCapture{false};
 			bool startHandover{false};
 
+			bool stopRtHand{true};
+			bool stopLtHand{true};
+			bool taskOK{false};
+
+			bool restartEverything{false};
 		};
 	} // namespace states
 } // namespace mc_handover

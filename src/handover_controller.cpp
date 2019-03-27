@@ -15,6 +15,12 @@ namespace mc_handover
 		double dt, const mc_rtc::Configuration & config) 
 	:mc_control::fsm::Controller(robot_module, dt, config)
 	{
+
+		// std::array<double, 3> damper = {{0.01, 0.001, 0.01}};
+		// // KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent)
+		// kinematicsConstraint = mc_solver::KinematicsConstraint(robots(), 0, timeStep, damper, 1.0);
+
+		// qpsolver->addConstraintSet(kinematicsConstraint);
 		qpsolver->addConstraintSet(selfCollisionConstraint);
 		
 		selfCollisionConstraint.reset();

@@ -43,11 +43,12 @@ namespace mc_handover
 		efVel.resize(2);
 
 		/*prediction controller parameter*/
-		tuner << 400., 20., 20.;
+		tuner << 600., 30., 20.;
+		// tuner(2) = tuner(0)/tuner(1);
 	
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
-		it = (int)tuner(2);
+		it = (int)tuner(2);//t_predict/t_observe;
 
 		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 	}
@@ -118,7 +119,7 @@ namespace mc_handover
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
-		it = (int)tuner(2);
+		it = (int)tuner(2); //t_predict/t_observe;
 
 
 		/*get robot ef current pose*/
@@ -141,7 +142,7 @@ namespace mc_handover
 
 		/*get unit vectors XYZ of subject LEFT hand*/
 		auto sizeStr = lShpMarkersName.size();
-		curPosLshp = markersPos[markers_name_index[lShpMarkersName[sizeStr-2]]].col(i); //markersPos[lShapeLtC].col(i);
+		curPosLshp = markersPos[markers_name_index[lShpMarkersName[sizeStr-2]]].col(i);//C
 		y = markersPos[markers_name_index[lShpMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
 		x = markersPos[markers_name_index[lShpMarkersName[1]]].col(i) - curPosLshp;//vCA=X
 
@@ -165,7 +166,7 @@ namespace mc_handover
 				{ ithPosSubj = newPosSubj.col(t_observe-1); }
 		}
 
-		/*get average velocity of previous *t_observe* sec Subj motion*/
+		/*get average velocity of previous *t_observe* sec Subj movement*/
 		curVelSubj  = handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX
 		avgVelSubj  << handoverTraj->takeAverage(curVelSubj);
 		
@@ -195,9 +196,19 @@ namespace mc_handover
 			
 			handoverPos = curEfPos + (refPos - initRefPos);
 
+			// if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
+			// 	obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
+			// {
+			// 	handoverPos = fingerPos;
+			// }
+			// else
+			// {
+			// 	handoverPos = objectPos;
+			// }
+
 			 /*robot constraint*/
 			if(motion &&
-				(handoverPos(0)>= 0.20) && (handoverPos(0)<= 0.7) &&
+				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
 				(handoverPos(1)>= min) && (handoverPos(1)<= max) &&
 				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5)
 				)
@@ -205,20 +216,22 @@ namespace mc_handover
 				/*handover pose*/
 				vecOriTask->targetVector(lshp_Z);
 				posTask->position(handoverPos);
-				// posTask->position(objectPos);
 				// cout << "objectPos - handoverPos " << (objectPos-handoverPos).transpose() <<endl;
 			}
+		return true;
 		}
 		if(it==wp.cols())
-		{ useRobotLeftHand = false; useRobotRightHand = false; }
-		return true;
+		{ 
+			useLeftEf = false;
+			useRightEf = false;
+			return false;
+		}
 	}
 
 
 
 	bool ApproachObject::handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName)
 	{
-
 		fingerPos = markersPos[markers_name_index[lShpMarkersName[0]]].col(i);
 		
 		/*direction vectors, projections and area*/
@@ -245,20 +258,6 @@ namespace mc_handover
 
 
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
-
-
-		/*gripper control*/
-		auto close_gripper = [&]()
-		{
-			auto gripper = controller_->grippers[gripperName].get();
-			gripper->setTargetQ({closeGrippers});
-		};
-
-		auto open_gripper = [&]()
-		{
-			auto gripper = controller_->grippers[gripperName].get();
-			gripper->setTargetQ({openGrippers});
-		};
 
 
 		auto checkForce = [&](const char *axis_name, int idx)
@@ -293,7 +292,7 @@ namespace mc_handover
 			/* MAY BE check torque too ???? */
 			if( (abs(Fpull[idx]) > newTh[idx]) && ( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) ) )
 			{
-				open_gripper();
+				gOpen = true;/*open_gripper();*/
 				restartHandover=true;
 				readyToGrasp=false;
 				dum1=false;
@@ -318,7 +317,7 @@ namespace mc_handover
 			if( (!openGripper) && (handForce.norm()<1.0) )
 			{
 				Fzero = handForce; //this has Finertia too
-				open_gripper();
+				gOpen = true;/*open_gripper();*/
 				LOG_WARNING("opening " + gripperName<< " with Force Norm "<< handForce.norm())
 				openGripper = true;
 			}
@@ -326,7 +325,7 @@ namespace mc_handover
 			/*close gripper*/
 			if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
 			{
-				close_gripper();
+				gClose = true;/*close_gripper();*/
 				closeGripper = true;
 				motion=false; //when subject hand is very close to efL
 			}

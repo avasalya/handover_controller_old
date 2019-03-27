@@ -19,6 +19,7 @@
 #include <Eigen/Dense>
 
 #include <mc_control/mc_controller.h>
+#include <mc_control/mc_global_controller.h>
 
 #include <mc_rbdyn/Robot.h>
 
@@ -58,16 +59,7 @@ namespace mc_handover
 		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
 
-
-		double closeGrippers{0.13};
-		double openGrippers{0.5};
-
 		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
-
-		bool useRobotLeftHand{false};
-		bool useRobotRightHand{false};
-
-		bool motion{true};
 		
 		Eigen::Vector3d tuner;
 
@@ -111,15 +103,11 @@ namespace mc_handover
 		sva::PTransformd X_M_efMarker;
 		sva::PTransformd X_R_M;
 		sva::PTransformd X_M_Subj;
-		// sva::PTransformd X_R_ef_const;
-		// sva::PTransformd X_e_l, X_M_lshp;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-		// Eigen::Matrix3d subjHandRot, handoverRot;
 		
 		sva::PTransformd X_ef_Subj;
 		
-		MCController * controller_ = nullptr;
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 
 		Eigen::MatrixXd newPosSubj, curVelSubj, wp;
@@ -129,10 +117,19 @@ namespace mc_handover
 		Eigen::Vector3d ithPosSubj, avgVelSubj, predictPos;
 		Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos, objectPos, fingerPos, gripperEf;
 
-		
+
+		bool useLeftEf{false};
+		bool useRightEf{false};
+
+		bool motion{true};
+
+		bool gOpen{false};
+		bool gClose{false};
 		bool openGripper{false};
 		bool closeGripper{false};
+		
 		bool readyToGrasp{false};
+		
 		bool restartHandover{false};
 
 		bool dum1{true};
