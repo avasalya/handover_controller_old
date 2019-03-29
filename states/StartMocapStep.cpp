@@ -557,7 +557,7 @@ namespace mc_handover
 						approachObj->useRightEf=false;
 
 						taskOK = approachObj->goToHandoverPose(0.2, 0.7, ltHand, posTaskL, vecOriTaskL);
-						taskOK = approachObj->handoverForceController(leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, lShpMarkersName);
+						taskOK = approachObj->handoverForceController(initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, lShpMarkersName);
 						gripperControl("l_gripper");
 					}
 					else if( approachObj->useRightEf )
@@ -565,13 +565,14 @@ namespace mc_handover
 						approachObj->useLeftEf=false;
 
 						taskOK = approachObj->goToHandoverPose(-0.7, 0.2, rtHand, posTaskR, vecOriTaskR);
-						taskOK = approachObj->handoverForceController(rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, lShpMarkersName);
+						taskOK = approachObj->handoverForceController(initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, lShpMarkersName);
 						gripperControl("r_gripper");
 					}
 
 				}// handoverRun
 			
 			}//startCapture
+
 
 			if(restartEverything)
 			{

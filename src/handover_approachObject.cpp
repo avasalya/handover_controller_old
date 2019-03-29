@@ -222,7 +222,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName)
+	bool ApproachObject::handoverForceController(Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName)
 	{
 		fingerPos = markersPos[markers_name_index[lShpMarkersName[0]]].col(i);
 		
@@ -251,10 +251,7 @@ namespace mc_handover
 
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
 
-
-		centerPos<<0.2, 0.0, 1.0;
-		initBodyVec<<0., 1., 0.;
-		initTargetVec<<0., 1., 0.;
+		subj_rel_ef = (gripperEf - fingerPos).norm();
 
 
 		auto checkForce = [&](const char *axis_name, int idx)
@@ -293,9 +290,9 @@ namespace mc_handover
 				restartHandover=true;
 				takeBackObject=false;
 
-				if(printOnce)
+				if(goBackInit)
 				{
-					printOnce=false;
+					goBackInit=false;
 					motion=false;
 
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
@@ -307,7 +304,6 @@ namespace mc_handover
 		};
 
 
-		subj_rel_ef = (gripperEf - fingerPos).norm();
 
 		
 		if( subj_rel_ef < 0.2 )
@@ -337,9 +333,9 @@ namespace mc_handover
 				LOG_INFO(" object is inside gripper "<< handForce.norm() )
 
 				/*move EF to center position*/
-				posTask->position(centerPos);
-				vecOriTask->bodyVector(initBodyVec);
-				vecOriTask->targetVector(initTargetVec);
+				posTask->position({0.2, 0.0, 1.0});
+				vecOriTask->bodyVector({1., 0., 0.});
+				vecOriTask->targetVector({0., 0., 1.});
 			}
 
 			/*check if object is being pulled*/
@@ -383,17 +379,20 @@ namespace mc_handover
 
 			if(restartHandover)
 			{
-				/*move EF to center position*/
-				posTask->position(centerPos);
-				vecOriTask->bodyVector(initBodyVec);
-				vecOriTask->targetVector(initTargetVec);
+				/*move EF to initial position*/
+				if(!goBackInit)
+				{
+					posTask->position(initPos);
+					vecOriTask->bodyVector({0., 1., 0.});
+					vecOriTask->targetVector({0., 1., 0.});
+				}
 
 				openGripper=false;
 				closeGripper=false;
 				restartHandover=false;
 
 				graspObject=true;
-				printOnce=true;
+				goBackInit=true;
 				motion=true;
 				cout<<"/*******restarting handover*******/"<<endl;
 			}
