@@ -139,7 +139,7 @@ namespace mc_handover
 		std::vector<Eigen::Vector3d> efPos, efVel;
 		std::vector<double> Floadx, Floady, Floadz;
 		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull, Force;
-		Eigen::Vector3d initBodyVec, initTargetVec;
+		Eigen::Vector3d centerPos, initBodyVec, initTargetVec;
 
 	};//strcut ApproachObject
 

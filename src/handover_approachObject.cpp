@@ -252,6 +252,7 @@ namespace mc_handover
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
 
 
+		centerPos<<0.2, 0.0, 1.0;
 		initBodyVec<<0., 1., 0.;
 		initTargetVec<<0., 1., 0.;
 
@@ -297,11 +298,6 @@ namespace mc_handover
 					printOnce=false;
 					motion=false;
 
-					/*move EF to center position*/
-					posTask->position({0.2, 0.0, 1.0});
-					vecOriTask->bodyVector(initBodyVec);
-					vecOriTask->targetVector(initTargetVec);
-
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
 					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
 					LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << Fpull.transpose()<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
@@ -341,7 +337,7 @@ namespace mc_handover
 				LOG_INFO(" object is inside gripper "<< handForce.norm() )
 
 				/*move EF to center position*/
-				posTask->position({0.2, 0.0, 1.0});
+				posTask->position(centerPos);
 				vecOriTask->bodyVector(initBodyVec);
 				vecOriTask->targetVector(initTargetVec);
 			}
@@ -387,6 +383,11 @@ namespace mc_handover
 
 			if(restartHandover)
 			{
+				/*move EF to center position*/
+				posTask->position(centerPos);
+				vecOriTask->bodyVector(initBodyVec);
+				vecOriTask->targetVector(initTargetVec);
+
 				openGripper=false;
 				closeGripper=false;
 				restartHandover=false;
