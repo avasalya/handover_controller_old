@@ -3,12 +3,12 @@
 namespace mc_handover
 {
 	ApproachObject::ApproachObject()
-	{ cout<<"object created " <<endl; }
+	{ cout<<"\033[1;50m handover object created\033[0m\n"; }
 
 
 
 	ApproachObject::~ApproachObject()
-	{ cout<<"object deleted " <<endl; }
+	{ cout<<"\033[1;50m handover object destroyed\033[0m\n"; }
 
 
 
@@ -155,7 +155,7 @@ namespace mc_handover
 		for(int j=1;j<=t_observe; j++)
 		{
 			X_M_Subj =
-			sva::PTransformd(idtMat/*handoverRot*/, markersPos[markers_name_index[lShpMarkersName[0]]].col((i-t_observe)+j));
+			sva::PTransformd(idtMat, markersPos[markers_name_index[lShpMarkersName[0]]].col((i-t_observe)+j));
 
 			X_ef_Subj = X_R_ef.inv()*X_M_Subj*X_M_efMarker.inv()*X_R_ef;
 
@@ -196,32 +196,24 @@ namespace mc_handover
 			
 			handoverPos = curEfPos + (refPos - initRefPos);
 
-			// if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
-			// 	obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
-			// {
-			// 	handoverPos = fingerPos;
-			// }
-			// else
-			// {
-			// 	handoverPos = objectPos;
-			// }
-
 			 /*robot constraint*/
 			if(motion &&
 				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-				(handoverPos(1)>= min) && (handoverPos(1)<= max) &&
+				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
 				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5)
 				)
 			{
 				/*handover pose*/
+				if( objectPos(1)>=-0.15 && objectPos(1)<=0.15)
+				{ posTask->position(objectPos); }
+				else { posTask->position(handoverPos); }
+				
 				vecOriTask->targetVector(lshp_Z);
-				posTask->position(handoverPos);
-				// cout << "objectPos - handoverPos " << (objectPos-handoverPos).transpose() <<endl;
 			}
-		return true;
+			return true;
 		}
 		if(it==wp.cols())
-		{ 
+		{
 			useLeftEf = false;
 			useRightEf = false;
 			return false;
@@ -230,7 +222,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName)
+	bool ApproachObject::handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName)
 	{
 		fingerPos = markersPos[markers_name_index[lShpMarkersName[0]]].col(i);
 		
@@ -258,6 +250,10 @@ namespace mc_handover
 
 
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
+
+
+		initBodyVec<<0., 1., 0.;
+		initTargetVec<<0., 1., 0.;
 
 
 		auto checkForce = [&](const char *axis_name, int idx)
@@ -292,13 +288,20 @@ namespace mc_handover
 			/* MAY BE check torque too ???? */
 			if( (abs(Fpull[idx]) > newTh[idx]) && ( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) ) )
 			{
-				gOpen = true;/*open_gripper();*/
+				gOpen=true;/*open_gripper();*/
 				restartHandover=true;
-				readyToGrasp=false;
-				dum1=false;
-				if(dum3)
+				takeBackObject=false;
+
+				if(printOnce)
 				{
-					dum3=false;
+					printOnce=false;
+					motion=false;
+
+					/*move EF to center position*/
+					posTask->position({0.2, 0.0, 1.0});
+					vecOriTask->bodyVector(initBodyVec);
+					vecOriTask->targetVector(initTargetVec);
+
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
 					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
 					LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << Fpull.transpose()<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
@@ -318,8 +321,8 @@ namespace mc_handover
 			{
 				Fzero = handForce; //this has Finertia too
 				gOpen = true;/*open_gripper();*/
-				LOG_WARNING("opening " + gripperName<< " with Force Norm "<< handForce.norm())
 				openGripper = true;
+				LOG_WARNING("opening " + gripperName<< " with Force Norm "<< handForce.norm())
 			}
 
 			/*close gripper*/
@@ -331,15 +334,20 @@ namespace mc_handover
 			}
 			
 			/*when closed WITH object*/
-			if( dum2 && closeGripper && (handForce.norm()>=2.0) )
+			if( graspObject && closeGripper && (handForce.norm()>=2.0) )
 			{
+				graspObject = false;
 				FNormAtClose = handForce.norm();
 				LOG_INFO(" object is inside gripper "<< handForce.norm() )
-				dum2 = false;
+
+				/*move EF to center position*/
+				posTask->position({0.2, 0.0, 1.0});
+				vecOriTask->bodyVector(initBodyVec);
+				vecOriTask->targetVector(initTargetVec);
 			}
 
 			/*check if object is being pulled*/
-			if(readyToGrasp)
+			if(takeBackObject)
 			{
 				return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 			}
@@ -355,7 +363,7 @@ namespace mc_handover
 				if(e%200==0)//wait xx sec
 				{
 					motion=true;
-					readyToGrasp=true;
+					takeBackObject=true;
 
 					Fload <<
 					accumulate( Floadx.begin(), Floadx.end(), 0.0)/double(Floadx.size()),
@@ -379,13 +387,13 @@ namespace mc_handover
 
 			if(restartHandover)
 			{
-				restartHandover=false;
 				openGripper=false;
 				closeGripper=false;
+				restartHandover=false;
 
-				dum1=true;
-				dum2=true;
-				dum3=true;
+				graspObject=true;
+				printOnce=true;
+				motion=true;
 				cout<<"/*******restarting handover*******/"<<endl;
 			}
 		}
@@ -393,3 +401,16 @@ namespace mc_handover
 	}
 
 }//namespace mc_handover
+
+
+
+
+// if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
+// 	obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
+// {
+// 	handoverPos = fingerPos;
+// }
+// else
+// {
+// 	handoverPos = objectPos;
+// }

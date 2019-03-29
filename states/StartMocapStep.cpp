@@ -34,12 +34,13 @@ namespace mc_handover
 			gripperR->setTargetQ({0.13});
 
 
+			/*initial ef pos*/
 			p1l << 0.3,0.3,1.1;
 			p1r <<0.3, -0.3,1.1;
 
-			/*initial F/T thresholds*/
+
+			/*initial force/torque threshold*/
 			thresh << 10, 10, 10, 6, 6, 6, 10, 10, 10, 6, 6, 6;
-			/*initial force threshold*/
 			leftTh = thresh.segment(3,3);
 			rightTh = thresh.segment(9,3);
 
@@ -81,14 +82,14 @@ namespace mc_handover
 			initBodyVector<<0., 1., 0.;
 			initTargetVector<<0., 1., 0.;
 
-			bodyVector<<1., 0., 0.;
-			targetVector<<0., 0., 1.;
-
 			vecOriTaskL.reset(new mc_tasks::VectorOrientationTask("LARM_LINK6", initBodyVector, initTargetVector, ctl.robots(), ctl.robots().robotIndex(), 3.0, 500));
 			ctl.solver().addTask(vecOriTaskL);
 
 			vecOriTaskR.reset(new mc_tasks::VectorOrientationTask("RARM_LINK6", initBodyVector, initTargetVector, ctl.robots(), ctl.robots().robotIndex(), 3.0, 500));
 			ctl.solver().addTask(vecOriTaskR);
+
+			bodyVector<<1., 0., 0.;
+			targetVector<<0., 0., 1.;
 
 
 
@@ -99,11 +100,13 @@ namespace mc_handover
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "randomPos"},
-				mc_rtc::gui::Button("open_gripperL & set flags", [this, &ctl]()
+				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
 				{
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({0.5});//openGripper
-					/*closeGripper = false; motion=true;*/
+					approachObj->motion=true;
+					approachObj->gClose = false;
+					approachObj->closeGripper = false;
 				}),
 				mc_rtc::gui::Button("init*", [this, &ctl]()
 				{
@@ -265,7 +268,7 @@ namespace mc_handover
 			/*configure MOCAP*/
 			if(Flag_CORTEX)
 			{
-				LOG_SUCCESS("***MOCAP IS ENABLED***")
+				cout << "\033[1;32m ***MOCAP IS ENABLED*** \033[0m\n";
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
 	
@@ -309,7 +312,7 @@ namespace mc_handover
 			}
 			else /*simulation*/
 			{
-				LOG_ERROR("***MOCAP IS DISABLED***")
+				cout << "\033[1;31m ***MOCAP IS DISABLED*** \033[0m\n";
 				// startCapture = true; //true for sim
 				
 				// name = {"bothHands_1"};
@@ -527,12 +530,11 @@ namespace mc_handover
 
 								approachObj->useRightEf = approachObj->predictionController(rtHand, rtRotW, lShpMarkersName, robotMarkersName);
 							}
-
 							return false;
 						};
-						/*return*/ obj_rel_robot();
-					
-					}// i/t_observe;
+						obj_rel_robot();
+					}// i%t_observe;
+
 
 
 					auto gripperControl = [&](std::string gripperName)
@@ -548,21 +550,22 @@ namespace mc_handover
 						}
 					};
 
+
 					/*feed Ef pose*/
 					if( approachObj->useLeftEf )
 					{
 						approachObj->useRightEf=false;
 
-						taskOK = approachObj->goToHandoverPose(0.1, 0.7, ltHand, posTaskL, vecOriTaskL);
-						taskOK = approachObj->handoverForceController(leftForce, leftTh, "l_gripper", robotMarkersName, lShpMarkersName);
+						taskOK = approachObj->goToHandoverPose(0.2, 0.7, ltHand, posTaskL, vecOriTaskL);
+						taskOK = approachObj->handoverForceController(leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, lShpMarkersName);
 						gripperControl("l_gripper");
 					}
 					else if( approachObj->useRightEf )
 					{
 						approachObj->useLeftEf=false;
 
-						taskOK = approachObj->goToHandoverPose(-0.7, 0.1, rtHand, posTaskR, vecOriTaskR);
-						taskOK = approachObj->handoverForceController(rightForce, rightTh, "r_gripper", robotMarkersName, lShpMarkersName);
+						taskOK = approachObj->goToHandoverPose(-0.7, 0.2, rtHand, posTaskR, vecOriTaskR);
+						taskOK = approachObj->handoverForceController(rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, lShpMarkersName);
 						gripperControl("r_gripper");
 					}
 

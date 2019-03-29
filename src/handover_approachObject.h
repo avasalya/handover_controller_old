@@ -56,7 +56,7 @@ namespace mc_handover
 
 		bool goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask);
 
-		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
+		bool handoverForceController(Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
 
 		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
@@ -128,19 +128,18 @@ namespace mc_handover
 		bool openGripper{false};
 		bool closeGripper{false};
 		
-		bool readyToGrasp{false};
+		bool graspObject{true};
+		bool takeBackObject{false};
 		
+		bool printOnce{true};
 		bool restartHandover{false};
 
-		bool dum1{true};
-		bool dum2{true};
-		bool dum3{true};
 
-
-		std::vector<Eigen::Vector3d> efPos, efVel;
-		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull, Force;
 		double efMass, FNormAtClose;
+		std::vector<Eigen::Vector3d> efPos, efVel;
 		std::vector<double> Floadx, Floady, Floadz;
+		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull, Force;
+		Eigen::Vector3d initBodyVec, initTargetVec;
 
 	};//strcut ApproachObject
 

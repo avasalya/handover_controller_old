@@ -42,6 +42,7 @@ namespace mc_handover
 			double closeGrippers{0.13};
 			double openGrippers{0.5};
 
+
 			bool Flag_CORTEX{true};
 
 
@@ -49,7 +50,6 @@ namespace mc_handover
 			double pt;
 			std::vector<double> pts;
 			std::vector<Eigen::MatrixXd> pos;
-
 			std::string name;
 
 
@@ -84,9 +84,6 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
-
-			std::shared_ptr<mc_control::MCController> ctlG;
-
 			std::vector<std::string> lShpMarkersName, robotMarkersName;
 
 
