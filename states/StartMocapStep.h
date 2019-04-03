@@ -84,7 +84,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
-			std::vector<std::string> lShpMarkersName, robotMarkersName;
+			std::vector<std::string> subjMarkersName, robotMarkersName;
 
 
 		private:

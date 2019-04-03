@@ -76,7 +76,7 @@ namespace mc_handover
 		std::vector<Eigen::MatrixXd> markersPos;
 		std::vector<Eigen::Vector3d> Markers;
 
-		std::vector<std::string> strMarkersBodyName, strMarkersName, robotLtMarkers, lShapeLtMarkers, robotRtMarkers, lShapeRtMarkers;
+		std::vector<std::string> strMarkersBodyName, strMarkersName, robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
 		std::map<std::string, double> markers_name_index; 
 
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;

@@ -480,10 +480,10 @@ namespace mc_handover
 						auto obj_rel_subj = [&]() -> std::vector<string>
 						{
 							if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
-							{ lShpMarkersName = approachObj->lShapeRtMarkers; }
+							{ subjMarkersName = approachObj->subjRtMarkers; }
 							else
-							{ lShpMarkersName = approachObj->lShapeLtMarkers; }
-							return lShpMarkersName;
+							{ subjMarkersName = approachObj->subjLtMarkers; }
+							return subjMarkersName;
 						};
 
 						auto obj_rel_robot = [&]() -> bool
@@ -508,7 +508,7 @@ namespace mc_handover
 
 								robotMarkersName = approachObj->robotLtMarkers;
 							
-								approachObj->useLeftEf = approachObj->predictionController(ltHand, ltRotW, lShpMarkersName, robotMarkersName);
+								approachObj->useLeftEf = approachObj->predictionController(ltHand, ltRotW, subjMarkersName, robotMarkersName);
 							}
 							else
 							{
@@ -528,7 +528,7 @@ namespace mc_handover
 
 								robotMarkersName = approachObj->robotRtMarkers;
 
-								approachObj->useRightEf = approachObj->predictionController(rtHand, rtRotW, lShpMarkersName, robotMarkersName);
+								approachObj->useRightEf = approachObj->predictionController(rtHand, rtRotW, subjMarkersName, robotMarkersName);
 							}
 							return false;
 						};
@@ -557,7 +557,7 @@ namespace mc_handover
 						approachObj->useRightEf=false;
 
 						taskOK = approachObj->goToHandoverPose(0.2, 0.7, ltHand, posTaskL, vecOriTaskL);
-						taskOK = approachObj->handoverForceController(initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, lShpMarkersName);
+						taskOK = approachObj->handoverForceController(initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
 						gripperControl("l_gripper");
 					}
 					else if( approachObj->useRightEf )
@@ -565,7 +565,7 @@ namespace mc_handover
 						approachObj->useLeftEf=false;
 
 						taskOK = approachObj->goToHandoverPose(-0.7, 0.2, rtHand, posTaskR, vecOriTaskR);
-						taskOK = approachObj->handoverForceController(initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, lShpMarkersName);
+						taskOK = approachObj->handoverForceController(initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
 						gripperControl("r_gripper");
 					}
 
