@@ -33,14 +33,11 @@ namespace mc_handover
 		for(unsigned int k=0; k<strMarkersName.size(); k++)
 			markers_name_index[strMarkersName[k]] = k;
 
-
 		Markers.resize(totalMarkers);
+
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
 			{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
-
-		efPos.resize(3);
-		efVel.resize(2);
 
 		/*prediction controller parameter*/
 		tuner << 600., 30., 20.;
@@ -112,12 +109,14 @@ namespace mc_handover
 
 
 	
-	std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
+	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
 	{
+		bool ready{false};
+
 		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
 		Eigen::Vector3d initRefPos, curPosEf, curPosEfMarker,  curPosLshp, ithPosSubj, avgVelSubj, predictPos;
 
-		Eigen::Matrix3d curRotEf;
+		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
 
 		sva::PTransformd X_R_ef;
 		sva::PTransformd X_M_efMarker;
@@ -127,18 +126,15 @@ namespace mc_handover
 
 		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
-		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
-
-		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2); //t_predict/t_observe;
 
+		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 
 		/*get robot ef current pose*/
-		curRotEf = robotEf.rotation();
 		curPosEf = robotEf.translation();
 
 
@@ -195,25 +191,28 @@ namespace mc_handover
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
-		return std::make_tuple(ready, newPosSubj, wp, initRefPos, lshp_Z);
+		ready = true;
+		return std::make_tuple(ready, wp, initRefPos, lshp_Z);
 	}
 
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask)
+	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict)
 	{
+		Eigen::Vector3d curEfPos, refPos, handoverPos;
+
 		it+= (int)tuner(2);
 
-		auto curEfPos = robotEf.translation();
+		curEfPos = robotEf.translation();
 
-		if(it<wp.cols())
+		if(it<get<1>(handPredict).cols())
 		{
-			refPos << wp(0,it), wp(1,it), wp(2,it);
+			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
 			
-			handoverPos = curEfPos + (refPos - initRefPos);
+			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
 
 			 /*robot constraint*/
-			if(motion &&
+			if(enableHand &&
 				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
 				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
 				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5)
@@ -224,11 +223,11 @@ namespace mc_handover
 				{ posTask->position(objectPos); }
 				else { posTask->position(handoverPos); }
 				
-				vecOriTask->targetVector(lshp_Z);
+				vecOriTask->targetVector(get<3>(handPredict));// vecOriTask->targetVector(lshp_Z);
 			}
 			return true;
 		}
-		if(it==wp.cols())
+		if(it==get<1>(handPredict).cols())
 		{
 			useLeftEf = false;
 			useRightEf = false;
@@ -238,8 +237,15 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::handoverForceController(Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
+		Eigen::Vector3d fingerPos, gripperEf;
+		
+		std::vector<Eigen::Vector3d> efPos, efVel;
+
+		efPos.resize(3);
+		efVel.resize(2);
+
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
 		
 		/*direction vectors, projections and area*/
@@ -309,7 +315,7 @@ namespace mc_handover
 				if(goBackInit)
 				{
 					goBackInit=false;
-					motion=false;
+					enableHand=false;
 
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
 					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
@@ -338,7 +344,7 @@ namespace mc_handover
 			{
 				gClose = true;/*close_gripper();*/
 				closeGripper = true;
-				motion=false; //when subject hand is very close to efL
+				enableHand=false; //when subject hand is very close to efL
 			}
 			
 			/*when closed WITH object*/
@@ -370,7 +376,7 @@ namespace mc_handover
 			{
 				if(e%200==0)//wait xx sec
 				{
-					motion=true;
+					enableHand=true;
 					takeBackObject=true;
 
 					Fload <<
@@ -409,7 +415,7 @@ namespace mc_handover
 
 				graspObject=true;
 				goBackInit=true;
-				motion=true;
+				enableHand=true;
 				cout<<"/*******restarting handover*******/"<<endl;
 			}
 		}

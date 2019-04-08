@@ -52,11 +52,11 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
 
-		bool goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask);
+		bool goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict);
 
-		bool handoverForceController(Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
+		bool handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
 
 		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
@@ -76,10 +76,18 @@ namespace mc_handover
 		std::vector<Eigen::MatrixXd> markersPos;
 		std::vector<Eigen::Vector3d> Markers;
 
-		std::vector<std::string> strMarkersBodyName, strMarkersName, robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
+		std::vector<std::string> strMarkersBodyName, strMarkersName;
+		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
 		std::map<std::string, double> markers_name_index; 
 
+		Eigen::Vector3d objectPos;
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand, subj_rel_ef;
+		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
+
+
+		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> lHandPredict, rHandPredict;
+				
 
 		double ef_wAB_theta_wAO;
 		double ef_wAB_theta_wAgA;
@@ -93,18 +101,13 @@ namespace mc_handover
 
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
-		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-
-		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-		Eigen::Vector3d lshp_Zl, lshp_Zr;
-				
-		Eigen::Vector3d refPos, handoverPos, objectPos, fingerPos, gripperEf;
-
 
 		bool useLeftEf{false};
 		bool useRightEf{false};
 
-		bool motion{true};
+		// bool motion{true};
+		bool enableLHand{true};
+		bool enableRHand{true};
 
 		bool gOpen{false};
 		bool gClose{false};
@@ -119,7 +122,6 @@ namespace mc_handover
 
 
 		double efMass, FNormAtClose;
-		std::vector<Eigen::Vector3d> efPos, efVel;
 		std::vector<double> Floadx, Floady, Floadz;
 		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull, Force;
 
