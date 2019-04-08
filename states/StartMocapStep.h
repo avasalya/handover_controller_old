@@ -57,6 +57,7 @@ namespace mc_handover
 			int body{0};
 			int maxMarkers, markersCount, until, b_;
 
+			// sva::PTransformd BodyW;
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
@@ -69,6 +70,10 @@ namespace mc_handover
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
+
+
+			std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
+			std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
 
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 			std::shared_ptr<mc_tasks::PositionTask> posTaskR;

@@ -52,7 +52,7 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		bool predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
 
 		bool goToHandoverPose(double min, double max, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask);
 
@@ -79,7 +79,7 @@ namespace mc_handover
 		std::vector<std::string> strMarkersBodyName, strMarkersName, robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
 		std::map<std::string, double> markers_name_index; 
 
-		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
+		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand, subj_rel_ef;
 
 		double ef_wAB_theta_wAO;
 		double ef_wAB_theta_wAgA;
@@ -91,31 +91,14 @@ namespace mc_handover
 		double ef_area_wAB_gB;
 		double ef_area_wAB_f;
 
-		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand, subj_rel_ef;
-
-		Eigen::Matrix3d curRotEf, curRotLink6;
-
-		Eigen::Vector3d curPosEf, curPosEfMarker,  curPosLshp;
-		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
-
-
-		sva::PTransformd X_R_ef;
-		sva::PTransformd X_M_efMarker;
-		sva::PTransformd X_R_M;
-		sva::PTransformd X_M_Subj;
+		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-		
-		sva::PTransformd X_ef_Subj;
-		
+
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-
-		Eigen::MatrixXd newPosSubj, curVelSubj, wp;
-
-		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
-
-		Eigen::Vector3d ithPosSubj, avgVelSubj, predictPos;
-		Eigen::Vector3d refPos, refVel, refAcc, initRefPos, handoverPos, objectPos, fingerPos, gripperEf;
+		Eigen::Vector3d lshp_Zl, lshp_Zr;
+				
+		Eigen::Vector3d refPos, handoverPos, objectPos, fingerPos, gripperEf;
 
 
 		bool useLeftEf{false};

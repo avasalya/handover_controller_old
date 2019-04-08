@@ -49,8 +49,6 @@ namespace mc_handover
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2);//t_predict/t_observe;
-
-		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 	}
 
 
@@ -114,8 +112,25 @@ namespace mc_handover
 
 
 	
-	bool ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
+	std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
 	{
+		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
+		Eigen::Vector3d initRefPos, curPosEf, curPosEfMarker,  curPosLshp, ithPosSubj, avgVelSubj, predictPos;
+
+		Eigen::Matrix3d curRotEf;
+
+		sva::PTransformd X_R_ef;
+		sva::PTransformd X_M_efMarker;
+		sva::PTransformd X_R_M;
+		sva::PTransformd X_M_Subj;
+		sva::PTransformd X_ef_Subj;
+
+		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
+
+		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
+
+		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
+
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
@@ -180,7 +195,7 @@ namespace mc_handover
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
-		return true;
+		return std::make_tuple(ready, newPosSubj, wp, initRefPos, lshp_Z);
 	}
 
 

@@ -69,7 +69,6 @@ namespace mc_handover
 
 
 		std::map<std::string, sva::ForceVecd> wrenches;
-		sva::ForceVecd wrenchLt, wrenchRt;
 		
 		bool getHostInfo();
 		bool Flag_ROBOT{false};
