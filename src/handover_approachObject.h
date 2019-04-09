@@ -58,7 +58,6 @@ namespace mc_handover
 
 		bool handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
-
 		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
 		
 		Eigen::Vector3d tuner;
@@ -73,39 +72,23 @@ namespace mc_handover
 		
 		int totalMarkers{19};//14, 19
 		
-		std::vector<Eigen::MatrixXd> markersPos;
 		std::vector<Eigen::Vector3d> Markers;
+		std::vector<Eigen::MatrixXd> markersPos;
 
+		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
 		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
-		std::map<std::string, double> markers_name_index; 
 
 		Eigen::Vector3d objectPos;
-		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand, subj_rel_ef;
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-
+		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
 
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> lHandPredict, rHandPredict;
-				
-
-		double ef_wAB_theta_wAO;
-		double ef_wAB_theta_wAgA;
-		double ef_wAB_theta_wAgB;
-		double ef_wAB_theta_wAf;
-
-		double ef_area_wAB_O;
-		double ef_area_wAB_gA;
-		double ef_area_wAB_gB;
-		double ef_area_wAB_f;
-
-		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
-
 
 		bool useLeftEf{false};
 		bool useRightEf{false};
 
-		// bool motion{true};
 		bool enableLHand{true};
 		bool enableRHand{true};
 
@@ -113,17 +96,13 @@ namespace mc_handover
 		bool gClose{false};
 		bool openGripper{false};
 		bool closeGripper{false};
-		
+
 		bool graspObject{true};
 		bool takeBackObject{false};
-		
+
 		bool goBackInit{true};
 		bool restartHandover{false};
 
-
-		double efMass, FNormAtClose;
-		std::vector<double> Floadx, Floady, Floadz;
-		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull, Force;
 
 	};//strcut ApproachObject
 

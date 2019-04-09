@@ -239,10 +239,25 @@ namespace mc_handover
 
 	bool ApproachObject::handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
-		Eigen::Vector3d fingerPos, gripperEf;
-		
-		std::vector<Eigen::Vector3d> efPos, efVel;
+		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
+		double ef_wAB_theta_wAO;
+		double ef_wAB_theta_wAgA;
+		double ef_wAB_theta_wAgB;
+		double ef_wAB_theta_wAf;
+
+		double ef_area_wAB_O;
+		double ef_area_wAB_gA;
+		double ef_area_wAB_gB;
+		double ef_area_wAB_f;
+
+		double subj_rel_ef;
+
+		double efMass, FNormAtClose;
+		std::vector<double> Floadx, Floady, Floadz;
+		std::vector<Eigen::Vector3d> efPos, efVel;
+		Eigen::Vector3d fingerPos, gripperEf, efAce, Finert, Fzero, Fload, Fpull;
+		
 		efPos.resize(3);
 		efVel.resize(2);
 

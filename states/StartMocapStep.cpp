@@ -112,7 +112,7 @@ namespace mc_handover
 				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
 				{
 					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5});//openGripper
+					gripper->setTargetQ({0.5});//open Gripper
 					approachObj->enableLHand=true;
 					approachObj->enableRHand=true;
 					approachObj->gClose = false;
@@ -641,8 +641,8 @@ namespace mc_handover
 			ctl.solver().removeTask(posTaskL);
 			ctl.solver().removeTask(posTaskR);
 
-			ctl.solver().removeTask(relEfTaskL);
-			ctl.solver().removeTask(relEfTaskR);
+			// ctl.solver().removeTask(relEfTaskL);
+			// ctl.solver().removeTask(relEfTaskR);
 
 			ctl.solver().removeTask(vecOriTaskL);
 			ctl.solver().removeTask(vecOriTaskR);
