@@ -43,7 +43,7 @@ namespace mc_handover
 			double openGrippers{0.5};
 
 
-			bool Flag_CORTEX{false};
+			bool Flag_CORTEX{true};
 
 
 			/*mocap_simulaton*/

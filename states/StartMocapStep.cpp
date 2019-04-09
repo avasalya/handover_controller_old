@@ -357,16 +357,14 @@ namespace mc_handover
 
 
 
-			posTaskL->position({0.3, 0.4, 1.1});
-			posTaskR->position({0.3, -0.4, 1.1});
+			// posTaskL->position({0.3, 0.4, 1.1});
+			// posTaskR->position({0.3, -0.4, 1.1});
 
-			vecOriTaskL->bodyVector({0., 1., 0.});
-			vecOriTaskL->targetVector({0., 0., 1.});
+			// vecOriTaskL->bodyVector({0., 1., 0.});
+			// vecOriTaskL->targetVector({0., 0., 1.});
 
-			vecOriTaskR->bodyVector({0., -1., 0.});
-			vecOriTaskR->targetVector({0., 0., 1.});
-
-
+			// vecOriTaskR->bodyVector({0., -1., 0.});
+			// vecOriTaskR->targetVector({0., 0., 1.});
 		}// start
 
 
@@ -379,9 +377,9 @@ namespace mc_handover
 			// relEfTaskL->set_ef_pose( sva::PTransformd(sva::RotY(-(pi/180)*90)*sva::RotX(-(pi/180)*90), p1l) );
 
 
-			initPosL = posTaskL->position();
-			initPosL << initPosL(0), -initPosL(1), initPosL(2);
-			posTaskR->position(initPosL);
+			// initPosL = posTaskL->position();
+			// initPosL << initPosL(0), -initPosL(1), initPosL(2);
+			// posTaskR->position(initPosL);
 
 
 			/*hand pose*/

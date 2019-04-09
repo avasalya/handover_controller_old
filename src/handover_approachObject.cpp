@@ -257,23 +257,23 @@ namespace mc_handover
 		std::vector<double> Floadx, Floady, Floadz;
 		std::vector<Eigen::Vector3d> efPos, efVel;
 		Eigen::Vector3d fingerPos, gripperEf, efAce, Finert, Fzero, Fload, Fpull;
-		
+
 		efPos.resize(3);
 		efVel.resize(2);
 
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
 		
 		/*direction vectors, projections and area*/
-		ef_wA_O  = markersPos[markers_name_index[robotMarkersName[0]]].col(i) -
-		objectPos;
-		ef_wA_f  = markersPos[markers_name_index[robotMarkersName[0]]].col(i) -
-		fingerPos;
-		ef_wA_wB = markersPos[markers_name_index[robotMarkersName[0]]].col(i) -
-		markersPos[markers_name_index[robotMarkersName[1]]].col(i);
-		ef_wA_gA = markersPos[markers_name_index[robotMarkersName[0]]].col(i) -
-		markersPos[markers_name_index[robotMarkersName[2]]].col(i);
-		ef_wA_gB = markersPos[markers_name_index[robotMarkersName[0]]].col(i) -
-		markersPos[markers_name_index[robotMarkersName[3]]].col(i);
+		ef_wA_O  =
+		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - objectPos;
+		ef_wA_f  =
+		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - fingerPos;
+		ef_wA_wB =
+		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[1]]].col(i);
+		ef_wA_gA =
+		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[2]]].col(i);
+		ef_wA_gB =
+		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - markersPos[markers_name_index[robotMarkersName[3]]].col(i);
 
 		ef_wAB_theta_wAO = acos( ef_wA_wB.dot(ef_wA_O)/( ef_wA_wB.norm()*ef_wA_O.norm() ) );
 		ef_wAB_theta_wAf = acos( ef_wA_wB.dot(ef_wA_f)/( ef_wA_wB.norm()*ef_wA_f.norm() ) );
@@ -369,7 +369,7 @@ namespace mc_handover
 				FNormAtClose = handForce.norm();
 				LOG_INFO(" object is inside gripper "<< handForce.norm() )
 
-				/*move EF to center position*/
+				/*move EF to initial position*/
 				posTask->position(initPos);
 				vecOriTask->bodyVector({0., 1., 0.});
 				vecOriTask->targetVector({0., 1., 0.});
