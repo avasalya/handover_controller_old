@@ -70,14 +70,15 @@ namespace mc_handover
 		int i{0};
 		int e{0};
 		
-		int totalMarkers{19};//14, 19
+		int totalMarkers{20};//18, 20
 		
 		std::vector<Eigen::Vector3d> Markers;
+		std::vector<Eigen::Vector3d> object;
 		std::vector<Eigen::MatrixXd> markersPos;
 
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
-		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
+		std::vector<std::string> robotLtMarkers, robotRtMarkers, objMarkers, subjRtMarkers, subjLtMarkers;
 
 		Eigen::Vector3d objectPos;
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();

@@ -52,6 +52,7 @@ namespace mc_handover
 			std::vector<Eigen::MatrixXd> pos;
 			std::string name;
 
+			int n;
 
 			int fps{200};
 			int body{0};

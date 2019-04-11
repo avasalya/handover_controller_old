@@ -16,17 +16,21 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "6mars_obj_subj_right_hand", "4mars_subj_left_hand"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_subj_right_hand", "3mars_obj", "4mars_subj_left_hand"};
 
-		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};
-		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};
+		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3
+		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};
-		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};
+		objMarkers = {"left", "center", "right"};//8-10
+
+		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-15
+		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};//16-19
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
-		strMarkersName.insert(strMarkersName.end(), "object");
+
+		strMarkersName.insert(strMarkersName.end(), objMarkers.begin(), objMarkers.end());
+
 		strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
 
@@ -34,6 +38,7 @@ namespace mc_handover
 			markers_name_index[strMarkersName[k]] = k;
 
 		Markers.resize(totalMarkers);
+		object.resize(objMarkers.size());
 
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
@@ -92,14 +97,18 @@ namespace mc_handover
 				{ markersPos[m].col(i) << Markers[m]; }
 
 			/*for GUI*/
-			objectPos = markersPos[8].col(i);
+			object[0] = markersPos[8].col(i);//left
+			object[1] = markersPos[9].col(i);//center
+			object[2] = markersPos[10].col(i);//right
+			
+			objectPos = markersPos[9].col(i); //object[1]//center
 
 			/*move EF when subject approaches object 1st time*/
-			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();
-			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();
+			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA
+			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();//gripperRtEfA
 
-			obj_rel_subjRtHand = ( markersPos[12].col(i) - objectPos ).norm();
-			obj_rel_subjLtHand = ( markersPos[16].col(i) - objectPos ).norm();
+			obj_rel_subjRtHand = ( markersPos[14].col(i) - objectPos ).norm();//lshpRtC
+			obj_rel_subjLtHand = ( markersPos[18].col(i) - objectPos ).norm();//lshpLtC
 
 			return true;
 		}
@@ -223,7 +232,7 @@ namespace mc_handover
 				{ posTask->position(objectPos); }
 				else { posTask->position(handoverPos); }
 				
-				vecOriTask->targetVector(get<3>(handPredict));// vecOriTask->targetVector(lshp_Z);
+				// vecOriTask->targetVector(get<3>(handPredict));// vecOriTask->targetVector(lshp_Z);
 			}
 			return true;
 		}

@@ -241,40 +241,42 @@ namespace mc_handover
 					[this](const Eigen::Vector3d & to){approachObj->tuner = to;cout<< "t_predict = " << approachObj->tuner(0)*1/fps<< "sec, t_observe = "<<approachObj->tuner(1)*1/fps<< "sec"<<endl;}));
 
 			/*move object using cursor or simData*/
-			ctl.gui()->addElement({"Handover","move_object"},
+			ctl.gui()->addElement({"Handover","cursor_move_object"},
 				mc_rtc::gui::Transform("Position right", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("right_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { 
-						ctl.robots().robot(2).posW(pos); }),
-
-				mc_rtc::gui::Transform("Position base", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { 
-						ctl.robots().robot(2).posW(pos); }),
-
-				mc_rtc::gui::Transform("Position left", 
 					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("left_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { 
-						ctl.robots().robot(2).posW(pos); })
+					[this,&ctl](const sva::PTransformd & pos) { ctl.robots().robot(2).posW(pos); })
 
-						// ctl.removeContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
-						// ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
-					// })//,
-				// mc_rtc::gui::Point3D("object position", [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
-				);
+				,mc_rtc::gui::Transform("Position base", 
+					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+					[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); })
 
-					// ,mc_rtc::gui::Rotation("Rot",
-					// [this,&ctl]() { return sva::PTransformd{rot_, pos_} },
-					// [this,&ctl]() { rot_ = Eigen::Identity::Matrix3d(); pos_ = approachObj->objectPos; })
+				,mc_rtc::gui::Transform("Position left", 
+					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("right_link"); },
+					[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); }) );
+
+			/*display moving object*/
+			ctl.gui()->addElement({"Handover","Point3D_object"},
+				mc_rtc::gui::Point3D("right link", [this,&ctl](){
+					ctl.robots().robot(2).posW({approachObj->object[0]});
+					return ctl.robots().robot(2).bodyPosW("left_link").translation(); }) 
+
+				,mc_rtc::gui::Point3D("base link", [this,&ctl](){
+					ctl.robots().robot(2).posW({approachObj->object[1]});
+					return ctl.robots().robot(2).bodyPosW("base_link").translation(); }) 
+
+				,mc_rtc::gui::Point3D("left link", [this,&ctl](){
+					ctl.robots().robot(2).posW({approachObj->object[2]});
+					return ctl.robots().robot(2).bodyPosW("right_link").translation(); }) );
 
 
+			// mc_rtc::gui::Point3D("object position",
+			// [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
+
+			// ,mc_rtc::gui::Rotation("Rot",
+			// [this,&ctl]() { return sva::PTransformd{rot_, pos_} },
+			// [this,&ctl]() { rot_ = Eigen::Identity::Matrix3d(); pos_ = approachObj->objectPos; })
 
 
-			/*trajectory trail*/
-			// ctl.gui()->addElement({"Handover", "Trajectories"},
-				// mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
-				// 	[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
-				// );
 
 			/*com Task*/
 			ctl.gui()->addElement({"Handover", "com"},
@@ -374,14 +376,15 @@ namespace mc_handover
 
 
 
-			posTaskL->position({0.3, 0.4, 1.1});
-			posTaskR->position({0.3, -0.4, 1.1});
+			// posTaskL->position({0.3, 0.4, 1.1});
+			// posTaskR->position({0.3, -0.4, 1.1});
 
-			vecOriTaskL->bodyVector({0., 1., 0.});
-			vecOriTaskL->targetVector({0., 0., 1.});
+			// vecOriTaskL->bodyVector({0., 1., 0.});
+			// vecOriTaskL->targetVector({0., 0., 1.});
 
-			vecOriTaskR->bodyVector({0., -1., 0.});
-			vecOriTaskR->targetVector({0., 0., 1.});
+			// vecOriTaskR->bodyVector({0., -1., 0.});
+			// vecOriTaskR->targetVector({0., 0., 1.});
+
 		}// start
 
 
@@ -394,9 +397,20 @@ namespace mc_handover
 			// relEfTaskL->set_ef_pose( sva::PTransformd(sva::RotY(-(pi/180)*90)*sva::RotX(-(pi/180)*90), p1l) );
 
 
-			initPosL = posTaskL->position();
-			initPosL << initPosL(0), -initPosL(1), initPosL(2);
-			posTaskR->position(initPosL);
+			/*move right Ef w.r.t left Ef*/
+			// initPosL = posTaskL->position();
+			// initPosL << initPosL(0), -initPosL(1), initPosL(2);
+			// posTaskR->position(initPosL);
+
+
+			// if(n%600 == 0)
+			// {
+			// 	approachObj->object[0] = Eigen::MatrixXd::Random(3,1);
+			// 	approachObj->object[1] = Eigen::MatrixXd::Random(3,1);
+			// 	approachObj->object[2] = Eigen::MatrixXd::Random(3,1);
+			// }
+			// n+=1;
+
 
 
 			/*hand pose*/
@@ -470,10 +484,6 @@ namespace mc_handover
 					pBody = &pBodyDefs->BodyDefs[b];
 					if(pBody->szName == approachObj->strMarkersBodyName[b])
 					{
-						/*LOG_INFO("body name: "<<pBody->szName<<"\n"<<
-							" pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
-							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" )*/
-
 						for(int m=0; m<pBody->nMarkers; m++)
 						{
 							approachObj->Markers[c] <<
@@ -520,6 +530,7 @@ namespace mc_handover
 							startHandover=true;
 						}
 					}
+
 
 
 
