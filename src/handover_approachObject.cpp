@@ -16,7 +16,7 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_subj_right_hand", "3mars_obj", "4mars_subj_left_hand"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "5mars_subj_right_hand", "4mars_subj_left_hand"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
@@ -74,6 +74,9 @@ namespace mc_handover
 			Markers[7] << 0.202506, -0.293441, 0.425241;
 		}
 
+		// for(const auto &p : markers_name_index)
+		// { LOG_INFO(p.first << " "<< p.second) }
+
 		for(unsigned int k=0; k<strMarkersName.size(); k++)
 		{
 			// LOG_WARNING(k<<" "<<strMarkersName[k])//<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
@@ -104,11 +107,14 @@ namespace mc_handover
 			objectPos = markersPos[9].col(i); //object[1]//center
 
 			/*move EF when subject approaches object 1st time*/
-			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA
-			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();//gripperRtEfA
+			obj_to_robotLtHand = ( markersPos[2].col(i) - object[2] );//gripperLtEfA - objRight
+			obj_to_robotRtHand = ( markersPos[6].col(i) - object[0] );//gripperRtEfA - objLeft
 
-			obj_rel_subjRtHand = ( markersPos[14].col(i) - objectPos ).norm();//lshpRtC
-			obj_rel_subjLtHand = ( markersPos[18].col(i) - objectPos ).norm();//lshpLtC
+			obj_rel_robotLtHand = ( markersPos[2].col(i) - object[2] ).norm();//gripperLtEfA - objRight
+			obj_rel_robotRtHand = ( markersPos[6].col(i) - object[0] ).norm();//gripperRtEfA - objLeft
+
+			obj_rel_subjRtHand = ( markersPos[14].col(i) - object[2] ).norm();//lshpRtC - objRight
+			obj_rel_subjLtHand = ( markersPos[18].col(i) - object[0] ).norm();//lshpLtC - objLeft
 
 			return true;
 		}
@@ -118,12 +124,11 @@ namespace mc_handover
 
 
 	
-	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
+	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
 	{
 		bool ready{false};
 
-		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
-		Eigen::Vector3d initRefPos, curPosEf, curPosEfMarker,  curPosLshp, ithPosSubj, avgVelSubj, predictPos;
+		Eigen::Vector3d initRefPos, curPosEf, curPosEfMarker, ithPosSubj, avgVelSubj, predictPos;
 
 		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
 
@@ -189,6 +194,18 @@ namespace mc_handover
 		
 		initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
+		ready = true;
+		return std::make_tuple(ready, wp, initRefPos);
+	}
+
+
+
+	bool ApproachObject::goToHandoverPose(std::string robotHand, std::vector<std::string> subjMarkersName, double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> handPredict)
+	{
+		Eigen::Vector3d curEfPos, refPos, handoverPos, P_, bodyVec, fingerPos;
+		Eigen::Vector3d curPosLshp, x, y, lshp_X, lshp_Y, lshp_Z;
+
+		it+= (int)tuner(2);
 
 		/*get unit vectors XYZ of subject LEFT hand*/
 		auto sizeStr = subjMarkersName.size();
@@ -200,25 +217,33 @@ namespace mc_handover
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
-		ready = true;
-		return std::make_tuple(ready, wp, initRefPos, lshp_Z);
-	}
-
-
-
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict)
-	{
-		Eigen::Vector3d curEfPos, refPos, handoverPos;
-
-		it+= (int)tuner(2);
+		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
 
 		curEfPos = robotEf.translation();
 
-		if(it<get<1>(handPredict).cols())
+		if(it < get<1>(handPredict).cols())
 		{
 			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
 			
-			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+			P_ = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+
+			
+			/*offset in y-axis to w.r.t. subject's hand*/
+			if(robotHand == "right")
+			{
+				bodyVec << 0., -1., 0.;
+				// P_(1) = max - abs( P_(1)-object[0][1] );
+				// P_(1) = max - abs( fingerPos(1)-object[0][1] );
+			}
+			else if(robotHand == "left")
+			{
+				bodyVec << 0., 1., 0.;
+				// P_(1) = min + abs( P_(1)-object[2][1] );
+				// P_(1) = min + abs( fingerPos(1)-object[2][1] );
+			}
+			
+			
+			handoverPos << P_(0), P_(1), P_(2);
 
 			 /*robot constraint*/
 			if(enableHand &&
@@ -228,15 +253,22 @@ namespace mc_handover
 				)
 			{
 				/*handover pose*/
-				if( objectPos(1)>=-0.15 && objectPos(1)<=0.15)
-				{ posTask->position(objectPos); }
-				else { posTask->position(handoverPos); }
+				posTask->position(handoverPos);
+
+				vecOriTask->bodyVector(bodyVec);
+				// vecOriTask->targetVector({0., 0., 1.});
+
+
+
+				// if( objectPos(1)>=-0.15 && objectPos(1)<=0.15)
+				// { posTask->position(objectPos); }
+				// else { posTask->position(handoverPos); }
 				
-				// vecOriTask->targetVector(get<3>(handPredict));// vecOriTask->targetVector(lshp_Z);
+				vecOriTask->targetVector(lshp_Z);
 			}
 			return true;
 		}
-		if(it==get<1>(handPredict).cols())
+		if(it == get<1>(handPredict).cols())
 		{
 			useLeftEf = false;
 			useRightEf = false;
@@ -447,16 +479,3 @@ namespace mc_handover
 	}
 
 }//namespace mc_handover
-
-
-
-
-// if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
-// 	obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
-// {
-// 	handoverPos = fingerPos;
-// }
-// else
-// {
-// 	handoverPos = objectPos;
-// }

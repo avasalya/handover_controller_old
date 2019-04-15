@@ -52,9 +52,9 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
 
-		bool goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict);
+		bool goToHandoverPose(std::string robotHand, std::vector<std::string> subjMarkersName, double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> handPredict);
 
 		bool handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
@@ -80,12 +80,13 @@ namespace mc_handover
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
 		std::vector<std::string> robotLtMarkers, robotRtMarkers, objMarkers, subjRtMarkers, subjLtMarkers;
 
-		Eigen::Vector3d objectPos;
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
+
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
+		Eigen::Vector3d objectPos, obj_to_robotLtHand, obj_to_robotRtHand;
 
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> lHandPredict, rHandPredict;
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> lHandPredict, rHandPredict;
 
 		bool useLeftEf{false};
 		bool useRightEf{false};

@@ -43,7 +43,7 @@ namespace mc_handover
 			double openGrippers{0.5};
 
 
-			bool Flag_CORTEX{false};
+			bool Flag_CORTEX{true};
 
 
 			/*mocap_simulaton*/
@@ -55,7 +55,6 @@ namespace mc_handover
 			int n;
 
 			int fps{200};
-			int body{0};
 			int maxMarkers, markersCount, until, b_;
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
@@ -64,6 +63,7 @@ namespace mc_handover
 			Eigen::Vector3d initPosL, initPosR, p1l, p1r;
 
 			sva::PTransformd ltHand, rtHand;
+			Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 			Eigen::Matrix3d ltRotW, rtRotW;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);

@@ -35,8 +35,8 @@ namespace mc_handover
 
 
 			/*initial ef pos*/
-			p1l << 0.3,0.3,1.1;
-			p1r <<0.3,-0.3,1.1;
+			p1l << 0.3,0.4,1.1;
+			p1r <<0.3,-0.4,1.1;
 
 
 			/*initial force/torque threshold*/
@@ -242,41 +242,33 @@ namespace mc_handover
 
 			/*move object using cursor or simData*/
 			ctl.gui()->addElement({"Handover","cursor_move_object"},
-				mc_rtc::gui::Transform("Position right", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("left_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { ctl.robots().robot(2).posW(pos); })
+				// mc_rtc::gui::Transform("Position right", 
+					// [this,&ctl](){ return ctl.robots().robot(2).bodyPosW("left_link"); },
+					// [this,&ctl](const sva::PTransformd & pos) { ctl.robots().robot(2).posW(pos); }),
 
-				,mc_rtc::gui::Transform("Position base", 
+				mc_rtc::gui::Transform("Position base", 
 					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
 					[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); })
 
-				,mc_rtc::gui::Transform("Position left", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("right_link"); },
-					[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); }) );
+				// ,mc_rtc::gui::Transform("Position left", 
+				// 	[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("right_link"); },
+				// 	[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); }) 
+				);
 
 			/*display moving object*/
 			ctl.gui()->addElement({"Handover","Point3D_object"},
-				mc_rtc::gui::Point3D("right link", [this,&ctl](){
-					ctl.robots().robot(2).posW({approachObj->object[0]});
-					return ctl.robots().robot(2).bodyPosW("left_link").translation(); }) 
+				// mc_rtc::gui::Point3D("right link", [this,&ctl](){
+				// 	ctl.robots().robot(2).posW({approachObj->object[0]});
+				// 	return ctl.robots().robot(2).bodyPosW("left_link").translation(); }),
 
-				,mc_rtc::gui::Point3D("base link", [this,&ctl](){
+				mc_rtc::gui::Point3D("base link", [this,&ctl](){
 					ctl.robots().robot(2).posW({approachObj->object[1]});
-					return ctl.robots().robot(2).bodyPosW("base_link").translation(); }) 
+					return ctl.robots().robot(2).bodyPosW("base_link"); })
 
-				,mc_rtc::gui::Point3D("left link", [this,&ctl](){
-					ctl.robots().robot(2).posW({approachObj->object[2]});
-					return ctl.robots().robot(2).bodyPosW("right_link").translation(); }) );
-
-
-			// mc_rtc::gui::Point3D("object position",
-			// [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
-
-			// ,mc_rtc::gui::Rotation("Rot",
-			// [this,&ctl]() { return sva::PTransformd{rot_, pos_} },
-			// [this,&ctl]() { rot_ = Eigen::Identity::Matrix3d(); pos_ = approachObj->objectPos; })
-
-
+				// ,mc_rtc::gui::Transform("left link", [this,&ctl](){
+				// 	ctl.robots().robot(2).posW({approachObj->object[2]});
+				// 	return ctl.robots().robot(2).bodyPosW("right_link").translation(); })
+				);
 
 			/*com Task*/
 			ctl.gui()->addElement({"Handover", "com"},
@@ -300,15 +292,15 @@ namespace mc_handover
 				cout << "\033[1;32m ***MOCAP IS ENABLED*** \033[0m\n";
 				Cortex_SetVerbosityLevel(VL_Info);
 				Cortex_SetErrorMsgHandlerFunc(MyErrorMsgHandler);
-	
+
 				if(ctl.Flag_ROBOT)
 					{ retval = Cortex_Initialize("10.1.1.180", "10.1.1.190"); }
 				else{ retval = Cortex_Initialize("10.1.1.200", "10.1.1.190"); }
-	
+
 				if (retval != RC_Okay)
 					{ printf("Error: Unable to initialize ethernet communication\n");
 				retval = Cortex_Exit(); }
-	
+
 				// cortex frame rate //
 				printf("\n****** Cortex_FrameRate ******\n");
 				retval = Cortex_Request("GetContextFrameRate", &pResponse, &nBytes);
@@ -316,7 +308,7 @@ namespace mc_handover
 					printf("ERROR, GetContextFrameRate\n");
 				float *contextFrameRate = (float*) pResponse;
 				printf("ContextFrameRate = %3.1f Hz\n", *contextFrameRate);
-	
+
 				// get name of bodies being tracked and its set of markers //
 				printf("\n****** Cortex_GetBodyDefs ******\n");
 				pBodyDefs = Cortex_GetBodyDefs();
@@ -376,8 +368,8 @@ namespace mc_handover
 
 
 
-			// posTaskL->position({0.3, 0.4, 1.1});
-			// posTaskR->position({0.3, -0.4, 1.1});
+			// posTaskL->position({p1l});
+			// posTaskR->position({p1r});
 
 			// vecOriTaskL->bodyVector({0., 1., 0.});
 			// vecOriTaskL->targetVector({0., 0., 1.});
@@ -408,6 +400,14 @@ namespace mc_handover
 			// 	approachObj->object[0] = Eigen::MatrixXd::Random(3,1);
 			// 	approachObj->object[1] = Eigen::MatrixXd::Random(3,1);
 			// 	approachObj->object[2] = Eigen::MatrixXd::Random(3,1);
+			// }
+			// n+=1;
+
+
+			// if(n%400 == 0)
+			// {
+			// 	LOG_WARNING(approachObj->obj_rel_subjRtHand)
+			// 	LOG_INFO(approachObj->obj_rel_subjLtHand)
 			// }
 			// n+=1;
 
@@ -446,16 +446,28 @@ namespace mc_handover
 			};
 
 
+			auto gripperControl = [&](std::string gripperName)
+			{
+				if(approachObj->gOpen)
+				{
+					open_gripper(gripperName);
+				}
+
+				if(approachObj->gClose)
+				{
+					close_gripper(gripperName);
+				}
+			};
 
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
 			{
 				getCurFrame = Cortex_GetCurrentFrame();
 				Cortex_CopyFrame(getCurFrame, &FrameofData);
-	
+
 				int ithFrame = FrameofData.iFrame;
 				del+=FrameofData.fDelay;
-	
+
 				if(ithFrame == 0 || ithFrame == 1)
 					{ startCapture = true; }
 				else if(ithFrame <0)
@@ -474,9 +486,9 @@ namespace mc_handover
 			{
 				/*get markers position FrameByFrame*/
 				if(approachObj->Flag_withoutRobot)
-				{ b_ = 2; c = 8; }
+					{ b_ = 2; c = 8; }
 				else
-				{ b_ = 0; c = 0; }
+					{ b_ = 0; c = 0; }
 
 				for(int b=b_; b<totalBodies; b++)
 				{
@@ -494,10 +506,8 @@ namespace mc_handover
 						}
 					}
 					else
-					{ LOG_ERROR("approachObj->strMarkersBodyName[b] "<<approachObj->strMarkersBodyName[b]<<"\n"<<
-						"pBody->szName "<<pBody->szName<<"\n"<< 
-						"pBody->nMarkers: " << pBody->nMarkers<<"\n"<< 
-						 " & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
+						{ LOG_ERROR("pBody->szName "<<pBody->szName<<"\n"<<
+							"approachObj->strMarkersBodyName[b] "<<approachObj->strMarkersBodyName[b]<<"\n") }
 				}
 
 
@@ -507,131 +517,74 @@ namespace mc_handover
 					headTask->target(approachObj->objectPos);
 
 					/*move EF when subject approaches object 1st time*/
-					if( !startHandover && (approachObj->obj_rel_subjRtHand < 0.2) )
-					{
-						posTaskL->position(p1l);
-						vecOriTaskL->bodyVector(bodyVector);
-						vecOriTaskL->targetVector(targetVector);
-						LOG_ERROR("subject right hand approaching object ")
+					// if((!startHandover) && (approachObj->obj_rel_subjRtHand < 0.2) && (approachObj->obj_rel_subjLtHand < 0.2))
+					// {
+					// 	posTaskL->position(p1l);
+					// 	vecOriTaskL->bodyVector({0., 1., 0.});
+					// 	vecOriTaskL->targetVector(targetVector);
 
-						if(posTaskL->eval().norm() >0.5 || posTaskL->eval().norm() <0.1) 
-						{
-							startHandover=true;
-						}
-					}
-					else if( !startHandover && (approachObj->obj_rel_subjLtHand < 0.2) )
-					{
-						posTaskR->position(p1r);
-						vecOriTaskR->bodyVector(bodyVector);
-						vecOriTaskR->targetVector(targetVector);
-						LOG_SUCCESS("subject left hand approaching object ")
-						if(posTaskR->eval().norm() >0.1 || posTaskR->eval().norm() <0.15) 
-						{
-							startHandover=true;
-						}
-					}
+					// 	posTaskR->position(p1r);
+					// 	vecOriTaskR->bodyVector({0., -1., 0.});
+					// 	vecOriTaskR->targetVector(targetVector);
+					// 	LOG_WARNING("subject both hands approaching object ")
+					// 	if(
+					// 		(posTaskR->eval().norm() >0.5 || posTaskR->eval().norm() <0.1) &&
+					// 		(posTaskL->eval().norm() >0.5 || posTaskL->eval().norm() <0.1)
+					// 		)
+					// 		{ startHandover=true; }
+					// }
 
 
+					startHandover=true;
 
 
 					/*observe subject motion for t_observe period*/
 					if( startHandover && ((approachObj->i)%(approachObj->t_observe)==0) )
 					{
-						auto obj_rel_subj = [&]() -> std::vector<string>
-						{
-							if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
-							{ subjMarkersName = approachObj->subjRtMarkers; }
-							else
-							{ subjMarkersName = approachObj->subjLtMarkers; }
-							return subjMarkersName;
-						};
+						approachObj->lHandPredict =
+						approachObj->predictionController(ltHand, ltRotW, approachObj->subjRtMarkers, approachObj->robotLtMarkers);
+						
+						approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
 
-						auto obj_rel_robot = [&]() -> bool
-						{
-							obj_rel_subj();
-							
-							if(approachObj->obj_rel_robotLtHand < approachObj->obj_rel_robotRtHand)
-							{
-								if(stopRtHand)
-								{
-									LOG_INFO("robotLeftHand in use\n")
-									stopRtHand = false;
-									posTaskR->position(initPosR);
-									vecOriTaskR->bodyVector(initBodyVector);
-									vecOriTaskR->targetVector(initTargetVector);
+						approachObj->rHandPredict =
+						approachObj->predictionController(rtHand, rtRotW, approachObj->subjLtMarkers, approachObj->robotRtMarkers);
+						
+						approachObj->useRightEf = get<0>(approachObj->rHandPredict);
 
-									stopLtHand = true;
-									posTaskL->position(p1l);
-									vecOriTaskL->bodyVector(bodyVector);
-							 		vecOriTaskL->targetVector(targetVector);
-								}
-
-								robotMarkersName = approachObj->robotLtMarkers;
-							
-								approachObj->lHandPredict = approachObj->predictionController(ltHand, ltRotW, subjMarkersName, robotMarkersName);
-								approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
-							}
-							else
-							{
-								if(stopLtHand)
-								{
-									LOG_WARNING("robotRightHand in use\n")
-									stopLtHand = false;
-									posTaskL->position(initPosL);
-									vecOriTaskL->bodyVector(initBodyVector);
-									vecOriTaskL->targetVector(initTargetVector);
-								
-									stopRtHand = true;
-									posTaskR->position(p1r);
-									vecOriTaskR->bodyVector(bodyVector);
-								 	vecOriTaskR->targetVector(targetVector);
-								 }
-
-								robotMarkersName = approachObj->robotRtMarkers;
-
-								approachObj->rHandPredict = approachObj->predictionController(rtHand, rtRotW, subjMarkersName, robotMarkersName);
-								approachObj->useRightEf = get<0>(approachObj->rHandPredict);
-							}
-							return false;
-						};
-						obj_rel_robot();
 					}// i%t_observe;
 
 
 
-					auto gripperControl = [&](std::string gripperName)
-					{
-						if(approachObj->gOpen)
-						{
-							open_gripper(gripperName);
-						}
-
-						if(approachObj->gClose)
-						{
-							close_gripper(gripperName);
-						}
-					};
 
 
 					/*feed Ef pose*/
-					if( approachObj->useLeftEf )
+					if( (approachObj->useLeftEf) && (approachObj->useRightEf) )
 					{
-						approachObj->useRightEf=false;
+						auto max = approachObj->object[0][1] - 0.05; //half width of ef
+						taskOK = approachObj->goToHandoverPose("right", approachObj->subjRtMarkers, -0.7, max, approachObj->enableRHand, rtHand, posTaskR, vecOriTaskR, approachObj->rHandPredict);
 
-						taskOK = approachObj->goToHandoverPose(0.2, 0.7, approachObj->enableLHand, ltHand, posTaskL, vecOriTaskL, approachObj->lHandPredict);
-						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
-						gripperControl("l_gripper");
-					}
-					else if( approachObj->useRightEf )
-					{
-						approachObj->useLeftEf=false;
+						auto min = approachObj->object[2][1] + 0.05; //half width of ef
+						taskOK = approachObj->goToHandoverPose("left", approachObj->subjLtMarkers, min, 0.7, approachObj->enableLHand, ltHand, posTaskL, vecOriTaskL, approachObj->lHandPredict);
 
-						taskOK = approachObj->goToHandoverPose(-0.7, 0.2, approachObj->enableRHand, rtHand, posTaskR, vecOriTaskR, approachObj->rHandPredict);
-						taskOK = approachObj->handoverForceController(approachObj->enableRHand, initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
-						gripperControl("r_gripper");
+
+
+						// taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
+						// gripperControl("l_gripper");
+
+
+						// taskOK = approachObj->handoverForceController(approachObj->enableRHand, initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
+						// gripperControl("r_gripper");
 					}
+
+
+
+
+				// obj_to_robotRtHand
+				// obj_to_robotLtHand
+
 
 				}// handoverRun
+
 			}//startCapture
 
 
@@ -648,7 +601,7 @@ namespace mc_handover
 				return true;
 			}
 			else
-			{ return false; }
+				{ return false; }
 
 		}// run
 
@@ -718,4 +671,90 @@ namespace mc_handover
 // 	normalAcc_ = w_b_b.cross(w_b_b.cross(bodyVector_));
 // 	normalAcc_ += bodyNormalAcc.cross(bodyVector_);
 // 	normalAcc_ = E_0_b*normalAcc_;
+// }
+
+
+
+
+
+
+// auto obj_rel_subj = [&]() -> std::vector<string>
+// {
+// 	if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
+// 		{ subjMarkersName = approachObj->subjRtMarkers; }
+// 	else
+// 		{ subjMarkersName = approachObj->subjLtMarkers; }
+// 	return subjMarkersName;
+// };
+
+
+// auto obj_rel_robot = [&]() -> bool
+// {
+// 	obj_rel_subj();
+
+// 	if(approachObj->obj_rel_robotLtHand < approachObj->obj_rel_robotRtHand)
+// 	{
+// 		if(stopRtHand)
+// 		{
+// 			LOG_INFO("robotLeftHand in use\n")
+// 			stopRtHand = false;
+// 			posTaskR->position(initPosR);
+// 			vecOriTaskR->bodyVector(initBodyVector);
+// 			vecOriTaskR->targetVector(initTargetVector);
+
+// 			stopLtHand = true;
+// 			posTaskL->position(p1l);
+// 			vecOriTaskL->bodyVector(bodyVector);
+// 			vecOriTaskL->targetVector(targetVector);
+// 		}
+
+// 		robotMarkersName = approachObj->robotLtMarkers;
+
+// 		approachObj->lHandPredict = approachObj->predictionController(ltHand, ltRotW, subjMarkersName, robotMarkersName);
+// 		approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
+// 	}
+// 	else
+// 	{
+// 		if(stopLtHand)
+// 		{
+// 			LOG_WARNING("robotRightHand in use\n")
+// 			stopLtHand = false;
+// 			posTaskL->position(initPosL);
+// 			vecOriTaskL->bodyVector(initBodyVector);
+// 			vecOriTaskL->targetVector(initTargetVector);
+
+// 			stopRtHand = true;
+// 			posTaskR->position(p1r);
+// 			vecOriTaskR->bodyVector(bodyVector);
+// 			vecOriTaskR->targetVector(targetVector);
+// 		}
+
+// 		robotMarkersName = approachObj->robotRtMarkers;
+
+// 		approachObj->rHandPredict = approachObj->predictionController(rtHand, rtRotW, subjMarkersName, robotMarkersName);
+// 		approachObj->useRightEf = get<0>(approachObj->rHandPredict);
+// 	}
+// 	return false;
+// };
+// obj_rel_robot();
+
+
+
+
+// if( approachObj->useLeftEf )
+// {
+// 	approachObj->useRightEf=false;
+
+// 	taskOK = approachObj->goToHandoverPose(0.2, 0.7, approachObj->enableLHand, ltHand, posTaskL, vecOriTaskL, approachObj->lHandPredict);
+
+// 	taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
+// 	gripperControl("l_gripper");
+// }
+// else if( approachObj->useRightEf )
+// {
+// 	approachObj->useLeftEf=false;
+
+// 	taskOK = approachObj->goToHandoverPose(-0.7, 0.2, approachObj->enableRHand, rtHand, posTaskR, vecOriTaskR, approachObj->rHandPredict);
+// 	taskOK = approachObj->handoverForceController(approachObj->enableRHand, initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
+// 	gripperControl("r_gripper");
 // }
