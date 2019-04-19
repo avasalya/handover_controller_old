@@ -252,7 +252,7 @@ namespace mc_handover
 
 				// ,mc_rtc::gui::Transform("Position left", 
 				// 	[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("right_link"); },
-				// 	[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); }) 
+				// 	[this,&ctl](const sva::PTransformd & pos) {	ctl.robots().robot(2).posW(pos); })
 				);
 
 			/*display moving object*/
@@ -263,7 +263,7 @@ namespace mc_handover
 
 				mc_rtc::gui::Point3D("base link", [this,&ctl](){
 					ctl.robots().robot(2).posW({approachObj->object[1]});
-					return ctl.robots().robot(2).bodyPosW("base_link"); })
+					return ctl.robots().robot(2).bodyPosW("base_link").translation(); })
 
 				// ,mc_rtc::gui::Transform("left link", [this,&ctl](){
 				// 	ctl.robots().robot(2).posW({approachObj->object[2]});
@@ -543,17 +543,12 @@ namespace mc_handover
 					{
 						approachObj->lHandPredict =
 						approachObj->predictionController(ltHand, ltRotW, approachObj->subjRtMarkers, approachObj->robotLtMarkers);
-						
 						approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
 
 						approachObj->rHandPredict =
 						approachObj->predictionController(rtHand, rtRotW, approachObj->subjLtMarkers, approachObj->robotRtMarkers);
-						
 						approachObj->useRightEf = get<0>(approachObj->rHandPredict);
-
 					}// i%t_observe;
-
-
 
 
 
@@ -575,12 +570,6 @@ namespace mc_handover
 						// taskOK = approachObj->handoverForceController(approachObj->enableRHand, initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
 						// gripperControl("r_gripper");
 					}
-
-
-
-
-				// obj_to_robotRtHand
-				// obj_to_robotLtHand
 
 
 				}// handoverRun

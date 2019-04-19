@@ -204,6 +204,7 @@ namespace mc_handover
 	{
 		Eigen::Vector3d curEfPos, refPos, handoverPos, P_, bodyVec, fingerPos;
 		Eigen::Vector3d curPosLshp, x, y, lshp_X, lshp_Y, lshp_Z;
+		int n;
 
 		it+= (int)tuner(2);
 
@@ -234,13 +235,17 @@ namespace mc_handover
 				bodyVec << 0., -1., 0.;
 				// P_(1) = max - abs( P_(1)-object[0][1] );
 				// P_(1) = max - abs( fingerPos(1)-object[0][1] );
+				if(n%400 == 0)
+				{LOG_WARNING(P_(1))}
 			}
 			else if(robotHand == "left")
 			{
 				bodyVec << 0., 1., 0.;
 				// P_(1) = min + abs( P_(1)-object[2][1] );
 				// P_(1) = min + abs( fingerPos(1)-object[2][1] );
-			}
+				if(n%400 == 0)
+				{LOG_ERROR(P_(1))}
+			}n+=1;
 			
 			
 			handoverPos << P_(0), P_(1), P_(2);
@@ -256,6 +261,7 @@ namespace mc_handover
 				posTask->position(handoverPos);
 
 				vecOriTask->bodyVector(bodyVec);
+				vecOriTask->targetVector(lshp_Z);
 				// vecOriTask->targetVector({0., 0., 1.});
 
 
@@ -263,8 +269,8 @@ namespace mc_handover
 				// if( objectPos(1)>=-0.15 && objectPos(1)<=0.15)
 				// { posTask->position(objectPos); }
 				// else { posTask->position(handoverPos); }
+				// vecOriTask->targetVector(lshp_Z);
 				
-				vecOriTask->targetVector(lshp_Z);
 			}
 			return true;
 		}
