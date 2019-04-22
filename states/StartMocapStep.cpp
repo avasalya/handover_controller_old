@@ -108,13 +108,60 @@ namespace mc_handover
 					{restartEverything = true; cout << "restarting Everything"<<endl; }));
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
-			ctl.gui()->addElement({"Handover", "randomPos"},
+			ctl.gui()->addElement({"Handover", "randomPosR"},
+				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
+				{
+					auto gripper = ctl.grippers["r_gripper"].get();
+					gripper->setTargetQ({0.5});//open Gripper					
+					approachObj->enableRHand=true;
+					approachObj->gClose = false;
+					approachObj->closeGripper = false;
+				}),
+				mc_rtc::gui::Button("init*", [this, &ctl]()
+				{
+					posTaskR->position(initPosR);
+					vecOriTaskR->bodyVector(initBodyVector);
+					vecOriTaskR->targetVector(initTargetVector);
+				}),
+				mc_rtc::gui::Button( "pos0", [this, &ctl](){
+					posTaskR->position(p1r);
+					vecOriTaskR->bodyVector(bodyVector);
+					vecOriTaskR->targetVector(targetVector);
+				} ),
+				mc_rtc::gui::Button( "pos1", [this, &ctl](){
+					posTaskR->position({0.3,-0.33,0.95});
+					vecOriTaskR->bodyVector(bodyVector);
+					vecOriTaskR->targetVector(targetVector);
+				} ),
+				mc_rtc::gui::Button( "pos2", [this, &ctl](){
+					posTaskR->position({0.36,-0.4,1.1});
+					vecOriTaskR->bodyVector(bodyVector);
+					vecOriTaskR->targetVector(targetVector);
+				} ),
+				mc_rtc::gui::Button( "pos3", [this, &ctl](){
+					posTaskR->position({0.3,-0.25,1.1});
+					vecOriTaskR->bodyVector(bodyVector);
+					vecOriTaskR->targetVector(targetVector);
+				} ),
+				mc_rtc::gui::Button( "pos4", [this, &ctl](){
+					posTaskR->position({0.5,-0.35,0.9});
+					vecOriTaskR->bodyVector(bodyVector);
+					vecOriTaskR->targetVector(targetVector);
+				} ),
+				mc_rtc::gui::Button( "pos5", [this, &ctl](){
+					posTaskR->position({0.3,-0.3,1.0});
+					vecOriTaskR->bodyVector(bodyVector);
+					vecOriTaskR->targetVector(targetVector);
+				} )
+				);
+
+
+				ctl.gui()->addElement({"Handover", "randomPosL"},
 				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
 				{
 					auto gripper = ctl.grippers["l_gripper"].get();
 					gripper->setTargetQ({0.5});//open Gripper
-					approachObj->enableLHand=true;
-					approachObj->enableRHand=true;
+					approachObj->enableLHand=true;					
 					approachObj->gClose = false;
 					approachObj->closeGripper = false;
 				}),
@@ -123,93 +170,39 @@ namespace mc_handover
 					posTaskL->position(initPosL);
 					vecOriTaskL->bodyVector(initBodyVector);
 					vecOriTaskL->targetVector(initTargetVector);
-
-					posTaskR->position(initPosR);
-					vecOriTaskR->bodyVector(initBodyVector);
-					vecOriTaskR->targetVector(initTargetVector);
 				}),
 				mc_rtc::gui::Button( "pos0", [this, &ctl](){
 					posTaskL->position(p1l);
 					vecOriTaskL->bodyVector(bodyVector);
 					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position(p1r);
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
 				} ),
 				mc_rtc::gui::Button( "pos1", [this, &ctl](){
-					posTaskL->position({0.24,0.3,0.8});
+					posTaskL->position({0.3,0.33,0.95});
 					vecOriTaskL->bodyVector(bodyVector);
 					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.24,-0.3,0.8});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
 				} ),
 				mc_rtc::gui::Button( "pos2", [this, &ctl](){
-					posTaskL->position({0.4,0.45,1.3});
+					posTaskL->position({0.36,0.4,1.1});
 					vecOriTaskL->bodyVector(bodyVector);
 					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.4,-0.45,1.3});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
 				} ),
 				mc_rtc::gui::Button( "pos3", [this, &ctl](){
 					posTaskL->position({0.3,0.25,1.1});
 					vecOriTaskL->bodyVector(bodyVector);
 					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.3,-0.25,1.1});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
 				} ),
 				mc_rtc::gui::Button( "pos4", [this, &ctl](){
-					posTaskL->position({0.5,0.3,0.8});
+					posTaskL->position({0.5,0.35,0.9});
 					vecOriTaskL->bodyVector(bodyVector);
 					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.5,-0.3,0.8});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
 				} ),
 				mc_rtc::gui::Button( "pos5", [this, &ctl](){
-					posTaskL->position({0.1,0.4,1.24});
+					posTaskL->position({0.3,0.3,1.0});
 					vecOriTaskL->bodyVector(bodyVector);
 					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.1,-0.4,1.24});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
-				} ),
-				mc_rtc::gui::Button( "pos6", [this, &ctl](){
-					posTaskL->position({0.3,0.5,1.0});
-					vecOriTaskL->bodyVector(bodyVector);
-					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.3,-0.5,1.0});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
-				} ),
-				mc_rtc::gui::Button( "pos7", [this, &ctl](){
-					posTaskL->position({0.1,0.4,1.24});
-					vecOriTaskL->bodyVector(bodyVector);
-					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.5,-0.3,0.8});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
-				} ),
-				mc_rtc::gui::Button( "pos8", [this, &ctl](){
-					posTaskL->position({0.3,0.5,1.0});
-					vecOriTaskL->bodyVector(bodyVector);
-					vecOriTaskL->targetVector(targetVector);
-
-					posTaskR->position({0.4,-0.45,1.3});
-					vecOriTaskR->bodyVector(bodyVector);
-					vecOriTaskR->targetVector(targetVector);
 				} )
 				);
+
 
 			/*publish wrench*/
 			ctl.gui()->addElement({"Handover", "wrench"},

@@ -19,13 +19,13 @@ namespace mc_handover
 		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "6mars_obj_subj_right_hand", "4mars_subj_left_hand"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};
-		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};
+		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB", "dummy"};
 
 		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};
 		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
-		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
+		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end()-1);
 		strMarkersName.insert(strMarkersName.end(), "object");
 		strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
