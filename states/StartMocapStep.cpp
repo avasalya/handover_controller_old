@@ -487,7 +487,7 @@ namespace mc_handover
 						vecOriTaskL->targetVector(targetVector);
 						LOG_ERROR("subject right hand approaching object ")
 
-						if(posTaskL->eval().norm() >0.5 || posTaskL->eval().norm() <0.1) 
+						if(posTaskL->eval().norm() >0.1 || posTaskL->eval().norm() <0.15)
 						{
 							startHandover=true;
 						}
@@ -498,7 +498,7 @@ namespace mc_handover
 						vecOriTaskR->bodyVector(bodyVector);
 						vecOriTaskR->targetVector(targetVector);
 						LOG_SUCCESS("subject left hand approaching object ")
-						if(posTaskR->eval().norm() >0.1 || posTaskR->eval().norm() <0.15) 
+						if(posTaskR->eval().norm() >0.1 || posTaskR->eval().norm() <0.15)
 						{
 							startHandover=true;
 						}

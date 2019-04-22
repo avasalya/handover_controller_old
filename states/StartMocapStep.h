@@ -54,7 +54,6 @@ namespace mc_handover
 
 
 			int fps{200};
-			int body{0};
 			int maxMarkers, markersCount, until, b_;
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
