@@ -446,17 +446,22 @@ namespace mc_handover
 					pBody = &pBodyDefs->BodyDefs[b];
 					if(pBody->szName == approachObj->strMarkersBodyName[b])
 					{
-						/*LOG_INFO("body name: "<<pBody->szName<<"\n"<<
-							" pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
-							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" )*/
+						// LOG_INFO("body name: "<<pBody->szName<<"\n"<<
+						// 	" pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
+						// 	" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" )
 
 						for(int m=0; m<pBody->nMarkers; m++)
 						{
-							approachObj->Markers[c] <<
-							FrameofData.BodyData[b].Markers[m][0], // X
-							FrameofData.BodyData[b].Markers[m][1], // Y
-							FrameofData.BodyData[b].Markers[m][2]; // Z
-							c+=1;
+							if(b==0 && m==4)
+							{}
+							else
+							{
+								approachObj->Markers[c] <<
+								FrameofData.BodyData[b].Markers[m][0], // X
+								FrameofData.BodyData[b].Markers[m][1], // Y
+								FrameofData.BodyData[b].Markers[m][2]; // Z
+								c+=1;
+							}
 						}
 					}
 					else
@@ -465,7 +470,6 @@ namespace mc_handover
 						"pBody->nMarkers: " << pBody->nMarkers<<"\n"<< 
 						 " & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 				}
-
 
 				if( approachObj->handoverRun() && (FrameofData.nUnidentifiedMarkers==0) )
 				{
@@ -479,7 +483,6 @@ namespace mc_handover
 						vecOriTaskL->bodyVector(bodyVector);
 						vecOriTaskL->targetVector(targetVector);
 						LOG_ERROR("subject right hand approaching object ")
-
 						if(posTaskL->eval().norm() >0.1 || posTaskL->eval().norm() <0.15)
 						{
 							startHandover=true;
