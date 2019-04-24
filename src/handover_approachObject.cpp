@@ -18,11 +18,11 @@ namespace mc_handover
 		/*markers Name strings*/
 		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "6mars_obj_subj_right_hand", "4mars_subj_left_hand"};
 
-		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};
-		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};
+		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3
+		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};
-		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};
+		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//9-13
+		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};//14-17
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
@@ -95,11 +95,11 @@ namespace mc_handover
 			objectPos = markersPos[8].col(i);
 
 			/*move EF when subject approaches object 1st time*/
-			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();
-			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();
+			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA - objRight
+			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();//gripperRtEfA - objLeft
 
-			obj_rel_subjRtHand = ( markersPos[12].col(i) - objectPos ).norm();
-			obj_rel_subjLtHand = ( markersPos[16].col(i) - objectPos ).norm();
+			obj_rel_subjRtHand = ( markersPos[12].col(i) - objectPos ).norm();//lshpRtC - objRight
+			obj_rel_subjLtHand = ( markersPos[16].col(i) - objectPos ).norm();//lshpLtC - objLeft
 
 			return true;
 		}
