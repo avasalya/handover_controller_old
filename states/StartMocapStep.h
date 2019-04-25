@@ -59,7 +59,7 @@ namespace mc_handover
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
 			Eigen::Vector3d headVector, headTarget, bodyVector, targetVector, initBodyVector, initTargetVector;
-			Eigen::Vector3d initPosL, initPosR, p1l, p1r;
+			Eigen::Vector3d initPosL, initPosR, p1l, p1r, fingerPos;
 
 			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;

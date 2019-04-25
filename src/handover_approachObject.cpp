@@ -42,7 +42,7 @@ namespace mc_handover
 		/*prediction controller parameter*/
 		tuner << 600., 30., 20.;
 		// tuner(2) = tuner(0)/tuner(1);
-	
+
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2);//t_predict/t_observe;
@@ -75,7 +75,7 @@ namespace mc_handover
 			if( Markers[k](0)>-10 && Markers[k](0)!=0 && Markers[k](0)<10 )
 				{ checkNonZero = true; }
 			else
-			{ return false; }
+				{ return false; }
 		}
 		return checkNonZero;
 	}
@@ -93,6 +93,8 @@ namespace mc_handover
 
 			/*for GUI*/
 			objectPos = markersPos[8].col(i);
+			fingerPosR = markersPos[9].col(i);
+			fingerPosL = markersPos[14].col(i);
 
 			/*move EF when subject approaches object 1st time*/
 			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA - objRight
@@ -104,7 +106,7 @@ namespace mc_handover
 			return true;
 		}
 		else
-		{ return false; }
+			{ return false; }
 	}
 
 
@@ -167,9 +169,11 @@ namespace mc_handover
 		}
 
 		/*get average velocity of previous *t_observe* sec Subj movement*/
-		curVelSubj  = handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX
-		avgVelSubj  << handoverTraj->takeAverage(curVelSubj);
+		curVelSubj  = handoverTraj->diff(newPosSubj)*fps;
+		avgVelSubj  <<handoverTraj->takeAverage(curVelSubj);
+		// cout<< " vel " << avgVelSubj.transpose() <<endl;
 		
+
 		/*predict position in straight line after t_predict time*/
 		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
 
@@ -197,7 +201,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict)
+	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict, Eigen::Vector3d fingerPos)
 	{
 		Eigen::Vector3d curEfPos, refPos, handoverPos;
 
@@ -207,23 +211,38 @@ namespace mc_handover
 
 		if(it<get<1>(handPredict).cols())
 		{
-			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
+			// refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
 			
-			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+			// handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+
+
+
+			if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
+				obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
+			{
+				handoverPos = fingerPos;
+				// LOG_WARNING("fingerPos ")
+
+			}
+			else
+			{
+				LOG_WARNING(" objectPos")
+				// handoverPos = objectPos;
+			}
+			
 
 			 /*robot constraint*/
 			if(enableHand &&
 				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
 				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5)
+				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.35)
 				)
 			{
-				/*handover pose*/
-				if( objectPos(1)>=-0.15 && objectPos(1)<=0.15)
-				{ posTask->position(objectPos); }
-				else { posTask->position(handoverPos); }
-				
-				vecOriTask->targetVector(get<3>(handPredict));// vecOriTask->targetVector(lshp_Z);
+				posTask->position(handoverPos);
+
+				/* lshpe Z to link6 X*/
+				vecOriTask->bodyVector({1., 0., 0.});
+				vecOriTask->targetVector(get<3>(handPredict));
 			}
 			return true;
 		}
@@ -343,15 +362,15 @@ namespace mc_handover
 
 
 		
-		if( subj_rel_ef < 0.2 )
+		if( subj_rel_ef < 0.3 )
 		{
 			/*open empty gripper when subject come near to robot*/
-			if( (!openGripper) && (handForce.norm()<1.0) )
+			if( (!openGripper) /*&& (handForce.norm()<1.0)*/ )
 			{
 				Fzero = handForce; //this has Finertia too
 				gOpen = true;/*open_gripper();*/
 				openGripper = true;
-				LOG_WARNING("opening " + gripperName<< " with Force Norm "<< handForce.norm())
+				LOG_INFO("opening " + gripperName<< " with Force Norm "<< handForce.norm())
 			}
 
 			/*close gripper*/
@@ -360,6 +379,7 @@ namespace mc_handover
 				gClose = true;/*close_gripper();*/
 				closeGripper = true;
 				enableHand=false; //when subject hand is very close to efL
+				LOG_INFO(" object is inside gripper "<< handForce.norm() )
 			}
 			
 			/*when closed WITH object*/
@@ -367,7 +387,7 @@ namespace mc_handover
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
-				LOG_INFO(" object is inside gripper "<< handForce.norm() )
+				LOG_INFO(" EF returning to init pos ")
 
 				/*move EF to initial position*/
 				posTask->position(initPos);
@@ -442,12 +462,3 @@ namespace mc_handover
 
 
 
-// if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
-// 	obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
-// {
-// 	handoverPos = fingerPos;
-// }
-// else
-// {
-// 	handoverPos = objectPos;
-// }
