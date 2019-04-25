@@ -98,6 +98,9 @@ namespace mc_handover
 		bool openGripper{false};
 		bool closeGripper{false};
 
+		bool subjHasObject{true};
+		bool robotHasObject{false};
+
 		bool graspObject{true};
 		bool takeBackObject{false};
 

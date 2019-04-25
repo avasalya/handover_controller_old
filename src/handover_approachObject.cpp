@@ -207,7 +207,7 @@ namespace mc_handover
 
 		it+= (int)tuner(2);
 
-		curEfPos = robotEf.translation();
+		// curEfPos = robotEf.translation();
 
 		if(it<get<1>(handPredict).cols())
 		{
@@ -217,19 +217,32 @@ namespace mc_handover
 
 
 
-			if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
-				obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
+			// if( obj_rel_robotLtHand < obj_rel_subjLtHand || obj_rel_robotRtHand < obj_rel_subjLtHand ||
+			// 	obj_rel_robotLtHand < obj_rel_subjRtHand || obj_rel_robotRtHand < obj_rel_subjRtHand )
+			// {
+			// 	handoverPos = fingerPos;
+			// 	// LOG_WARNING("fingerPos ")
+
+			// }
+			// else
+			// {
+			// 	handoverPos = objectPos;
+			// 	// LOG_WARNING(" objectPos")
+			// }
+			
+
+			if(subjHasObject)
+			{
+				handoverPos = objectPos;
+				// LOG_WARNING(" objectPos")
+			}
+			else if(robotHasObject)
 			{
 				handoverPos = fingerPos;
-				// LOG_WARNING("fingerPos ")
+				// LOG_INFO("fingerPos ")
+			}
 
-			}
-			else
-			{
-				LOG_WARNING(" objectPos")
-				// handoverPos = objectPos;
-			}
-			
+
 
 			 /*robot constraint*/
 			if(enableHand &&
@@ -241,8 +254,8 @@ namespace mc_handover
 				posTask->position(handoverPos);
 
 				/* lshpe Z to link6 X*/
-				vecOriTask->bodyVector({1., 0., 0.});
-				vecOriTask->targetVector(get<3>(handPredict));
+				// vecOriTask->bodyVector({1., 0., 0.});
+				// vecOriTask->targetVector(get<3>(handPredict));
 			}
 			return true;
 		}
@@ -359,18 +372,27 @@ namespace mc_handover
 			return false;
 		};
 
-
-
 		
 		if( subj_rel_ef < 0.3 )
 		{
+			// if( (ef_area_wAB_gA < ef_area_wAB_O) || (ef_area_wAB_gB < ef_area_wAB_O) )
+			// {
+			// 	LOG_ERROR("ef_area_wAB_gA - wAB_0" << ef_area_wAB_gA <<"  "<< ef_area_wAB_O)
+			// }
+
+			// else if( (ef_area_wAB_gA < ef_area_wAB_f) || (ef_area_wAB_gB < ef_area_wAB_f) )
+			// {
+			// 	LOG_SUCCESS("ef_area_wAB_gA - wAB_f" << ef_area_wAB_gA<<"  "<<ef_area_wAB_f)
+			// }
+
+
 			/*open empty gripper when subject come near to robot*/
 			if( (!openGripper) /*&& (handForce.norm()<1.0)*/ )
 			{
 				Fzero = handForce; //this has Finertia too
 				gOpen = true;/*open_gripper();*/
 				openGripper = true;
-				LOG_INFO("opening " + gripperName<< " with Force Norm "<< handForce.norm())
+				LOG_INFO(" opening " + gripperName<< " with Force Norm "<< handForce.norm())
 			}
 
 			/*close gripper*/
@@ -387,12 +409,7 @@ namespace mc_handover
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
-				LOG_INFO(" EF returning to init pos ")
-
-				/*move EF to initial position*/
-				posTask->position(initPos);
-				vecOriTask->bodyVector({0., 1., 0.});
-				vecOriTask->targetVector({0., 1., 0.});
+				LOG_INFO(" Force Norm At Close "<<FNormAtClose)				
 			}
 
 			/*check if object is being pulled*/
@@ -411,6 +428,7 @@ namespace mc_handover
 			{
 				if(e%200==0)//wait xx sec
 				{
+					e=0;
 					enableHand=true;
 					takeBackObject=true;
 
@@ -419,10 +437,18 @@ namespace mc_handover
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
-					// LOG_INFO("ready to grasp again, avg itr size "<< Floadx.size())
+					LOG_INFO("Fload  "<< Fload.transpose() << " ,EF returning to init pos" )
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
+
+					/*move EF to initial position*/
+					posTask->position(initPos);
+					vecOriTask->bodyVector({0., 1., 0.});
+					vecOriTask->targetVector({0., 1., 0.});
+
+					subjHasObject = false;
+					robotHasObject = true;
 				}
 				/*divide by 9.8 and you will get object mass*/
 				else
@@ -451,6 +477,11 @@ namespace mc_handover
 				graspObject=true;
 				goBackInit=true;
 				enableHand=true;
+
+
+				subjHasObject = true;
+				robotHasObject = false;
+
 				cout<<"/*******restarting handover*******/"<<endl;
 			}
 		}

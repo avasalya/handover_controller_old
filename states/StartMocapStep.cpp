@@ -101,6 +101,18 @@ namespace mc_handover
 			targetVector<<0., 0., 1.;
 
 
+			/*play-pause MOCAP*/
+			ctl.gui()->addElement({"MOCAP"}, 
+				mc_rtc::gui::Button("pause", [this]()
+				{
+					Cortex_Request("Pause", &pResponse, &nBytes);
+				}),
+
+				mc_rtc::gui::Button("Play", [this]()
+				{
+					Cortex_Request("LiveMode", &pResponse, &nBytes);
+				})
+				);
 
 			/*restart mocapStep*/
 			ctl.gui()->addElement({"Handover", "Restart"}, 
@@ -155,7 +167,6 @@ namespace mc_handover
 				} )
 				);
 
-
 			ctl.gui()->addElement({"Handover", "randomPosL"},
 				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
 				{
@@ -202,7 +213,6 @@ namespace mc_handover
 					vecOriTaskL->targetVector(targetVector);
 				} )
 				);
-
 
 			/*publish wrench*/
 			ctl.gui()->addElement({"Handover", "wrench"},
@@ -362,17 +372,10 @@ namespace mc_handover
 
 			
 			/*specific logs*/
-			ctl.logger().addLogEntry("objectPos",[this]() -> Eigen::Vector3d { return approachObj->objectPos; });
+			ctl.logger().addLogEntry("objectPos",[this]()-> Eigen::Vector3d { return approachObj->objectPos; });
 			ctl.logger().addLogEntry("subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
 			ctl.logger().addLogEntry("subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
 
-			// ctl.logger().addLogEntry("HandoverPosL", [this]() -> Eigen::Vector3d 
-			// { 	Eigen::Vector3d handoverPosL = ltHand.translation() +  get<1>(approachObj->lHandPredict)(1) - get<2>(approachObj->lHandPredict);
-			// 	return handoverPosL; });
-			
-			// ctl.logger().addLogEntry("HandoverPosR", [this]() -> Eigen::Vector3d 
-			// {	auto handoverPosR = rtHand.translation() + get<1>(approachObj->rHandPredict) - get<2>(approachObj->rHandPredict);
-			// 	return handoverPosR; });
 			
 			ctl.logger().addLogEntry("posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
 			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
@@ -488,38 +491,40 @@ namespace mc_handover
 							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 				}
 
-				if( approachObj->handoverRun() && (FrameofData.nUnidentifiedMarkers==0) )
+				if( approachObj->handoverRun() /*&& (FrameofData.nUnidentifiedMarkers==0)*/ )
 				{
 					/*Head Pose*/
 					headTask->target(approachObj->objectPos);
 
-					/*move EF when subject approaches object 1st time*/
-					if( !startHandover && (approachObj->obj_rel_subjRtHand < 0.2) )
-					{
-						posTaskL->position(p1l);
-						vecOriTaskL->bodyVector(bodyVector);
-						vecOriTaskL->targetVector(targetVector);
-						LOG_ERROR("subject right hand approaching object ")
-						if(posTaskL->eval().norm() >0.1 || posTaskL->eval().norm() <0.15)
-						{
-							startHandover=true;
-						}
-					}
-					else if( !startHandover && (approachObj->obj_rel_subjLtHand < 0.2) )
-					{
-						posTaskR->position(p1r);
-						vecOriTaskR->bodyVector(bodyVector);
-						vecOriTaskR->targetVector(targetVector);
-						LOG_SUCCESS("subject left hand approaching object ")
-						if(posTaskR->eval().norm() >0.1 || posTaskR->eval().norm() <0.15)
-						{
-							startHandover=true;
-						}
-					}
+					// /*move EF when subject approaches object 1st time*/
+					// if( !startHandover && (approachObj->obj_rel_subjRtHand < 0.2) )
+					// {
+					// 	posTaskL->position(p1l);
+					// 	vecOriTaskL->bodyVector(bodyVector);
+					// 	vecOriTaskL->targetVector(targetVector);
+					// 	LOG_ERROR("subject right hand approaching object ")
+					// 	if(posTaskL->eval().norm() >0.1 || posTaskL->eval().norm() <0.15)
+					// 	{
+					// 		startHandover=true;
+					// 	}
+					// }
+					// else if( !startHandover && (approachObj->obj_rel_subjLtHand < 0.2) )
+					// {
+					// 	posTaskR->position(p1r);
+					// 	vecOriTaskR->bodyVector(bodyVector);
+					// 	vecOriTaskR->targetVector(targetVector);
+					// 	LOG_SUCCESS("subject left hand approaching object ")
+					// 	if(posTaskR->eval().norm() >0.1 || posTaskR->eval().norm() <0.15)
+					// 	{
+					// 		startHandover=true;
+					// 	}
+					// }
 
 
 					/*observe subject motion for t_observe period*/
-					if( startHandover && ((approachObj->i)%(approachObj->t_observe)==0) )
+					// if( startHandover && ((approachObj->i)%(approachObj->t_observe)==0) )
+
+					if( ((approachObj->i)%(approachObj->t_observe)==0) )					
 					{
 						auto obj_rel_subj = [&]() -> std::vector<string>
 						{
@@ -610,7 +615,9 @@ namespace mc_handover
 						approachObj->useRightEf=false;
 
 						taskOK = approachObj->goToHandoverPose(0.2, 0.7, approachObj->enableLHand, ltHand, posTaskL, vecOriTaskL, approachObj->lHandPredict, fingerPos);
+
 						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
+
 						gripperControl("l_gripper");
 					}
 					else if( approachObj->useRightEf )
@@ -618,7 +625,9 @@ namespace mc_handover
 						approachObj->useLeftEf=false;
 
 						taskOK = approachObj->goToHandoverPose(-0.7, 0.2, approachObj->enableRHand, rtHand, posTaskR, vecOriTaskR, approachObj->rHandPredict, fingerPos);
+
 						taskOK = approachObj->handoverForceController(approachObj->enableRHand, initPosR, rightForce, rightTh, posTaskR, vecOriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
+
 						gripperControl("r_gripper");
 					}
 
