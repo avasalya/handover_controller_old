@@ -125,15 +125,25 @@ namespace mc_handover
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "randomPosR"},
-				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
+				mc_rtc::gui::Button("go halfsit & set flags", [this, &ctl]()
 				{
-					auto gripper = ctl.grippers["r_gripper"].get();
-					gripper->setTargetQ({0.5});//open Gripper
-					approachObj->enableRHand=true;
-					approachObj->gClose = false;
+					// auto gripper = ctl.grippers["r_gripper"].get();
+					// gripper->setTargetQ({0.5});//open Gripper
+
+					posTaskR->position(initPosR);
+					vecOriTaskR->bodyVector({0., 1., 0.});
+					vecOriTaskR->targetVector({0., 1., 0.});
+
+					approachObj->openGripper = false;
+
 					approachObj->closeGripper = false;
+					approachObj->gClose = false;
+
+					approachObj->enableRHand=true;
+
+					LOG_ERROR("manual reset")
 				}),
-				mc_rtc::gui::Button("init*", [this, &ctl]()
+				mc_rtc::gui::Button("go halfsit", [this, &ctl]()
 				{
 					posTaskR->position(initPosR);
 					vecOriTaskR->bodyVector(initBodyVector);
@@ -172,15 +182,25 @@ namespace mc_handover
 				);
 
 			ctl.gui()->addElement({"Handover", "randomPosL"},
-				mc_rtc::gui::Button("open_gripper & set flags", [this, &ctl]()
+				mc_rtc::gui::Button("go halfsit & set flags", [this, &ctl]()
 				{
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({0.5});//open Gripper
-					approachObj->enableLHand=true;
-					approachObj->gClose = false;
+					// auto gripper = ctl.grippers["l_gripper"].get();
+					// gripper->setTargetQ({0.5});//open Gripper
+
+					posTaskL->position(initPosL);
+					vecOriTaskL->bodyVector({0., -1., 0.});
+					vecOriTaskL->targetVector({0., 1., 0.});
+
+					approachObj->openGripper = false;
+
 					approachObj->closeGripper = false;
+					approachObj->gClose = false;
+
+					approachObj->enableLHand=true;
+
+					LOG_ERROR("manual reset")
 				}),
-				mc_rtc::gui::Button("init*", [this, &ctl]()
+				mc_rtc::gui::Button("go halfsit", [this, &ctl]()
 				{
 					posTaskL->position(initPosL);
 					vecOriTaskL->bodyVector(initBodyVector);
@@ -657,7 +677,7 @@ namespace mc_handover
 					{
 						taskOK = approachObj->goToHandoverPose(0.1, 0.7, approachObj->enableLHand, ltHand, posTaskL, vecOriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, leftForce, leftTh, posTaskL, vecOriTaskL, {0., -1., 0.}, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
+						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, {0., -1., 0.}, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
 
 						gripperControl("l_gripper");
 					}
