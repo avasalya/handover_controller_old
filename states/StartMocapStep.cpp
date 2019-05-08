@@ -30,13 +30,19 @@ namespace mc_handover
 			/*close grippers for safety*/
 			auto  gripperL = ctl.grippers["l_gripper"].get();
 			auto  gripperR = ctl.grippers["r_gripper"].get();
-			gripperL->setTargetQ({0.13});
-			gripperR->setTargetQ({0.13});
+			gripperL->setTargetQ({closeGrippers});
+			gripperR->setTargetQ({closeGrippers});
 
 
 			/*initial ef pos*/
 			p1l << 0.3,0.3,1.1;
 			p1r <<0.3,-0.3,1.1;
+
+			q1l = {0.64, -0.01, -0.76, -0.06};
+			q1r = {0.64, -0.01, -0.76, -0.06};
+
+
+			X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p1l);
 
 
 			/*initial force/torque threshold*/
@@ -54,7 +60,6 @@ namespace mc_handover
 			headTask->selectActiveJoints(ctl.solver(), activeJointsName);
 
 
-
 			/*chest pos task*/
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
@@ -64,7 +69,6 @@ namespace mc_handover
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestOriTask);
 			chestOriTask->orientation(Eigen::Matrix3d::Identity());
-
 
 
 			/*Ef pos Tasks*/
@@ -77,33 +81,15 @@ namespace mc_handover
 			initPosR = posTaskR->position();
 
 
-
 			/*EfL ori Task*/
-			oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK7",ctl.robots(), 0, 2.0, 1e2);
+			oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(oriTaskL);
 			initRotL = oriTaskL->orientation(); 
 
-			oriTaskR = make_shared<mc_tasks::OrientationTask>("RARM_LINK7",ctl.robots(), 0, 2.0, 1e2);
+			oriTaskR = make_shared<mc_tasks::OrientationTask>("RARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
 			ctl.solver().addTask(oriTaskR);
 			initRotR = oriTaskR->orientation();
 
-
-			/*Ef VectorOrientationTasks*/
-			// initBodyVector<<0., 1., 0.; //body vector to be controlled
-			// initTargetVector<<0., 1., 0.; //target vector in world frame
-
-			initTargetVector<<0., 1., 0.; //target vector in world frame
-
-			initBodyVector<<0., -1., 0.; //body vector to be controlled
-			vecOriTaskL.reset(new mc_tasks::VectorOrientationTask("LARM_LINK7", initBodyVector, initTargetVector, ctl.robots(), ctl.robots().robotIndex(), 3.0, 1e3));
-			ctl.solver().addTask(vecOriTaskL);
-
-			initBodyVector<<0., 1., 0.; //body vector to be controlled			
-			vecOriTaskR.reset(new mc_tasks::VectorOrientationTask("RARM_LINK7", initBodyVector, initTargetVector, ctl.robots(), ctl.robots().robotIndex(), 3.0, 1e3));
-			ctl.solver().addTask(vecOriTaskR);
-
-			bodyVector<<1., 0., 0.;
-			targetVector<<0., 0., 1.;
 
 
 			/*play-pause MOCAP*/
@@ -127,11 +113,8 @@ namespace mc_handover
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "reset"},
 				
-				mc_rtc::gui::Button("RIGHT halfsit & set flags", [this, &ctl]()
+				mc_rtc::gui::Button("RIGHT ARM init / set flags", [this, &ctl]()
 				{
-					// vecOriTaskR->bodyVector({0., 1., 0.});
-					// vecOriTaskR->targetVector({0., 1., 0.});
-
 					posTaskR->position(initPosR);
 					oriTaskR->orientation(initRotR);
 
@@ -149,11 +132,8 @@ namespace mc_handover
 					oriTaskR->orientation(initRotR);
 				}),
 				
-				mc_rtc::gui::Button("LEFT halfsit & set flags", [this, &ctl]()
+				mc_rtc::gui::Button("LEFT ARM init / set flags", [this, &ctl]()
 				{
-					// vecOriTaskL->bodyVector({0., 1., 0.});
-					// vecOriTaskL->targetVector({0., -1., 0.});
-					
 					posTaskL->position(initPosL);
 					oriTaskL->orientation(initRotL);
 
@@ -179,13 +159,15 @@ namespace mc_handover
 				mc_rtc::gui::Button("publish_current_wrench", [&ctl]() {
 					cout << "left hand Forces " <<
 					ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
-					// cout << "right hand Forces " <<
-					// ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
+					cout << "right hand Forces " <<
+					ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force().transpose()<<endl;
 				}),
 				
 				mc_rtc::gui::Button("Norm_LeftEf_Force",[this, &ctl](){
 					Eigen::Vector3d v = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-					cout<<"Norm "<< v.norm() <<endl; }),
+					Eigen::Vector3d v2 = ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+					cout<<"Norm Fl"<< v.norm() <<endl;
+					cout<<"Norm Fr"<< v2.norm() <<endl; }),
 
 				mc_rtc::gui::ArrayInput("set Threshold %",
 					{"Left cx", "cy", "cz", "fx", "fy", "fz", "Right cx", "cy", "cz", "fx", "fy", "fz"},
@@ -289,8 +271,6 @@ namespace mc_handover
 			ctl.logger().addLogEntry("subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
 			ctl.logger().addLogEntry("subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
 
-			// ctl.logger().addLogEntry("predictPosL",[this]()-> Eigen::Vector3d { return approachObj->predictedPos; });
-
 			ctl.logger().addLogEntry("posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
 			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
 
@@ -353,7 +333,22 @@ namespace mc_handover
 
 
 
-			if(approachObj->i)
+			// if(R%300==0)
+			// {	LOG_ERROR(R)
+			// 	open_gripper("l_gripper");
+			// 	close_gripper("r_gripper");
+			// }
+
+
+			// if(R%700==0)
+			// {	LOG_INFO(R)
+			// 	open_gripper("r_gripper");
+			// 	close_gripper("l_gripper");
+			// }
+
+			// R=R+1;
+
+
 			/*Get non-stop MOCAP Frame*/
 			if(Flag_CORTEX)
 			{
@@ -378,6 +373,7 @@ namespace mc_handover
 			/*start only when ithFrame == 1*/
 			if(startCapture)
 			{
+
 				/*get markers position FrameByFrame*/
 				if(approachObj->Flag_withoutRobot)
 					{ b_ = 2; c = 8; }
@@ -415,6 +411,7 @@ namespace mc_handover
 							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 				}
 
+
 				if( approachObj->handoverRun() )
 				{
 					/*Head Pose*/
@@ -425,7 +422,7 @@ namespace mc_handover
 					{
 						approachObj->useLeftEf = false;
 						
-						approachObj->lHandPredict = approachObj->predictionController(ltHand, ltRotW, approachObj->subjRtMarkers, approachObj->robotLtMarkers);
+						approachObj->lHandPredict = approachObj->predictionController(ltHand, ltRotW, X_R_efL_const, approachObj->subjRtMarkers, approachObj->robotLtMarkers);
 						
 						approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
 					}
@@ -434,15 +431,12 @@ namespace mc_handover
 
 					if( approachObj->useLeftEf )
 					{
-						taskOK = approachObj->goToHandoverPose(0.1, 0.7, approachObj->enableLHand, ltHand, posTaskL, vecOriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
+						taskOK = approachObj->goToHandoverPose(0.1, 0.7, approachObj->enableLHand, ltHand, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, {0., -1., 0.}, leftForce, leftTh, posTaskL, vecOriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
+						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
 
 						gripperControl("l_gripper");
 					}
-
-
-
 
 
 				}// handoverRun
@@ -482,11 +476,14 @@ namespace mc_handover
 			ctl.solver().removeTask(posTaskL);
 			ctl.solver().removeTask(posTaskR);
 
+			ctl.solver().removeTask(oriTaskL);
+			ctl.solver().removeTask(oriTaskR);
+
 			// ctl.solver().removeTask(relEfTaskL);
 			// ctl.solver().removeTask(relEfTaskR);
 
-			ctl.solver().removeTask(vecOriTaskL);
-			ctl.solver().removeTask(vecOriTaskR);
+			// ctl.solver().removeTask(vecOriTaskL);
+			// ctl.solver().removeTask(vecOriTaskR);
 
 			ctl.solver().removeTask(comTask);
 		}

@@ -44,6 +44,7 @@ namespace mc_handover
 
 
 			bool Flag_CORTEX{false};
+			// int R=0;
 
 
 			/*mocap_simulaton*/
@@ -58,8 +59,10 @@ namespace mc_handover
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
-			Eigen::Vector3d headVector, headTarget, bodyVector, targetVector, initBodyVector, initTargetVector;
+			Eigen::Vector3d headVector, headTarget;
+
 			Eigen::Vector3d initPosL, initPosR, p1l, p1r, fingerPos;
+			Eigen::Quaterniond q1l, q1r;
 
 			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;
@@ -69,7 +72,7 @@ namespace mc_handover
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
 
-			// sva::PTransformd BodyW;
+			sva::PTransformd X_R_efL_const;
 
 			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
 			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
@@ -80,8 +83,8 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
-			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
-			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;
+			// std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
+			// std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;
 			
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
@@ -91,6 +94,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
 
 			std::shared_ptr<mc_handover::ApproachObject> approachObj;
+
 			std::vector<std::string> subjMarkersName, robotMarkersName;
 
 

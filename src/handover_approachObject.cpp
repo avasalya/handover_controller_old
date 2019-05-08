@@ -111,7 +111,7 @@ namespace mc_handover
 
 
 	
-	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
+	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, sva::PTransformd X_R_ef_const, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
 	{
 		bool ready{false};
 
@@ -120,11 +120,15 @@ namespace mc_handover
 
 		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
 
+		Eigen::Matrix3d subjHandRot, handoverRot;
+
 		sva::PTransformd X_R_ef;
 		sva::PTransformd X_M_efMarker;
 		sva::PTransformd X_R_M;
 		sva::PTransformd X_M_Subj;
 		sva::PTransformd X_ef_Subj;
+		sva::PTransformd X_M_lLtshp;
+		sva::PTransformd X_e_l;
 
 		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
@@ -177,9 +181,6 @@ namespace mc_handover
 		/*predict position in straight line after t_predict time*/
 		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
 
-		// predictedPos = predictPos;
-		// cout << predictedPos.transpose()<<"\n";
-
 		/*get predicted way points between left ef and Subj*/	/*** GET NEW VELOCITY PROFILE ****/	
 		wp_efL_Subj=handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
 		
@@ -198,13 +199,27 @@ namespace mc_handover
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
+
+		subjHandRot.col(0) = lshp_X;
+		subjHandRot.col(1) = lshp_Y;
+		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
+		
+
+		X_M_lLtshp = sva::PTransformd(subjHandRot, curPosLshp);
+
+		X_e_l =  X_R_ef_const.inv() * X_M_lLtshp;// * X_R_M;
+		// LOG_SUCCESS(X_e_l.rotation()<<"\n")
+
+		handoverRot = X_e_l.rotation();// * idt;
+
+
 		ready = true;
-		return std::make_tuple(ready, wp, initRefPos, lshp_Z);
+		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
 
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> handPredict, Eigen::Vector3d fingerPos)
+	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
 	{
 		Eigen::Vector3d curEfPos, refPos, handoverPos;
 
@@ -219,16 +234,16 @@ namespace mc_handover
 			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
 
 
-			// if(subjHasObject)
-			// {
-			// 	handoverPos = objectPos;
-			// 	// LOG_WARNING(" objectPos")
-			// }
-			// else if(robotHasObject)
-			// {
-			// 	handoverPos = fingerPos;
-			// 	// LOG_INFO("fingerPos ")
-			// }
+			if(subjHasObject)
+			{
+				handoverPos = objectPos;
+				// LOG_WARNING(" objectPos")
+			}
+			else if(robotHasObject)
+			{
+				handoverPos = fingerPos;
+				// LOG_INFO("fingerPos ")
+			}
 
 
 
@@ -239,27 +254,13 @@ namespace mc_handover
 				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.4)
 				)
 			{
+				// posTask->position(handoverPos);
+				// oriTask->orientation(handoverRot);
 
+				sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+				posTask->position(new_pose.translation());
+				oriTask->orientation(new_pose.rotation());
 
-				// cout <<handoverPos.transpose()<<"\n";
-
-				// if(subjHasObject)
-				// {
-				// 	handoverPos = objectPos;
-				// 	// LOG_WARNING(" objectPos")
-				// }
-				// else if(robotHasObject)
-				// {
-				// 	handoverPos = fingerPos;
-				// 	// LOG_INFO("fingerPos ")
-				// }
-
-
-				posTask->position(handoverPos);
-
-				/* lshpe Z to link6 X*/
-				vecOriTask->bodyVector({-1., 0., 0.});
-				vecOriTask->targetVector(get<3>(handPredict));
 			}
 
 
@@ -278,7 +279,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d bodyVec, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -361,7 +362,6 @@ namespace mc_handover
 			/*new threshold*/
 			auto newTh = Fload + Th;
 
-			/* MAY BE check torque too ???? */
 			if( (abs(Fpull[idx]) > newTh[idx]) && ( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) ) )
 			{
 				gOpen=true;/*open_gripper();*/
@@ -407,7 +407,7 @@ namespace mc_handover
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
-				LOG_INFO(" Force Norm At Close "<<FNormAtClose)				
+				LOG_INFO(" Force Norm At Close "<<FNormAtClose)
 			}
 
 			/*check if object is being pulled*/
@@ -442,19 +442,21 @@ namespace mc_handover
 
 					/*move EF to initial position*/
 					posTask->position(initPos);
-					vecOriTask->bodyVector(bodyVec);
-					vecOriTask->targetVector({0., 1., 0.});
+					oriTask->orientation(initRot);
+
+					// vecOriTask->bodyVector(bodyVec);
+					// vecOriTask->targetVector({0., 1., 0.});
 
 					subjHasObject = false;
 					robotHasObject = true;
-				}				
+				}
 				else /*divide by 9.8 and you will get object mass*/
 				{
 					Floadx.push_back( abs( abs(handForce[0])-abs(Fzero[0]) ) );
 					Floady.push_back( abs( abs(handForce[1])-abs(Fzero[1]) ) );
 					Floadz.push_back( abs( abs(handForce[2])-abs(Fzero[2]) ) );
 				}
-				e+=1;//cout << "e " << e << endl;
+				e+=1;
 			}
 
 			if(restartHandover)
@@ -463,8 +465,10 @@ namespace mc_handover
 				if(!goBackInit)
 				{
 					posTask->position(initPos);
-					vecOriTask->bodyVector(bodyVec);
-					vecOriTask->targetVector({0., 1., 0.});
+					oriTask->orientation(initRot);
+
+					// vecOriTask->bodyVector(bodyVec);
+					// vecOriTask->targetVector({0., 1., 0.});
 					gClose = true;
 				}
 
