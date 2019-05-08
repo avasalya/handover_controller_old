@@ -43,7 +43,7 @@ namespace mc_handover
 			double openGrippers{0.5};
 
 
-			bool Flag_CORTEX{true};
+			bool Flag_CORTEX{false};
 
 
 			/*mocap_simulaton*/
@@ -63,6 +63,7 @@ namespace mc_handover
 
 			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;
+			Eigen::Matrix3d initRotL, initRotR;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
@@ -75,6 +76,9 @@ namespace mc_handover
 
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
+
+			std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
+			std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
 			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
 			std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;

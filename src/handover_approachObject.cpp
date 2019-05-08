@@ -219,16 +219,16 @@ namespace mc_handover
 			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
 
 
-			if(subjHasObject)
-			{
-				handoverPos = objectPos;
-				// LOG_WARNING(" objectPos")
-			}
-			else if(robotHasObject)
-			{
-				handoverPos = fingerPos;
-				// LOG_INFO("fingerPos ")
-			}
+			// if(subjHasObject)
+			// {
+			// 	handoverPos = objectPos;
+			// 	// LOG_WARNING(" objectPos")
+			// }
+			// else if(robotHasObject)
+			// {
+			// 	handoverPos = fingerPos;
+			// 	// LOG_INFO("fingerPos ")
+			// }
 
 
 
@@ -383,24 +383,13 @@ namespace mc_handover
 
 		
 		if( subj_rel_ef < 0.3 )
-		{
-			// if( (ef_area_wAB_gA < ef_area_wAB_O) || (ef_area_wAB_gB < ef_area_wAB_O) )
-			// {
-			// 	LOG_ERROR("ef_area_wAB_gA - wAB_0" << ef_area_wAB_gA <<"  "<< ef_area_wAB_O)
-			// }
-
-			// else if( (ef_area_wAB_gA < ef_area_wAB_f) || (ef_area_wAB_gB < ef_area_wAB_f) )
-			// {
-			// 	LOG_SUCCESS("ef_area_wAB_gA - wAB_f" << ef_area_wAB_gA<<"  "<<ef_area_wAB_f)
-			// }
-
-
+		{			
 			/*open empty gripper when subject come near to robot*/
-			if( (!openGripper) /*&& (handForce.norm()<1.0)*/ )
+			if( (!openGripper))
 			{
 				Fzero = handForce; //this has Finertia too
-				gOpen = true;/*open_gripper();*/
-				openGripper = true;
+				gOpen = true;
+				// openGripper = true;
 				LOG_INFO(" opening " + gripperName<< " with Force Norm "<< handForce.norm())
 			}
 
@@ -410,11 +399,11 @@ namespace mc_handover
 				gClose = true;/*close_gripper();*/
 				closeGripper = true;
 				enableHand=false; //when subject hand is very close to efL
-				LOG_INFO(" object is inside gripper "<< handForce.norm() )
+				LOG_INFO(" motion stopped, object is inside gripper "<< handForce.norm() )
 			}
 			
 			/*when closed WITH object*/
-			if( graspObject && closeGripper && (handForce.norm()>=2.0) )
+			if( graspObject && closeGripper && (handForce.norm()>=2.1) )
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
