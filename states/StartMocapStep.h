@@ -43,7 +43,7 @@ namespace mc_handover
 			double openGrippers{0.5};
 
 
-			bool Flag_CORTEX{false};
+			bool Flag_CORTEX{true};
 			// int R=0;
 
 
@@ -72,7 +72,7 @@ namespace mc_handover
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
 
-			sva::PTransformd X_R_efL_const;
+			sva::PTransformd X_R_efL_const, X_R_efR_const;
 
 			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
 			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;

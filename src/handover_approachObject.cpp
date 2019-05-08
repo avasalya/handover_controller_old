@@ -18,11 +18,11 @@ namespace mc_handover
 		/*markers Name strings*/
 		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "6mars_obj_subj_right_hand", "4mars_subj_left_hand"};
 
-		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3
+		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//9-13
-		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};//14-17
+		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//9-12
+		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//13-15
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
@@ -94,7 +94,7 @@ namespace mc_handover
 			/*for GUI*/
 			objectPos = markersPos[8].col(i);
 			fingerPosR = markersPos[9].col(i);
-			fingerPosL = markersPos[14].col(i);
+			fingerPosL = markersPos[13].col(i);
 
 			/*move EF when subject approaches object 1st time*/
 			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA - objRight
@@ -191,9 +191,12 @@ namespace mc_handover
 
 		/*get unit vectors XYZ of subject LEFT hand*/
 		auto sizeStr = subjMarkersName.size();
+		
 		curPosLshp = markersPos[markers_name_index[subjMarkersName[sizeStr-2]]].col(i);//C
+		
 		y = markersPos[markers_name_index[subjMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
-		x = markersPos[markers_name_index[subjMarkersName[1]]].col(i) - curPosLshp;//vCA=X
+		
+		x = curPosLshp - markersPos[markers_name_index[subjMarkersName[0]]].col(i);//vAC=X
 
 		lshp_X = x/x.norm();
 		lshp_Y = y/y.norm();
@@ -204,6 +207,7 @@ namespace mc_handover
 		subjHandRot.col(1) = lshp_Y;
 		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
 		
+
 
 		X_M_lLtshp = sva::PTransformd(subjHandRot, curPosLshp);
 
@@ -232,19 +236,6 @@ namespace mc_handover
 			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
 			
 			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
-
-
-			if(subjHasObject)
-			{
-				handoverPos = objectPos;
-				// LOG_WARNING(" objectPos")
-			}
-			else if(robotHasObject)
-			{
-				handoverPos = fingerPos;
-				// LOG_INFO("fingerPos ")
-			}
-
 
 
 			 /*robot constraint*/
@@ -279,7 +270,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 

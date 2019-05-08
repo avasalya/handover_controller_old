@@ -43,6 +43,7 @@ namespace mc_handover
 
 
 			X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p1l);
+			X_R_efR_const = sva::PTransformd(q1r.toRotationMatrix(), p1r);
 
 
 			/*initial force/torque threshold*/
@@ -186,13 +187,13 @@ namespace mc_handover
 
 			/*move object using cursor or simData*/
 			ctl.gui()->addElement({"Handover","move_object"},
-				mc_rtc::gui::Transform("Position", 
-					[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-					[this,&ctl](const sva::PTransformd & pos) { 
-						ctl.robots().robot(2).posW(pos);
-						ctl.removeContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
-						ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
-					}),
+				// mc_rtc::gui::Transform("Position", 
+				// 	[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
+				// 	[this,&ctl](const sva::PTransformd & pos) { 
+				// 		ctl.robots().robot(2).posW(pos);
+				// 		// ctl.removeContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
+				// 		// ctl.addContact({"handoverobjects", "ground", "handoverPipeBottom", "AllGround"});
+				// 	}),
 				// mc_rtc::gui::Button("Replay", [this](){ i = 0;}),
 				mc_rtc::gui::Point3D("object position", [this,&ctl](){ ctl.robots().robot(2).posW({approachObj->objectPos}); return approachObj->objectPos;})
 				);
@@ -433,7 +434,7 @@ namespace mc_handover
 					{
 						taskOK = approachObj->goToHandoverPose(0.1, 0.7, approachObj->enableLHand, ltHand, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-						taskOK = approachObj->handoverForceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
+						taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
 
 						gripperControl("l_gripper");
 					}
