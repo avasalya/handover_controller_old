@@ -44,7 +44,6 @@ namespace mc_handover
 
 
 			bool Flag_CORTEX{true};
-			// int R=0;
 
 
 			/*mocap_simulaton*/
@@ -61,22 +60,18 @@ namespace mc_handover
 
 			Eigen::Vector3d headVector, headTarget;
 
-			Eigen::Vector3d initPosL, initPosR, p1l, p1r;
+			sva::PTransformd ltHand, rtHand;
+			
+			sva::PTransformd X_R_efL_const, X_R_efR_const;
+			Eigen::Vector3d initPosL, initPosR, constPosL, constPosR;
+			Eigen::Matrix3d constRotL, constRotR;
 
 			Eigen::Matrix3d ltRotW, rtRotW;
 			Eigen::Matrix3d initRotL, initRotR;
-			Eigen::Matrix3d constRotL, constRotR;
-			
-			sva::PTransformd ltHand, rtHand;
-			sva::PTransformd X_R_efL_const, X_R_efR_const;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
-
-
-			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
-			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
 
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
@@ -84,9 +79,6 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
-			// std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskL;
-			// std::shared_ptr<mc_tasks::VectorOrientationTask> vecOriTaskR;
-			
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 
@@ -132,6 +124,19 @@ EXPORT_SINGLE_STATE("StartMocapStep", mc_handover::states::StartMocapStep)
 
 
 /*
+// try below methods for rotation //
+//http://www.continuummechanics.org/rotationmatrix.html
+//https://reference.wolfram.com/language/ref/RotationMatrix.html
+//https://www.youtube.com/watch?v=lVjFhNv2N8o 7.7min
+//http://www.songho.ca/opengl/gl_anglestoaxes.html
+
+// try below methods //
+//https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+//http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
+//http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
+//https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
+
+
 
 normal = (u/u.norm()).cross(v/v.norm());
 Eigen::Matrix3d rotation_;

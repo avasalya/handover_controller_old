@@ -23,7 +23,6 @@ namespace mc_handover
 
 			/*allocate memory*/
 			approachObj = std::make_shared<mc_handover::ApproachObject>();
-			maxMarkers = approachObj->totalMarkers;
 			approachObj->initials();
 
 
@@ -35,22 +34,21 @@ namespace mc_handover
 
 
 			/*initial ef pos*/
-			p1l << 0.3,0.3,1.1;
-			p1r <<0.3,-0.3,1.1;
+			constPosL << 0.3,0.3,1.1;
+			constPosR <<0.3,-0.3,1.1;
 
 			constRotL<<
 			-0.1624, -0.0616,   0.974,
 			0.092,  0.9926,  0.0784,
 			-0.9716,   0.104, -0.1554;
-
 			constRotR<<
 			0.013618,  0.0805374,   0.996659,
 			-0.243029,   0.967128, -0.0748305,
 			-0.969923,  -0.241198,  0.0327433;
 
 
-			X_R_efL_const = sva::PTransformd(constRotL, p1l);
-			X_R_efR_const = sva::PTransformd(constRotR, p1r);
+			X_R_efL_const = sva::PTransformd(constRotL, constPosL);
+			X_R_efR_const = sva::PTransformd(constRotR, constPosR);
 
 
 			/*initial force/torque threshold*/
@@ -414,6 +412,8 @@ namespace mc_handover
 
 
 
+
+
 					/*****robot LEFT ******/
 
 
@@ -536,29 +536,8 @@ namespace mc_handover
 			ctl.solver().removeTask(oriTaskL);
 			ctl.solver().removeTask(oriTaskR);
 
-			// ctl.solver().removeTask(relEfTaskL);
-			// ctl.solver().removeTask(relEfTaskR);
-
-			// ctl.solver().removeTask(vecOriTaskL);
-			// ctl.solver().removeTask(vecOriTaskR);
-
 			ctl.solver().removeTask(comTask);
 		}
 
 	} // namespace states
 } // namespace mc_handover
-
-
-
-
-/*try below methods for rotation*/
-//http://www.continuummechanics.org/rotationmatrix.html
-//https://reference.wolfram.com/language/ref/RotationMatrix.html
-//https://www.youtube.com/watch?v=lVjFhNv2N8o 7.7min
-//http://www.songho.ca/opengl/gl_anglestoaxes.html
-
-/*try below methods*/
-//https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-//http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
-//http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
-//https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d

@@ -70,7 +70,7 @@ namespace mc_handover
 		int i{0};
 		int e{1};
 		
-		int totalMarkers{17};
+		int totalMarkers;
 		
 		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;

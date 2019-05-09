@@ -3,12 +3,12 @@
 namespace mc_handover
 {
 	ApproachObject::ApproachObject()
-	{ cout<<"\033[1;50m handover object created\033[0m\n"; }
+	{ cout<<"\033[1;50mHandover object created\033[0m\n"; }
 
 
 
 	ApproachObject::~ApproachObject()
-	{ cout<<"\033[1;50m handover object destroyed\033[0m\n"; }
+	{ cout<<"\033[1;50mHandover object destroyed\033[0m\n"; }
 
 
 
@@ -30,9 +30,11 @@ namespace mc_handover
 		strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
 
-		for(unsigned int k=0; k<strMarkersName.size(); k++)
-			markers_name_index[strMarkersName[k]] = k;
+		totalMarkers = strMarkersName.size();
 
+		for(unsigned int k=0; k<totalMarkers; k++)
+			markers_name_index[strMarkersName[k]] = k;
+		
 		Markers.resize(totalMarkers);
 
 		markersPos.resize(totalMarkers);
@@ -69,7 +71,7 @@ namespace mc_handover
 			Markers[7] << 0.202506, -0.293441, 0.425241;
 		}
 
-		for(unsigned int k=0; k<strMarkersName.size(); k++)
+		for(unsigned int k=0; k<totalMarkers; k++)
 		{
 			// LOG_WARNING(k<<" "<<strMarkersName[k])
 			//<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
@@ -98,11 +100,11 @@ namespace mc_handover
 			fingerPosL = markersPos[13].col(i);
 
 			/*move EF when subject approaches object 1st time*/
-			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA - objRight
-			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();//gripperRtEfA - objLeft
-
-			obj_rel_subjRtHand = ( markersPos[12].col(i) - objectPos ).norm();//lshpRtC - objRight
-			obj_rel_subjLtHand = ( markersPos[16].col(i) - objectPos ).norm();//lshpLtC - objLeft
+			obj_rel_subjRtHand = ( fingerPosR - objectPos ).norm();//lshpRtA - obj
+			obj_rel_subjLtHand = ( fingerPosL - objectPos ).norm();//lshpLtA - obj
+			
+			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA - obj
+			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();//gripperRtEfA - obj
 
 			return true;
 		}
@@ -203,7 +205,6 @@ namespace mc_handover
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
-
 		subjHandRot.col(0) = lshp_X;
 		subjHandRot.col(1) = lshp_Y;
 		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
@@ -211,12 +212,10 @@ namespace mc_handover
 		X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
 		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M;
 
-
 		// LOG_ERROR(subjHandRot<<"\n\n")
 		// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
 
 		handoverRot = X_ef_lShp.rotation();// * idt;
-
 
 		ready = true;
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
@@ -228,7 +227,7 @@ namespace mc_handover
 	{
 		Eigen::Vector3d curEfPos, refPos, handoverPos;
 
-		it+= (int)tuner(2)*2;
+		it+= (int)tuner(2);
 
 		curEfPos = robotEf.translation();
 
@@ -259,18 +258,13 @@ namespace mc_handover
 				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.4)
 				)
 			{
-				// posTask->position(handoverPos);
-				// oriTask->orientation(handoverRot);
-
 				sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
 				posTask->position(new_pose.translation());
 				oriTask->orientation(new_pose.rotation());
-
 			}
 
 
 			return true;
-
 
 		}
 
