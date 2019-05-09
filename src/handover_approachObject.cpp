@@ -204,44 +204,12 @@ namespace mc_handover
 		lshp_Z = lshp_X.cross(lshp_Y);
 
 
-		/*convert to 2D rotation method*/
-
-		// subjHandRot.col(0) = lshp_X;
-		// subjHandRot.col(1) = lshp_Y;
-		// subjHandRot.row(2) = lshp_Z/lshp_Z.norm();
-
-		// X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
-		// X_ef_lShp =  X_R_ef_const.inv() * X_M_lShp;// * X_R_M;
-
-
-
-
-
-		// // //******robot-LEFT & subj-left/right******************//
-		// subjHandRot.col(0) = lshp_X;
-		// subjHandRot.col(1) = lshp_Y;
-		// subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
-
-		// X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
-		// // X_ef_lShp =  X_R_ef_const.inv() * X_M_lShp.inv() * X_R_M; // with q1l,q1r
-		// X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M; //with constRotL, constRotR
-		// // //************************//
-
-
-
-		//******robot-RIGHT & subj-left/right******************//
 		subjHandRot.col(0) = lshp_X;
 		subjHandRot.col(1) = lshp_Y;
 		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
 
 		X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
-		// X_ef_lShp =  X_R_ef_const.inv() * X_M_lShp.inv() * X_R_M; // with q1l,q1r
-		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M; //with constRotL, constRotR
-
-		//************************//
-
-
-
+		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M;
 
 
 		// LOG_ERROR(subjHandRot<<"\n\n")

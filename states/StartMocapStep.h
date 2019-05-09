@@ -61,19 +61,19 @@ namespace mc_handover
 
 			Eigen::Vector3d headVector, headTarget;
 
-			Eigen::Vector3d initPosL, initPosR, p1l, p1r, fingerPos;
-			Eigen::Quaterniond q1l, q1r;
+			Eigen::Vector3d initPosL, initPosR, p1l, p1r;
 
-			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;
 			Eigen::Matrix3d initRotL, initRotR;
 			Eigen::Matrix3d constRotL, constRotR;
+			
+			sva::PTransformd ltHand, rtHand;
+			sva::PTransformd X_R_efL_const, X_R_efR_const;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
 
-			sva::PTransformd X_R_efL_const, X_R_efR_const;
 
 			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskL;
 			// std::shared_ptr<mc_tasks::RelativeEndEffectorTask> relEfTaskR;
