@@ -128,8 +128,8 @@ namespace mc_handover
 		sva::PTransformd X_R_M;
 		sva::PTransformd X_M_Subj;
 		sva::PTransformd X_ef_Subj;
-		sva::PTransformd X_M_lLtshp;
-		sva::PTransformd X_e_l;
+		sva::PTransformd X_M_lShp;
+		sva::PTransformd X_ef_lShp;
 
 		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
 
@@ -210,34 +210,44 @@ namespace mc_handover
 		// subjHandRot.col(1) = lshp_Y;
 		// subjHandRot.row(2) = lshp_Z/lshp_Z.norm();
 
-		// X_M_lLtshp = sva::PTransformd(subjHandRot, curPosLshp);
-		// X_e_l =  X_R_ef_const.inv() * X_M_lLtshp;// * X_R_M;
+		// X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
+		// X_ef_lShp =  X_R_ef_const.inv() * X_M_lShp;// * X_R_M;
 
 
 
 
 
-		// //******robot-LEFT & subj-left/right******************//
+		// // //******robot-LEFT & subj-left/right******************//
+		// subjHandRot.col(0) = lshp_X;
+		// subjHandRot.col(1) = lshp_Y;
+		// subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
+
+		// X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
+		// // X_ef_lShp =  X_R_ef_const.inv() * X_M_lShp.inv() * X_R_M; // with q1l,q1r
+		// X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M; //with constRotL, constRotR
+		// // //************************//
+
+
+
+		//******robot-RIGHT & subj-left/right******************//
 		subjHandRot.col(0) = lshp_X;
 		subjHandRot.col(1) = lshp_Y;
 		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
 
-		X_M_lLtshp = sva::PTransformd(subjHandRot, curPosLshp);
-		// X_e_l =  X_R_ef_const.inv() * X_M_lLtshp.inv() * X_R_M; // with q1l,q1r
-		X_e_l =  X_R_ef_const * X_M_lLtshp.inv() * X_R_M; //with constRotL, constRotR
-		// //************************//
+		X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
+		// X_ef_lShp =  X_R_ef_const.inv() * X_M_lShp.inv() * X_R_M; // with q1l,q1r
+		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M; //with constRotL, constRotR
 
-
-
+		//************************//
 
 
 
 
 
 		// LOG_ERROR(subjHandRot<<"\n\n")
-		// LOG_SUCCESS(X_e_l.rotation()<<"\n")
+		// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
 
-		handoverRot = X_e_l.rotation();// * idt;
+		handoverRot = X_ef_lShp.rotation();// * idt;
 
 
 		ready = true;
