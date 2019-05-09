@@ -58,7 +58,7 @@ namespace mc_handover
 
 		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
-		bool Flag_withoutRobot{false}; // default TRUE for using MOCAP without ROBOT_Markers
+		bool Flag_withoutRobot{true}; // default TRUE for using MOCAP without ROBOT_Markers
 		
 		Eigen::Vector3d tuner;
 
@@ -70,7 +70,7 @@ namespace mc_handover
 		int i{0};
 		int e{1};
 		
-		int totalMarkers{15};
+		int totalMarkers{17};
 		
 		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;

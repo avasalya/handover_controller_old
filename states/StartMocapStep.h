@@ -67,6 +67,7 @@ namespace mc_handover
 			sva::PTransformd ltHand, rtHand;
 			Eigen::Matrix3d ltRotW, rtRotW;
 			Eigen::Matrix3d initRotL, initRotR;
+			Eigen::Matrix3d constRotL, constRotR;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;

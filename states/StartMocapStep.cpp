@@ -42,8 +42,21 @@ namespace mc_handover
 			q1r = {0.64, -0.01, -0.76, -0.06};
 
 
-			X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p1l);
-			X_R_efR_const = sva::PTransformd(q1r.toRotationMatrix(), p1r);
+			constRotL<<
+			-0.1624, -0.0616,   0.974,
+			0.092,  0.9926,  0.0784,
+			-0.9716,   0.104, -0.1554;
+
+			constRotR << 
+			0.013618,  0.0805374,   0.996659,
+			-0.243029,   0.967128, -0.0748305,
+			-0.969923,  -0.241198,  0.0327433;
+
+
+			// X_R_efL_const = sva::PTransformd(q1l.toRotationMatrix(), p1l);
+			X_R_efL_const = sva::PTransformd(constRotL, p1l);
+
+			X_R_efR_const = sva::PTransformd(constRotR, p1r);
 
 
 			/*initial force/torque threshold*/
@@ -83,11 +96,11 @@ namespace mc_handover
 
 
 			/*EfL ori Task*/
-			oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
+			oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 4.0, 500);
 			ctl.solver().addTask(oriTaskL);
 			initRotL = oriTaskL->orientation(); 
 
-			oriTaskR = make_shared<mc_tasks::OrientationTask>("RARM_LINK6",ctl.robots(), 0, 2.0, 1e2);
+			oriTaskR = make_shared<mc_tasks::OrientationTask>("RARM_LINK6",ctl.robots(), 0, 4.0, 500);
 			ctl.solver().addTask(oriTaskR);
 			initRotR = oriTaskR->orientation();
 
@@ -402,6 +415,7 @@ namespace mc_handover
 								FrameofData.BodyData[b].Markers[m][1], // Y
 								FrameofData.BodyData[b].Markers[m][2]; // Z
 								c+=1;
+								// cout<<approachObj->Markers[c].transpose()<<"\n";
 							}
 						}
 					}
@@ -411,6 +425,9 @@ namespace mc_handover
 							"pBody->nMarkers: " << pBody->nMarkers<<"\n"<< 
 							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 				}
+
+
+
 
 
 				if( approachObj->handoverRun() )
@@ -423,7 +440,13 @@ namespace mc_handover
 					{
 						approachObj->useLeftEf = false;
 						
+						/*robot left / subj right*/
 						approachObj->lHandPredict = approachObj->predictionController(ltHand, ltRotW, X_R_efL_const, approachObj->subjRtMarkers, approachObj->robotLtMarkers);
+
+
+						/*robot left / subj left*/
+						// approachObj->lHandPredict = approachObj->predictionController(ltHand, ltRotW, X_R_efL_const, approachObj->subjLtMarkers, approachObj->robotLtMarkers);
+
 						
 						approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
 					}
@@ -432,17 +455,44 @@ namespace mc_handover
 
 					if( approachObj->useLeftEf )
 					{
-						taskOK = approachObj->goToHandoverPose(0.1, 0.7, approachObj->enableLHand, ltHand, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
+						/*robot left / subj right*/
+						taskOK = approachObj->goToHandoverPose(0.0, 0.7, approachObj->enableLHand, ltHand, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
 						taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
+						
+
+						/*robot left / subj left*/
+						// taskOK = approachObj->goToHandoverPose(0.0, 0.7, approachObj->enableLHand, ltHand, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosL);
+
+						// taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjLtMarkers);
+
 
 						gripperControl("l_gripper");
 					}
 
-
 				}// handoverRun
 
+
 			}//startCapture
+
+
+
+			// posTaskL->position(p1l);
+			// // oriTaskL->orientation(X_R_efL_const.rotation().transpose());
+			// oriTaskL->orientation(X_R_efL_const.rotation());
+
+			// LOG_ERROR(oriTaskL->orientation())
+
+
+			// posTaskR->position(p1r);
+			// oriTaskR->orientation(X_R_efR_const.rotation());
+
+			// LOG_INFO(oriTaskR->orientation())
+
+
+
+
+
 
 
 
@@ -497,6 +547,7 @@ namespace mc_handover
 
 /*try below methods for rotation*/
 //http://www.continuummechanics.org/rotationmatrix.html
+//https://reference.wolfram.com/language/ref/RotationMatrix.html
 //https://www.youtube.com/watch?v=lVjFhNv2N8o 7.7min
 //http://www.songho.ca/opengl/gl_anglestoaxes.html
 
@@ -504,31 +555,4 @@ namespace mc_handover
 //https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
 //http://www.euclideanspace.com/maths/geometry/affine/conversions/quaternionToMatrix/index.htm
 //http://www.euclideanspace.com/maths/geometry/affine/aroundPoint/
-
-
-
-/****** VectorOrientationTask *********/
-
-// void VectorOrientationTask::update(const rbd::MultiBody &mb,
-// 	const rbd::MultiBodyConfig &mbc,
-// 	const std::vector<sva::MotionVecd> &normalAccB)
-// {
-// 	//Evaluation of eval
-// 	Eigen::Matrix3d E_0_b = mbc.bodyPosW[bodyIndex_].rotation().transpose();
-// 	actualVector_ = E_0_b*bodyVector_;
-// 	eval_ = targetVector_ - actualVector_;
-
-// 	//Evaluation of speed and jacMat
-// 	Eigen::MatrixXd shortMat, fullJac(3, mb.nrDof());
-// 	shortMat = jac_.bodyJacobian(mb, mbc);
-// 	jac_.fullJacobian(mb, shortMat.block(0, 0, 3, jac_.dof()), fullJac);
-// 	jacMat_ = -E_0_b*skewMatrix(bodyVector_)*fullJac;
-// 	Eigen::Vector3d w_b_b = jac_.bodyVelocity(mb, mbc).angular();
-// 	speed_ = E_0_b*(w_b_b.cross(bodyVector_));
-
-// 	//Evaluation of normalAcc
-// 	Eigen::Vector3d bodyNormalAcc = jac_.bodyNormalAcceleration(mb, mbc, normalAccB).angular();
-// 	normalAcc_ = w_b_b.cross(w_b_b.cross(bodyVector_));
-// 	normalAcc_ += bodyNormalAcc.cross(bodyVector_);
-// 	normalAcc_ = E_0_b*normalAcc_;
-// }
+//https://stackoverflow.com/questions/10629737/convert-3d-4x4-rotation-matrix-into-2d
