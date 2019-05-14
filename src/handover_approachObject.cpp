@@ -42,7 +42,7 @@ namespace mc_handover
 			{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
 
 		/*prediction controller parameter*/
-		tuner << 600., 30., 20.;
+		tuner << 400., 20., 20.;
 		// tuner(2) = tuner(0)/tuner(1);
 
 		t_predict = (int)tuner(0);
@@ -161,10 +161,36 @@ namespace mc_handover
 
 
 		/*subj marker(s) pose w.r.t to robot EF frame*/
+		
+		auto sizeStr = subjMarkersName.size();		
+		curPosLshp = markersPos[markers_name_index[subjMarkersName[sizeStr-2]]].col(i);//C
+		y = markersPos[markers_name_index[subjMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
+		x = curPosLshp - markersPos[markers_name_index[subjMarkersName[0]]].col(i);//vAC=X
+
+		lshp_X = x/x.norm();
+		lshp_Y = y/y.norm();
+		lshp_Z = lshp_X.cross(lshp_Y);
+
+		subjHandRot.col(0) = lshp_X;
+		subjHandRot.col(1) = lshp_Y;
+		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
+
+		X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
+		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M;
+		// X_lShp_ef_new =  X_R_ef_const * (X_M_lShp * X_R_M).inv();
+
+		// LOG_ERROR(subjHandRot<<"\n\n")
+		// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
+
+		handoverRot = X_ef_lShp.rotation();// * idt;
+
+
 		for(int j=1;j<=t_observe; j++)
 		{
+
 			X_M_Subj =
-			sva::PTransformd(idtMat, markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j));
+			sva::PTransformd(handoverRot, markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j));
+			// sva::PTransformd(idtMat, markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j));
 
 			X_ef_Subj = X_R_ef.inv()*X_M_Subj*X_M_efMarker.inv()*X_R_ef;
 
@@ -183,6 +209,7 @@ namespace mc_handover
 
 		/*predict position in straight line after t_predict time*/
 		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
+		// LOG_INFO("predictPos "<<predictPos.transpose()<<"\n" << "objectPos "<< objectPos.transpose())
 
 		/*get predicted way points between left ef and Subj*/	/*** GET NEW VELOCITY PROFILE ****/	
 		wp_efL_Subj=handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
@@ -190,32 +217,6 @@ namespace mc_handover
 		wp = get<0>(wp_efL_Subj);
 		
 		initRefPos << wp(0,it), wp(1,it), wp(2,it);
-
-
-		/*get unit vectors XYZ of subject LEFT hand*/
-		auto sizeStr = subjMarkersName.size();
-		
-		curPosLshp = markersPos[markers_name_index[subjMarkersName[sizeStr-2]]].col(i);//C
-		
-		y = markersPos[markers_name_index[subjMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
-		
-		x = curPosLshp - markersPos[markers_name_index[subjMarkersName[0]]].col(i);//vAC=X
-
-		lshp_X = x/x.norm();
-		lshp_Y = y/y.norm();
-		lshp_Z = lshp_X.cross(lshp_Y);
-
-		subjHandRot.col(0) = lshp_X;
-		subjHandRot.col(1) = lshp_Y;
-		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
-
-		X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
-		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M;
-
-		// LOG_ERROR(subjHandRot<<"\n\n")
-		// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
-
-		handoverRot = X_ef_lShp.rotation();// * idt;
 
 		ready = true;
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
@@ -235,20 +236,9 @@ namespace mc_handover
 		{
 			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
 			
-			handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+			// handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
 
-
-			if(subjHasObject)
-			{
-				handoverPos = objectPos;
-				// LOG_WARNING(" objectPos")
-			}
-			else if(robotHasObject)
-			{
-				handoverPos = fingerPos;
-				// LOG_INFO("fingerPos ")
-			}
-
+			handoverPos = fingerPos;
 
 
 			 /*robot constraint*/
@@ -270,6 +260,7 @@ namespace mc_handover
 
 		if(it==get<1>(handPredict).cols())
 		{
+			// LOG_WARNING("reset")
 			useLeftEf = false;
 			useRightEf = false;
 			return false;
@@ -371,7 +362,6 @@ namespace mc_handover
 				{
 					goBackInit=false;
 					enableHand=false;
-					// posTask->stiffness(2);
 					LOG_WARNING("motion stopped last->"<<enableHand)
 
 
@@ -449,10 +439,8 @@ namespace mc_handover
 					/*move EF to initial position*/
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
-					// posTaskL->stiffness(2);
-
-					subjHasObject = false;
-					robotHasObject = true;
+					posTask->stiffness(2);
+					LOG_INFO("robot has object")
 				}
 				else /*divide by 9.8 and you will get object mass*/
 				{
@@ -461,6 +449,13 @@ namespace mc_handover
 					Floadz.push_back( abs( abs(handForce[2])-abs(Fzero[2]) ) );
 				}
 				e+=1;
+
+
+				if(posTask->eval().norm() <0.1)
+				{
+					posTask->stiffness(4);
+					LOG_INFO("begin 2nd cycle")
+				}
 			}
 
 			if(restartHandover)
@@ -470,25 +465,28 @@ namespace mc_handover
 				{
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
-					// posTaskL->stiffness(2);
+					posTask->stiffness(2);
 
 					gClose = true;
 				}
 
 				openGripper=false;
 				closeGripper=false;
-				restartHandover=false;
 
 				graspObject=true;
 				goBackInit=true;
 				enableHand=true;
 
-				LOG_INFO("motion restart last-> "<<enableHand)
 
-				subjHasObject = true;
-				robotHasObject = false;
+				if(posTask->eval().norm() <0.1)
+				{
+					posTask->stiffness(4);
+					restartHandover=false;
+					LOG_INFO("object returned to subject")
+					LOG_INFO("motion restart last-> "<<enableHand)
+					LOG_INFO("/*******restarting handover*******/");
+				}
 
-				cout<<"/*******restarting handover*******/"<<endl;
 			}
 		}
 		return false;
