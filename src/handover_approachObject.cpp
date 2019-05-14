@@ -42,9 +42,9 @@ namespace mc_handover
 			{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
 
 		if(Flag_withoutRobot)
-		{
-			LOG_INFO("robot markers are not considered")
-		}
+		{	LOG_ERROR("robot markers are not considered") }
+		else
+		{	LOG_ERROR("robot markers are considered")	}
 
 		/*prediction controller parameter*/
 		tuner << 400., 20., 20.;
