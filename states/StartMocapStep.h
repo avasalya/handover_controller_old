@@ -60,10 +60,9 @@ namespace mc_handover
 
 			Eigen::Vector3d headVector, headTarget;
 
-			sva::PTransformd ltHand, rtHand;
+			Eigen::Vector3d ltPosW, rtPosW;
 			
-			sva::PTransformd X_R_efL_const, X_R_efR_const;
-			Eigen::Vector3d initPosL, initPosR, constPosL, constPosR, fingerPos;
+			Eigen::Vector3d initPosL, initPosR, fingerPos/*, constPosL, constPosR*/;
 			Eigen::Matrix3d constRotL, constRotR;
 
 			Eigen::Matrix3d ltRotW, rtRotW;

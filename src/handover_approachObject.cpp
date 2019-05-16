@@ -44,7 +44,7 @@ namespace mc_handover
 		if(Flag_withoutRobot)
 		{	LOG_ERROR("robot markers are not considered") }
 		else
-		{	LOG_ERROR("robot markers are considered")	}
+		{	LOG_SUCCESS("robot markers are considered")	}
 
 		/*prediction controller parameter*/
 		tuner << 400., 20., 20.;
@@ -119,26 +119,24 @@ namespace mc_handover
 
 
 	
-	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, sva::PTransformd X_R_ef_const, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
+	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> subjMarkersName)
 	{
 		bool ready{false};
 
 		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
-		Eigen::Vector3d initRefPos, curPosEf, curPosEfMarker,  curPosLshp, ithPosSubj, avgVelSubj, predictPos;
+		Eigen::Vector3d initRefPos, curPosLshp, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
-		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
+		Eigen::MatrixXd curVelSubj, P_M_Subj, wp;
 
 		Eigen::Matrix3d subjHandRot, handoverRot;
 
 		sva::PTransformd X_R_ef;
-		sva::PTransformd X_M_efMarker;
 		sva::PTransformd X_R_M;
+
 		sva::PTransformd X_M_Subj;
 		sva::PTransformd X_ef_Subj;
-		sva::PTransformd X_M_lShp;
-		sva::PTransformd X_ef_lShp;
 
-		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
+		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_ef_Subj;
 
 
 		/*prediction_ tuner*/
@@ -146,28 +144,9 @@ namespace mc_handover
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2); //t_predict/t_observe;
 
-		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
 
-		/*get robot ef current pose*/
-		curPosEf = robotEf.translation();
-
-
-		/*get robot ef marker(s) current pose*/
-		curPosEfMarker << 0.25*( 
-			markersPos[markers_name_index[robotMarkersName[0]]].col((i-t_observe)+1) +
-			markersPos[markers_name_index[robotMarkersName[1]]].col((i-t_observe)+1) +
-			markersPos[markers_name_index[robotMarkersName[2]]].col((i-t_observe)+1) + 
-			markersPos[markers_name_index[robotMarkersName[3]]].col((i-t_observe)+1) );
-
-
-		X_R_ef = sva::PTransformd(curRotLink6, curPosEf);
-		X_M_efMarker = sva::PTransformd(curRotLink6, curPosEfMarker);
-		X_R_M = X_M_efMarker.inv() * X_R_ef;
-
-
-		/*subj marker(s) pose w.r.t to robot EF frame*/
-		
-		auto sizeStr = subjMarkersName.size();		
+		/*Subject Hand L SHAPE*/
+		auto sizeStr = subjMarkersName.size();
 		curPosLshp = markersPos[markers_name_index[subjMarkersName[sizeStr-2]]].col(i);//C
 		y = markersPos[markers_name_index[subjMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
 		x = curPosLshp - markersPos[markers_name_index[subjMarkersName[0]]].col(i);//vAC=X
@@ -179,97 +158,105 @@ namespace mc_handover
 		subjHandRot.col(0) = lshp_X;
 		subjHandRot.col(1) = lshp_Y;
 		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
-
-		X_M_lShp = sva::PTransformd(subjHandRot, curPosLshp);
-		X_ef_lShp =  X_R_ef_const * X_M_lShp.inv() * X_R_M;
-		// X_lShp_ef_new =  X_R_ef_const * (X_M_lShp * X_R_M).inv();
-
 		// LOG_ERROR(subjHandRot<<"\n\n")
-		// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
-
-		handoverRot = X_ef_lShp.rotation();// * idt;
 
 
+		P_M_Subj = Eigen::MatrixXd::Zero(3, t_observe);
 		for(int j=1;j<=t_observe; j++)
 		{
+			P_M_Subj.col(j-1) = markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j);
+			// cout << "P_M_Subj.col(j-1) " << P_M_Subj.col(j-1).transpose() <<endl;
 
-			X_M_Subj =
-			sva::PTransformd(handoverRot, markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j));
-			// sva::PTransformd(idtMat, markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j));
+			if(j==1)
+				{ initPosSubj = P_M_Subj.col(j-1); }
 
-			X_ef_Subj = X_R_ef.inv()*X_M_Subj*X_M_efMarker.inv()*X_R_ef;
-
-			newPosSubj.col(j-1) = X_ef_Subj.translation();
-			// cout << "newPosSubj.col(j-1) " << newPosSubj.col(j-1).transpose() <<endl;
-			
 			if(j==t_observe)
-				{ ithPosSubj = newPosSubj.col(t_observe-1); }
+				{ ithPosSubj = P_M_Subj.col(t_observe-1); }
 		}
 
 		/*get average velocity of previous *t_observe* sec Subj movement*/
-		curVelSubj  = handoverTraj->diff(newPosSubj)*fps;
-		avgVelSubj  <<handoverTraj->takeAverage(curVelSubj);
-		// cout<< " vel " << avgVelSubj.transpose() <<endl;
+		curVelSubj  = handoverTraj->diff(P_M_Subj)*fps;
 		
+		/*avg velocity between A to B*/
+		avgVelSubj  <<handoverTraj->takeAverage(curVelSubj); //or
+		// avgVelSubj = (ithPosSubj - initPosSubj)* fps; 
+		// cout<< " vel " << avgVelSubj.transpose() <<endl;
+
 
 		/*predict position in straight line after t_predict time*/
 		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
-		// LOG_INFO("predictPos "<<predictPos.transpose()<<"\n" << "objectPos "<< objectPos.transpose())
 
-		/*get predicted way points between left ef and Subj*/	/*** GET NEW VELOCITY PROFILE ****/	
-		wp_efL_Subj=handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
-		
-		wp = get<0>(wp_efL_Subj);
-		
+		X_M_Subj = sva::PTransformd(subjHandRot, predictPos);
+
+		X_R_ef = sva::PTransformd(constRotLink6, curPosEf);
+		X_R_M = sva::PTransformd(idtMat, Eigen::Vector3d(0., 0., 0.));
+
+		X_ef_Subj = X_M_Subj * X_R_M * X_R_ef.inv();
+
+		handoverRot = X_ef_Subj.rotation().transpose();
+
+
+		/*** GET NEW VELOCITY PROFILE ****/	
+		wp_ef_Subj=handoverTraj->constVelocity(curPosEf, X_ef_Subj.translation(), t_predict);
+		wp = get<0>(wp_ef_Subj);
 		initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
+
 		ready = true;
+
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
 
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
+	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
 	{
-		Eigen::Vector3d curEfPos, refPos, handoverPos;
+		Eigen::Vector3d wp, handoverPos;
 
-		it+= (int)tuner(2);
+		// it+= (int)tuner(2);
 
-		curEfPos = robotEf.translation();
-
-		if( it < get<1>(handPredict).cols() )
-		{
-			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
+		// if( it < get<1>(handPredict).cols() )
+		// {
+		// 	wp << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
 			
-			// handoverPos = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+		// 	// handoverPos = curPosEf + (wp - get<2>(handPredict));//initRefPos
+		// 	// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
 
-			handoverPos = fingerPos;
+		// 	handoverPos = fingerPos;
+
+		// 	 /*robot constraint*/
+		// 	if(enableHand &&
+		// 		(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+		// 		(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
+		// 		(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+		// 		)
+		// 	{
+		// 		sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+		// 		posTask->position(new_pose.translation());
+		// 		oriTask->orientation(new_pose.rotation());
+		// 	}
+
+		// 	return true;
+		// }
 
 
-			 /*robot constraint*/
-			if(enableHand &&
-				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.4)
-				)
-			{
-				sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
-				posTask->position(new_pose.translation());
-				oriTask->orientation(new_pose.rotation());
-			}
 
+		handoverPos = fingerPos;
 
-			return true;
-
-		}
-
-		if(it==get<1>(handPredict).cols())
+		 /*robot constraint*/
+		if(enableHand &&
+			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+			(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
+			(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+			)
 		{
-			// LOG_WARNING("reset")
-			useLeftEf = false;
-			useRightEf = false;
-			return false;
+			sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+			posTask->position(new_pose.translation());
+			oriTask->orientation(new_pose.rotation());
 		}
+
+		return true;
+
 	}
 
 
@@ -498,3 +485,9 @@ namespace mc_handover
 	}
 
 }//namespace mc_handover
+
+/*working orientation*/
+// X_ef_lShp = X_R_ef_const * (X_M_Subj * X_R_M).inv();
+// X_ef_lShp =  X_R_ef_const * X_M_Subj.inv() * X_R_M;
+// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
+// handoverRot = X_ef_lShp.rotation();//

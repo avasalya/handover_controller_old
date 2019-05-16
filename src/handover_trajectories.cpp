@@ -126,7 +126,9 @@ namespace mc_handover
 		for(int i=0; i<tf; i++)
 		{
 			pos.col(i) = slope*i*0.005 + constant;
+			// (Xf- Xi) * (i/tf) + xi;
 		}
+
 
 		// cout << pos << endl<< endl;
 		// cout << vel << endl<< endl;
