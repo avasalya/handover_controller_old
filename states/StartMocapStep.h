@@ -45,6 +45,7 @@ namespace mc_handover
 
 			bool Flag_CORTEX{true};
 
+			bool Flag_oneHand{true};//TRUE, otherwise use both hands
 
 			/*mocap_simulaton*/
 			double pt;
@@ -62,7 +63,7 @@ namespace mc_handover
 
 			Eigen::Vector3d ltPosW, rtPosW;
 			
-			Eigen::Vector3d initPosL, initPosR, fingerPos/*, constPosL, constPosR*/;
+			Eigen::Vector3d initPosL, initPosR, fingerPos;
 			Eigen::Matrix3d constRotL, constRotR;
 
 			Eigen::Matrix3d ltRotW, rtRotW;

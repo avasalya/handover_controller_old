@@ -47,7 +47,7 @@ namespace mc_handover
 		{	LOG_SUCCESS("robot markers are considered")	}
 
 		/*prediction controller parameter*/
-		tuner << 400., 20., 20.;
+		tuner << 100., 10., 10.;
 		// tuner(2) = tuner(0)/tuner(1);
 
 		t_predict = (int)tuner(0);
@@ -138,12 +138,10 @@ namespace mc_handover
 
 		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_ef_Subj;
 
-
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2); //t_predict/t_observe;
-
 
 		/*Subject Hand L SHAPE*/
 		auto sizeStr = subjMarkersName.size();
@@ -175,11 +173,10 @@ namespace mc_handover
 		}
 
 		/*get average velocity of previous *t_observe* sec Subj movement*/
-		curVelSubj  = handoverTraj->diff(P_M_Subj)*fps;
-		
-		/*avg velocity between A to B*/
-		avgVelSubj  <<handoverTraj->takeAverage(curVelSubj); //or
-		// avgVelSubj = (ithPosSubj - initPosSubj)* fps; 
+		// curVelSubj  = handoverTraj->diff(P_M_Subj)*fps;
+		// avgVelSubj  <<handoverTraj->takeAverage(curVelSubj); //or
+
+		avgVelSubj = (ithPosSubj - initPosSubj)/0.1;
 		// cout<< " vel " << avgVelSubj.transpose() <<endl;
 
 
@@ -195,12 +192,11 @@ namespace mc_handover
 
 		handoverRot = X_ef_Subj.rotation().transpose();
 
-
-		/*** GET NEW VELOCITY PROFILE ****/	
-		wp_ef_Subj=handoverTraj->constVelocity(curPosEf, X_ef_Subj.translation(), t_predict);
+		/*** way points for robot ef to predict pos ****/
+		wp_ef_Subj=handoverTraj->constVelocity(curPosEf, predictPos, t_predict);
+		// wp_ef_Subj=handoverTraj->constVelocity(curPosEf, X_ef_Subj.translation(), t_predict);
 		wp = get<0>(wp_ef_Subj);
 		initRefPos << wp(0,it), wp(1,it), wp(2,it);
-
 
 		ready = true;
 
@@ -213,49 +209,51 @@ namespace mc_handover
 	{
 		Eigen::Vector3d wp, handoverPos;
 
-		// it+= (int)tuner(2);
-
-		// if( it < get<1>(handPredict).cols() )
-		// {
-		// 	wp << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
-			
-		// 	// handoverPos = curPosEf + (wp - get<2>(handPredict));//initRefPos
-		// 	// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
-
-		// 	handoverPos = fingerPos;
-
-		// 	 /*robot constraint*/
-		// 	if(enableHand &&
-		// 		(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-		// 		(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-		// 		(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
-		// 		)
-		// 	{
-		// 		sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
-		// 		posTask->position(new_pose.translation());
-		// 		oriTask->orientation(new_pose.rotation());
-		// 	}
-
-		// 	return true;
-		// }
-
-
-
-		handoverPos = fingerPos;
-
-		 /*robot constraint*/
-		if(enableHand &&
-			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-			(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-			(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
-			)
+		if(Flag_prediction)
 		{
-			sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
-			posTask->position(new_pose.translation());
-			oriTask->orientation(new_pose.rotation());
-		}
+			it+= (int)tuner(2);
 
-		return true;
+			if( it < get<1>(handPredict).cols() )
+			{
+				wp << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
+
+				handoverPos = curPosEf + (wp - get<2>(handPredict));
+
+				 /*robot constraint*/
+				if(enableHand &&
+					(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+					(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
+					(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+					)
+				{
+					sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+					posTask->position(new_pose.translation());
+					oriTask->orientation(new_pose.rotation());
+
+					// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
+				}
+
+				return true;
+			}
+		}
+		else
+		{
+			handoverPos = fingerPos;
+
+			 /*robot constraint*/
+			if(enableHand &&
+				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
+				(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+				)
+			{
+				sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+				posTask->position(new_pose.translation());
+				oriTask->orientation(new_pose.rotation());
+			}
+
+			return true;
+		}
 
 	}
 
@@ -374,7 +372,7 @@ namespace mc_handover
 				Fzero = handForce; //this has Finertia too
 				gOpen = true;
 				// openGripper = true;
-				LOG_INFO(" opening " + gripperName<< " with Force Norm "<< handForce.norm())
+				LOG_INFO("opening " + gripperName<< " with Force Norm "<< handForce.norm())
 			}
 
 			/*close gripper*/
@@ -485,9 +483,3 @@ namespace mc_handover
 	}
 
 }//namespace mc_handover
-
-/*working orientation*/
-// X_ef_lShp = X_R_ef_const * (X_M_Subj * X_R_M).inv();
-// X_ef_lShp =  X_R_ef_const * X_M_Subj.inv() * X_R_M;
-// LOG_SUCCESS(X_ef_lShp.rotation()<<"\n")
-// handoverRot = X_ef_lShp.rotation();//
