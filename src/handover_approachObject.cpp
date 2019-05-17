@@ -39,12 +39,12 @@ namespace mc_handover
 
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
-			{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
+			{ markersPos[m] = Eigen::MatrixXd::Zero(3,600000); }
 
 		if(Flag_withoutRobot)
 		{	LOG_ERROR("robot markers are not considered") }
 		else
-		{	LOG_SUCCESS("robot markers are considered")	}
+		{	LOG_WARNING("robot markers are considered")	}
 
 		/*prediction controller parameter*/
 		tuner << 100., 10., 10.;
@@ -76,15 +76,17 @@ namespace mc_handover
 			Markers[7] << 0.202506, -0.293441, 0.425241;
 		}
 
+		// LOG_WARNING(9<<" "<<strMarkersName[9]<<" "<< Markers[ markers_name_index[ strMarkersName[9] ] ].transpose())
+
 		for(unsigned int k=0; k<totalMarkers; k++)
 		{
-			// LOG_WARNING(k<<" "<<strMarkersName[k])
-			//<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
+			// LOG_WARNING(k<<" "<<strMarkersName[k]<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
 			if( Markers[k](0)>-10 && Markers[k](0)!=0 && Markers[k](0)<10 )
 				{ checkNonZero = true; }
 			else
 				{ return false; }
 		}
+
 		return checkNonZero;
 	}
 
@@ -173,9 +175,6 @@ namespace mc_handover
 		}
 
 		/*get average velocity of previous *t_observe* sec Subj movement*/
-		// curVelSubj  = handoverTraj->diff(P_M_Subj)*fps;
-		// avgVelSubj  <<handoverTraj->takeAverage(curVelSubj); //or
-
 		avgVelSubj = (ithPosSubj - initPosSubj)/0.1;
 		// cout<< " vel " << avgVelSubj.transpose() <<endl;
 

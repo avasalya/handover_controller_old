@@ -17,6 +17,40 @@ namespace mc_handover
 		}
 
 
+		void StartMocapStep::ros_spinner()
+		{
+			// ros::Rate rt(200);
+			// while(ros::ok())
+			// {
+			// 	ros::spinOnce();
+			// 	rt.sleep();
+			// }
+			ros::spin();
+		}
+
+
+		void StartMocapStep::cortexCallback(const cortex_bridge::Markers & msg)
+		{
+			// LOG_WARNING("cortexCallback")
+			c = 0;
+			for(unsigned int d=0; d<msg.markers.size(); d++)
+			{
+				if(msg.markers.at(d).marker_name== "dummy")
+				{}
+				else if( c < 16)/*used markers count*/
+				{
+					approachObj->Markers[c] <<
+					msg.markers.at(d).translation.x, msg.markers.at(d).translation.y, msg.markers.at(d).translation.z;
+
+					// LOG_INFO(msg.markers.at(d).marker_name <<" "<<c <<"    "<< approachObj->Markers[c].transpose())
+
+					c+=1;
+				}
+			}
+			// cout<<endl;
+		}
+
+
 		void StartMocapStep::start(mc_control::fsm::Controller & controller)
 		{
 			auto & ctl = static_cast<mc_handover::HandoverController&>(controller);
@@ -274,6 +308,17 @@ namespace mc_handover
 				printf("\n*** start live mode ***\n");
 				Cortex_Request("LiveMode", &pResponse, &nBytes);
 			}
+			else
+			{
+				cout << "\033[1;32m ***ROS_MOCAP_BRIDGE IS ENABLED*** \033[0m\n";
+				m_nh_ = mc_rtc::ROSBridge::get_node_handle();
+				if(!m_nh_)
+				{
+				LOG_ERROR_AND_THROW(std::runtime_error, "This controller does not work withtout ROS")
+				}
+				m_ros_spinner_ = std::thread{[this](){ this->ros_spinner(); }};
+				l_shape_sub_ = m_nh_->subscribe("novis_markers", 1, & mc_handover::states::StartMocapStep::cortexCallback, this);
+			}
 
 			
 			/*specific logs*/
@@ -285,6 +330,8 @@ namespace mc_handover
 			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
 
 		}// start
+
+
 
 
 		bool StartMocapStep::run(mc_control::fsm::Controller & controller)
@@ -361,57 +408,63 @@ namespace mc_handover
 					return true;
 				}
 			}
+			else
+			{
+				startCapture = true;
+			}
 
 
 			/*start only when ithFrame == 1*/
 			if(startCapture)
 			{
 
-				/*get markers position FrameByFrame*/
-				if(approachObj->Flag_withoutRobot)
-					{ b_ = 2; c = 8; }
-				else
-					{ b_ = 0; c = 0; }
-
-				for(int b=b_; b<totalBodies; b++)
+				if(Flag_CORTEX)
 				{
-					/*make sure mocap template body marker's index are correct*/
-					pBody = &pBodyDefs->BodyDefs[b];
-					if(pBody->szName == approachObj->strMarkersBodyName[b])
-					{
-						// LOG_INFO("body name: "<<pBody->szName<<"\n"<<
-						// 	" pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
-						// 	" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" )
 
-						for(int m=0; m<pBody->nMarkers; m++)
+					/*get markers position FrameByFrame*/
+					if(approachObj->Flag_withoutRobot)
+						{ b_ = 2; c = 8; }
+					else
+						{ b_ = 0; c = 0; }
+
+					for(int b=b_; b<totalBodies; b++)
+					{
+						/*make sure mocap template body marker's index are correct*/
+						pBody = &pBodyDefs->BodyDefs[b];
+						if(pBody->szName == approachObj->strMarkersBodyName[b])
 						{
-							if(b==0 && m==4)
-							{}
-						else
-						{
-							approachObj->Markers[c] <<
-								FrameofData.BodyData[b].Markers[m][0], // X
-								FrameofData.BodyData[b].Markers[m][1], // Y
-								FrameofData.BodyData[b].Markers[m][2]; // Z
-								c+=1;
-								// cout<<approachObj->Markers[c].transpose()<<"\n";
-								// cout<<*getCurFrame->BodyData[b].Markers[m]<<endl;
+							// LOG_INFO("body name: "<<pBody->szName<<"\n"<<
+							// 	" pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
+							// 	" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" )
+
+							for(int m=0; m<pBody->nMarkers; m++)
+							{
+								if(b==0 && m==4)
+								{}
+							else
+							{
+								approachObj->Markers[c] <<
+									FrameofData.BodyData[b].Markers[m][0], // X
+									FrameofData.BodyData[b].Markers[m][1], // Y
+									FrameofData.BodyData[b].Markers[m][2]; // Z
+									c+=1;
+									// cout<<approachObj->Markers[c].transpose()<<"\n";
+									// cout<<*getCurFrame->BodyData[b].Markers[m]<<endl;
+								}
 							}
 						}
+						else
+							{ LOG_ERROR("approachObj->strMarkersBodyName[b] "<<approachObj->strMarkersBodyName[b]<<"\n"<<
+								"pBody->szName "<<pBody->szName<<"\n"<< 
+								"pBody->nMarkers: " << pBody->nMarkers<<"\n"<< 
+								" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 					}
-					else
-						{ LOG_ERROR("approachObj->strMarkersBodyName[b] "<<approachObj->strMarkersBodyName[b]<<"\n"<<
-							"pBody->szName "<<pBody->szName<<"\n"<< 
-							"pBody->nMarkers: " << pBody->nMarkers<<"\n"<< 
-							" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
+
 				}
-
-
-
-
 
 				if( approachObj->handoverRun() )
 				{
+					// LOG_ERROR("in RUN Controller")
 
 					if(Flag_oneHand)
 					{
@@ -589,3 +642,19 @@ namespace mc_handover
 
 	} // namespace states
 } // namespace mc_handover
+
+
+// for (const auto & frame : msg.markers)
+// {
+// 	if(frame.subject_name == "4mars_robot_left_hand" && frame.marker_name == "wristLtEfA")
+// 	{	c = 0;	}//restart count
+
+// 	if(frame.marker_name == "dummy") //ignore this marker
+// 	{}
+// 	else
+// 	{
+// 		approachObj->Markers[c] << frame.translation.x, frame.translation.y, frame.translation.z;
+// 		cout << frame.marker_name <<"    "<< c <<"      "<< approachObj->Markers[c].transpose()<<endl;
+// 		c+=1;
+// 	}
+// }
