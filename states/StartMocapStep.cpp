@@ -29,7 +29,7 @@ namespace mc_handover
 		}
 
 
-		void StartMocapStep::cortexCallback(const cortex_bridge::Markers & msg)
+		void StartMocapStep::cortexCallback(const cortex_ros_bridge_msgs::Markers & msg)
 		{
 			// LOG_WARNING("cortexCallback")
 			c = 0;
@@ -359,7 +359,8 @@ namespace mc_handover
 			auto open_gripper = [&](std::string gripperName)
 			{
 				auto gripper = ctl.grippers[gripperName].get();
-				gripper->setTargetQ({openGrippers});
+				gripper->setTargetQ({0.5});
+				cout<< "gripper open\n ";
 
 				approachObj->openGripper = true;
 				approachObj->gOpen = false;

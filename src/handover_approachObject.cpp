@@ -78,7 +78,7 @@ namespace mc_handover
 
 		// LOG_WARNING(9<<" "<<strMarkersName[9]<<" "<< Markers[ markers_name_index[ strMarkersName[9] ] ].transpose())
 
-		for(unsigned int k=0; k<totalMarkers; k++)
+		for(unsigned int k=8; k<totalMarkers; k++)
 		{
 			// LOG_WARNING(k<<" "<<strMarkersName[k]<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
 			if( Markers[k](0)>-10 && Markers[k](0)!=0 && Markers[k](0)<10 )
@@ -387,7 +387,7 @@ namespace mc_handover
 			}
 			
 			/*when closed WITH object*/
-			if( graspObject && closeGripper && (handForce.norm()>=2.1) )
+			if( graspObject && closeGripper && (handForce.norm()>=2.6) )
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
@@ -406,7 +406,7 @@ namespace mc_handover
 		if( subj_rel_ef > 0.5 )
 		{
 			/*here comes only after object is grasped*/
-			if( (closeGripper) && (!restartHandover) && (FNormAtClose>=2.0) )
+			if( (closeGripper) && (!restartHandover) && (FNormAtClose>=2.6) )
 			{
 				if( e%200==0 && !enableHand )//wait xx sec
 				{

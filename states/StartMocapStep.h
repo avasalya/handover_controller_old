@@ -17,8 +17,8 @@
 
 
 //Cortex_ROS_bridge
-#include <cortex_bridge/Marker.h>
-#include <cortex_bridge/Markers.h>
+#include <cortex_ros_bridge_msgs/Marker.h>
+#include <cortex_ros_bridge_msgs/Markers.h>
 
 
 // ros
@@ -49,7 +49,7 @@ namespace mc_handover
 			void teardown(mc_control::fsm::Controller&) override;
 
 			void ros_spinner();
-			void cortexCallback(const cortex_bridge::Markers & msg);
+			void cortexCallback(const cortex_ros_bridge_msgs::Markers & msg);
 
 			double pi = 3.14;
 			double DegToRad = pi/180;
