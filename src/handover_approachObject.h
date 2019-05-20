@@ -107,6 +107,11 @@ namespace mc_handover
 		bool restartHandover{false};
 
 
+	private:
+		std::vector<double> Floadx, Floady, Floadz;
+		double efMass;
+		double FNormAtClose;
+		Eigen::Vector3d fingerPos, gripperEf, efAce, Finert, Fzero, Fload, Fpull;
 	};//strcut ApproachObject
 
 }//namespace mc_handover

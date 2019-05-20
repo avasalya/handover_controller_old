@@ -272,10 +272,7 @@ namespace mc_handover
 
 		double subj_rel_ef;
 
-		double efMass, FNormAtClose;
-		std::vector<double> Floadx, Floady, Floadz;
 		std::vector<Eigen::Vector3d> efPos, efVel;
-		Eigen::Vector3d fingerPos, gripperEf, efAce, Finert, Fzero, Fload, Fpull;
 
 		efPos.resize(3);
 		efVel.resize(2);
@@ -328,7 +325,7 @@ namespace mc_handover
 				efVel[1] = (efPos[2]-efPos[1])*fps;
 				efAce = (efVel[1]-efVel[0])*fps;
 
-				efMass = Fload.norm()/9.8; //HandMass + objMass;
+				efMass = Fload.norm()/9.81; //HandMass + objMass;
 				Finert = efMass*efAce; //inertial Force at ef
 
 				Fpull[0] = abs(handForce[0])-abs(Finert[0]); //-abs(Fzero[0]);
@@ -345,11 +342,11 @@ namespace mc_handover
 				restartHandover=true;
 				takeBackObject=false;
 
+				enableHand=false;
+				LOG_WARNING("motion stopped last->"<<enableHand)
 				if(goBackInit)
 				{
 					goBackInit=false;
-					enableHand=false;
-					LOG_WARNING("motion stopped last->"<<enableHand)
 
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
 					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
@@ -381,7 +378,7 @@ namespace mc_handover
 			
 			/*when closed WITH object*/
 			// if( graspObject && closeGripper && (handForce.norm() >= 2.6) )
-			if( graspObject && closeGripper && (handForce.norm() >= Fzero*1.2) )
+			if( graspObject && closeGripper && (handForce.norm() >= Fzero.norm()*1.2) )
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
@@ -402,7 +399,7 @@ namespace mc_handover
 		{
 			/*here comes only after object is grasped*/
 			// if( (closeGripper) && (!restartHandover) && (FNormAtClose >= 2.6) )
-			if( (closeGripper) && (!restartHandover) && (FNormAtClose >= Fzero*1.2) )
+			if( (closeGripper) && (!restartHandover) && (FNormAtClose >= Fzero.norm()*1.2) )
 			{
 				if( (e%200==0) && (enableHand==0) )//wait xx sec
 				{
