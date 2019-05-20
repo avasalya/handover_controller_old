@@ -19,12 +19,6 @@ namespace mc_handover
 
 		void StartMocapStep::ros_spinner()
 		{
-			// ros::Rate rt(200);
-			// while(ros::ok())
-			// {
-			// 	ros::spinOnce();
-			// 	rt.sleep();
-			// }
 			ros::spin();
 		}
 
@@ -41,13 +35,11 @@ namespace mc_handover
 				{
 					approachObj->Markers[c] <<
 					msg.markers.at(d).translation.x, msg.markers.at(d).translation.y, msg.markers.at(d).translation.z;
-
 					// LOG_INFO(msg.markers.at(d).marker_name <<" "<<c <<"    "<< approachObj->Markers[c].transpose())
 
 					c+=1;
 				}
 			}
-			// cout<<endl;
 		}
 
 
@@ -360,7 +352,6 @@ namespace mc_handover
 			{
 				auto gripper = ctl.grippers[gripperName].get();
 				gripper->setTargetQ({0.5});
-				cout<< "gripper open\n ";
 
 				approachObj->openGripper = true;
 				approachObj->gOpen = false;
@@ -465,7 +456,6 @@ namespace mc_handover
 
 				if( approachObj->handoverRun() )
 				{
-					// LOG_ERROR("in RUN Controller")
 
 					if(Flag_oneHand)
 					{
@@ -643,19 +633,3 @@ namespace mc_handover
 
 	} // namespace states
 } // namespace mc_handover
-
-
-// for (const auto & frame : msg.markers)
-// {
-// 	if(frame.subject_name == "4mars_robot_left_hand" && frame.marker_name == "wristLtEfA")
-// 	{	c = 0;	}//restart count
-
-// 	if(frame.marker_name == "dummy") //ignore this marker
-// 	{}
-// 	else
-// 	{
-// 		approachObj->Markers[c] << frame.translation.x, frame.translation.y, frame.translation.z;
-// 		cout << frame.marker_name <<"    "<< c <<"      "<< approachObj->Markers[c].transpose()<<endl;
-// 		c+=1;
-// 	}
-// }

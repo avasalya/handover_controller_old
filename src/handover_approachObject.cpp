@@ -56,7 +56,7 @@ namespace mc_handover
 	}
 
 
-	
+
 	bool ApproachObject::checkFrameOfData(std::vector<Eigen::Vector3d>)
 	{
 		bool checkNonZero{false};
@@ -75,8 +75,6 @@ namespace mc_handover
 			Markers[6] << 0.148997, -0.29622, 0.418868;
 			Markers[7] << 0.202506, -0.293441, 0.425241;
 		}
-
-		// LOG_WARNING(9<<" "<<strMarkersName[9]<<" "<< Markers[ markers_name_index[ strMarkersName[9] ] ].transpose())
 
 		for(unsigned int k=8; k<totalMarkers; k++)
 		{
@@ -343,7 +341,7 @@ namespace mc_handover
 
 			if( (abs(Fpull[idx]) > newTh[idx]) && ( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) ) )
 			{
-				gOpen=true;/*open_gripper();*/
+				gOpen=true;
 				restartHandover=true;
 				takeBackObject=false;
 
@@ -352,7 +350,6 @@ namespace mc_handover
 					goBackInit=false;
 					enableHand=false;
 					LOG_WARNING("motion stopped last->"<<enableHand)
-
 
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
 					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
@@ -364,39 +361,37 @@ namespace mc_handover
 
 		
 		if( subj_rel_ef < 0.3 )
-		{			
+		{
 			/*open empty gripper when subject come near to robot*/
 			if( (!openGripper))
 			{
-				Fzero = handForce; //this has Finertia too
+				Fzero = handForce;
 				gOpen = true;
-				// openGripper = true;
-				LOG_INFO("opening " + gripperName<< " with Force Norm "<< handForce.norm())
+				LOG_INFO("opening " + gripperName<< " with Fzero Norm "<< Fzero.norm())
 			}
 
 			/*close gripper*/
 			if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
 			{
-				gClose = true;/*close_gripper();*/
+				gClose = true;
 				closeGripper = true;
-				
 				enableHand=false; //when subject hand is very close to efL
 				LOG_WARNING("motion stopped 1st->"<< enableHand)
-
-				LOG_INFO("object is inside gripper "<< handForce.norm() )
 			}
 			
 			/*when closed WITH object*/
-			if( graspObject && closeGripper && (handForce.norm()>=2.6) )
+			// if( graspObject && closeGripper && (handForce.norm() >= 2.6) )
+			if( graspObject && closeGripper && (handForce.norm() >= Fzero*1.2) )
 			{
 				graspObject = false;
 				FNormAtClose = handForce.norm();
-				LOG_INFO(" Force Norm At Close "<<FNormAtClose)
+				LOG_INFO("object is inside gripper with Force Norm At Close "<<FNormAtClose)
 			}
 
 			/*check if object is being pulled*/
 			if(takeBackObject)
 			{
+				posTask->stiffness(4);
 				return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 			}
 		}
@@ -406,13 +401,13 @@ namespace mc_handover
 		if( subj_rel_ef > 0.5 )
 		{
 			/*here comes only after object is grasped*/
-			if( (closeGripper) && (!restartHandover) && (FNormAtClose>=2.6) )
+			// if( (closeGripper) && (!restartHandover) && (FNormAtClose >= 2.6) )
+			if( (closeGripper) && (!restartHandover) && (FNormAtClose >= Fzero*1.2) )
 			{
-				if( e%200==0 && !enableHand )//wait xx sec
+				if( (e%200==0) && (enableHand==0) )//wait xx sec
 				{
-					e=1;
-					takeBackObject=true;
 					enableHand=true;
+					takeBackObject=true;
 					LOG_INFO("motion restart 1st-> "<<enableHand)
 
 					Fload <<
@@ -429,7 +424,7 @@ namespace mc_handover
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
 					posTask->stiffness(2);
-					LOG_INFO("robot has object")
+					LOG_ERROR("robot has object")
 				}
 				else /*divide by 9.8 and you will get object mass*/
 				{
@@ -438,13 +433,6 @@ namespace mc_handover
 					Floadz.push_back( abs( abs(handForce[2])-abs(Fzero[2]) ) );
 				}
 				e+=1;
-
-
-				if(posTask->eval().norm() <0.1)
-				{
-					posTask->stiffness(4);
-					LOG_INFO("begin 2nd cycle")
-				}
 			}
 
 			if(restartHandover)
@@ -465,9 +453,9 @@ namespace mc_handover
 				graspObject=true;
 				goBackInit=true;
 				enableHand=true;
+				e = 1;
 
-
-				if(posTask->eval().norm() <0.1)
+				if(restartHandover && posTask->eval().norm() <0.1)
 				{
 					posTask->stiffness(4);
 					restartHandover=false;
