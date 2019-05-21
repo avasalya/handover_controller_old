@@ -360,16 +360,16 @@ namespace mc_handover
 
 			if( approachObj->i > 3 )
 			{
-				if(approachObj->enableLHand)
-				{
+			//	if(approachObj->enableLHand)
+			//	{
 					efPos[3-g] = ltPosW;
 					g++;
-				}
-				if(approachObj->enableRHand)
-				{
-					efPos[3-g] = rtPosW;
-					g++;
-				}
+			//	}
+			//	if(approachObj->enableRHand)
+			//	{
+			//		efPos[3-g] = rtPosW;
+			//		g++;
+			//	}
 			
 				if(g>3)
 				{

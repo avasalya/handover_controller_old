@@ -347,12 +347,12 @@ namespace mc_handover
 				/*new threshold*/
 				newTh = Fload + Th;
 
-				if( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) )
+				if( subj_rel_ef<0.1 /*(ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f)*/ )
 				{
 					if(enableHand)
 					{
 						enableHand=false;
-						LOG_WARNING("motion stopped, try to retreat object"<<enableHand)
+						LOG_WARNING("2nd cycle, motion stopped, try to retreat object")
 					}
 
 					if( (abs(Fpull[idx]) > newTh[idx]) )
@@ -365,10 +365,10 @@ namespace mc_handover
 						{
 							goBackInit=false;
 
-							cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
-							cout << "Finert "<< Finert.transpose() << " object mass \n";
-							cout << objMass <<endl;
 							LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull force " << Fpull[idx]<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
+							cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
+							cout << "Finert "<< Finert.transpose() <<endl;
+							cout <<"object mass " << objMass <<endl;
 						}
 					}
 				}
@@ -378,7 +378,7 @@ namespace mc_handover
 			/*check if object is being pulled*/
 			if(takeBackObject)
 			{
-				posTask->stiffness(4);
+				posTask->stiffness(4.0);
 				return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 			}
 		}
@@ -389,7 +389,7 @@ namespace mc_handover
 		{
 
 			/*if closed WITHOUT object*/
-			if( (!graspObject) && ( (ef_area_wAB_gA < ef_area_wAB_O) || (ef_area_wAB_gB < ef_area_wAB_O) ) )
+			if( (!restartHandover) && (!graspObject) && ( (ef_area_wAB_gA < ef_area_wAB_O) || (ef_area_wAB_gB < ef_area_wAB_O) ) )
 			{
 				graspObject = true;
 				closeGripper = false;
@@ -411,13 +411,13 @@ namespace mc_handover
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
-					LOG_INFO("motion enabled, Fload norm "<< Fload.norm() << ", EF returning to init pos" )
+					LOG_INFO("motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pos" )
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
 
 					/*move EF to initial position*/
-					posTask->stiffness(2);
+					posTask->stiffness(2.0);
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
 					LOG_ERROR("robot has object")
@@ -437,7 +437,7 @@ namespace mc_handover
 				/*move EF to initial position*/
 				if(!goBackInit)
 				{
-					posTask->stiffness(2);
+					posTask->stiffness(2.0);
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
 
@@ -454,10 +454,10 @@ namespace mc_handover
 
 				if(restartHandover && posTask->eval().norm() <0.1)
 				{
-					posTask->stiffness(4);
+					posTask->stiffness(4.0);
 					restartHandover = false;
 					LOG_INFO("object returned to subject")
-					LOG_INFO("motion enabled, restarting handover "<<enableHand)
+					LOG_INFO("motion enabled, restarting handover\n")
 				}
 
 			}
