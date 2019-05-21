@@ -53,6 +53,7 @@ namespace mc_handover
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2);//t_predict/t_observe;
+
 	}
 
 
@@ -256,7 +257,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::forceController(sva::MotionVecd BodyAccW, bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -272,10 +273,11 @@ namespace mc_handover
 
 		double subj_rel_ef;
 
-		std::vector<Eigen::Vector3d> efPos, efVel;
-
-		efPos.resize(3);
-		efVel.resize(2);
+		Eigen::Vector3d fingerPos, gripperEf;
+		
+		// std::vector<Eigen::Vector3d> efPos, efVel;
+		// efPos.resize(3);
+		// efVel.resize(2);
 
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
 		
@@ -310,28 +312,40 @@ namespace mc_handover
 		auto checkForce = [&](const char *axis_name, int idx)
 		{
 			/*get acceleration of lHand*/
-			if(i>3)
-			{
-				for(int g=1; g<=3; g++)
-				{
-					efPos[3-g] = 0.25*(
-						markersPos[markers_name_index[robotMarkersName[0]]].col(i-g) +
-						markersPos[markers_name_index[robotMarkersName[1]]].col(i-g) +
-						markersPos[markers_name_index[robotMarkersName[2]]].col(i-g) +
-						markersPos[markers_name_index[robotMarkersName[3]]].col(i-g)
-						);
-				}
-				efVel[0] = (efPos[1]-efPos[0])*fps;
-				efVel[1] = (efPos[2]-efPos[1])*fps;
-				efAce = (efVel[1]-efVel[0])*fps;
+			// if(i>3)
+			// {
+			// 	for(int g=1; g<=3; g++)
+			// 	{
+			// 		efPos[3-g] = 0.25*(
+			// 			markersPos[markers_name_index[robotMarkersName[0]]].col(i-g) +
+			// 			markersPos[markers_name_index[robotMarkersName[1]]].col(i-g) +
+			// 			markersPos[markers_name_index[robotMarkersName[2]]].col(i-g) +
+			// 			markersPos[markers_name_index[robotMarkersName[3]]].col(i-g)
+			// 			);
+			// 	}
+			// 	efVel[0] = (efPos[1]-efPos[0])*fps;
+			// 	efVel[1] = (efPos[2]-efPos[1])*fps;
+			// 	efAce = (efVel[1]-efVel[0])*fps;
 
-				efMass = Fload.norm()/9.81; //HandMass + objMass;
-				Finert = efMass*efAce; //inertial Force at ef
+			// 	objMass = Fload.norm()/9.81; //HandMass + objMass;
 
-				Fpull[0] = abs(handForce[0])-abs(Finert[0]); //-abs(Fzero[0]);
-				Fpull[1] = abs(handForce[1])-abs(Finert[1]); //-abs(Fzero[1]);
-				Fpull[2] = abs(handForce[2])-abs(Finert[2]); //-abs(Fzero[2]);
-			}
+			// 	// Finert = objMass*efAce; //inertial Force at ef
+			// 	Finert = objMass * BodyAccW.linear();
+
+			// 	Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
+			// 	Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
+			// 	Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
+			// }
+
+
+			objMass = Fload.norm()/9.81; //HandMass + objMass;
+			Finert = objMass * efAce;
+
+			// Finert = objMass * BodyAccW.linear();
+
+			Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
+			Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
+			Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
 
 			/*new threshold*/
 			auto newTh = Fload + Th;
@@ -349,7 +363,7 @@ namespace mc_handover
 					goBackInit=false;
 
 					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
-					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
+					cout << "Finert "<< Finert.transpose() << " object mass " << objMass <<endl;
 					LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << Fpull.transpose()<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
 				}
 			}

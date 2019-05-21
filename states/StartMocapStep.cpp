@@ -314,12 +314,23 @@ namespace mc_handover
 
 			
 			/*specific logs*/
+			ctl.logger().addLogEntry("posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
+			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
+			
 			ctl.logger().addLogEntry("objectPos",[this]()-> Eigen::Vector3d { return approachObj->objectPos; });
 			ctl.logger().addLogEntry("subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
 			ctl.logger().addLogEntry("subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
 
-			ctl.logger().addLogEntry("posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
-			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
+			ctl.logger().addLogEntry("obj mass",[this]() -> double { return approachObj->objMass; });
+			ctl.logger().addLogEntry("FNormAtClose",[this]() -> double { return approachObj->FNormAtClose; });
+			
+			ctl.logger().addLogEntry("efMarkerAce",[this]() -> Eigen::Vector3d { return approachObj->efAce; });
+			ctl.logger().addLogEntry("Fzero",[this]() -> Eigen::Vector3d { return approachObj->Fzero; });
+			ctl.logger().addLogEntry("Fload",[this]() -> Eigen::Vector3d { return approachObj->Fload; });
+			ctl.logger().addLogEntry("Finert",[this]() -> Eigen::Vector3d { return approachObj->Finert; });
+			ctl.logger().addLogEntry("Fpull",[this]() -> Eigen::Vector3d { return approachObj->Fpull; });
+
+
 
 		}// start
 
@@ -336,6 +347,33 @@ namespace mc_handover
 
 			rtPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK7")].translation();
 			rtRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")].rotation();
+
+			
+			// ltBodyAccW = ltRotW * ctl.robot().mbc().bodyAccB[ctl.robot().bodyIndexByName("LARM_LINK6")];
+			// rtBodyAccW = rtRotW * ctl.robot().mbc().bodyAccB[ctl.robot().bodyIndexByName("RARM_LINK6")];
+			
+			// cout << ltBodyAccW.linear().transpose()<<endl;
+
+
+			efPos.resize(3);
+			efVel.resize(2);
+
+			if(approachObj->i > 3)
+			{
+				efPos[3-g] = ltPosW;
+				// cout<< g << " " <<efPos[3-g].transpose()<<endl;
+				g++;
+			
+				if(g>3)
+				{
+					g = 1;
+					efVel[0] = (efPos[1]-efPos[2])*fps;
+					efVel[1] = (efPos[0]-efPos[1])*fps;
+					approachObj->efAce = (efVel[1]-efVel[0])*fps;
+					// cout<< "ace "<< approachObj->efAce <<endl;
+				}
+			}
+
 
 
 			/*Force sensor*/
@@ -475,7 +513,7 @@ namespace mc_handover
 							/*subj right*/
 							taskOK = approachObj->goToHandoverPose(0.0, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
+							taskOK = approachObj->forceController(ltBodyAccW, approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
 
 							gripperControl("l_gripper");
 						}
@@ -570,7 +608,7 @@ namespace mc_handover
 
 							taskOK = approachObj->goToHandoverPose(0.05, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
+							taskOK = approachObj->forceController(ltBodyAccW, approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
 
 							gripperControl("l_gripper");
 						}
@@ -580,7 +618,7 @@ namespace mc_handover
 
 							taskOK = approachObj->goToHandoverPose(-0.7, 0.05, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableRHand, initPosR, initRotR, rightForce, rightTh, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
+							taskOK = approachObj->forceController(rtBodyAccW, approachObj->enableRHand, initPosR, initRotR, rightForce, rightTh, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
 
 							gripperControl("r_gripper");
 						}

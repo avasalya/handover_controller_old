@@ -78,6 +78,11 @@ namespace mc_handover
 			Eigen::Vector3d headVector, headTarget;
 
 			Eigen::Vector3d ltPosW, rtPosW;
+
+			sva::MotionVecd ltBodyAccW, rtBodyAccW;
+			std::vector<Eigen::Vector3d> efPos, efVel;
+			int g{1};
+
 			
 			Eigen::Vector3d initPosL, initPosR, fingerPos;
 			Eigen::Matrix3d constRotL, constRotR;

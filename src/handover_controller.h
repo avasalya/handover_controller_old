@@ -38,6 +38,7 @@
 #include <RBDyn/EulerIntegration.h>
 #include <RBDyn/FK.h>
 #include <RBDyn/FV.h>
+#include <RBDyn/FA.h>
 
 #include <boost/filesystem/fstream.hpp>
 
