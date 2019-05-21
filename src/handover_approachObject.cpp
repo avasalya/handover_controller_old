@@ -257,7 +257,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::forceController(sva::MotionVecd BodyAccW, bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -274,10 +274,6 @@ namespace mc_handover
 		double subj_rel_ef;
 
 		Eigen::Vector3d fingerPos, gripperEf;
-		
-		// std::vector<Eigen::Vector3d> efPos, efVel;
-		// efPos.resize(3);
-		// efVel.resize(2);
 
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
 		
@@ -309,95 +305,76 @@ namespace mc_handover
 		subj_rel_ef = (gripperEf - fingerPos).norm();
 
 
-		auto checkForce = [&](const char *axis_name, int idx)
-		{
-			/*get acceleration of lHand*/
-			// if(i>3)
-			// {
-			// 	for(int g=1; g<=3; g++)
-			// 	{
-			// 		efPos[3-g] = 0.25*(
-			// 			markersPos[markers_name_index[robotMarkersName[0]]].col(i-g) +
-			// 			markersPos[markers_name_index[robotMarkersName[1]]].col(i-g) +
-			// 			markersPos[markers_name_index[robotMarkersName[2]]].col(i-g) +
-			// 			markersPos[markers_name_index[robotMarkersName[3]]].col(i-g)
-			// 			);
-			// 	}
-			// 	efVel[0] = (efPos[1]-efPos[0])*fps;
-			// 	efVel[1] = (efPos[2]-efPos[1])*fps;
-			// 	efAce = (efVel[1]-efVel[0])*fps;
-
-			// 	objMass = Fload.norm()/9.81; //HandMass + objMass;
-
-			// 	// Finert = objMass*efAce; //inertial Force at ef
-			// 	Finert = objMass * BodyAccW.linear();
-
-			// 	Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
-			// 	Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
-			// 	Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
-			// }
-
-
-			objMass = Fload.norm()/9.81; //HandMass + objMass;
-			Finert = objMass * efAce;
-
-			// Finert = objMass * BodyAccW.linear();
-
-			Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
-			Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
-			Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
-
-			/*new threshold*/
-			auto newTh = Fload + Th;
-
-			if( (abs(Fpull[idx]) > newTh[idx]) && ( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) ) )
-			{
-				gOpen=true;
-				restartHandover=true;
-				takeBackObject=false;
-
-				enableHand=false;
-				LOG_WARNING("motion stopped last->"<<enableHand)
-				if(goBackInit)
-				{
-					goBackInit=false;
-
-					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
-					cout << "Finert "<< Finert.transpose() << " object mass " << objMass <<endl;
-					LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << Fpull.transpose()<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
-				}
-			}
-			return false;
-		};
-
-		
 		if( subj_rel_ef < 0.3 )
 		{
+
 			/*open empty gripper when subject come near to robot*/
-			if( (!openGripper))
+			if( (!openGripper) )
 			{
-				Fzero = handForce;
 				gOpen = true;
-				LOG_INFO("opening " + gripperName<< " with Fzero Norm "<< Fzero.norm())
+				LOG_INFO("opening " + gripperName)
 			}
 
-			/*close gripper*/
-			if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
+			/*stop motion*/
+			if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.1) )
 			{
-				gClose = true;
-				closeGripper = true;
-				enableHand=false; //when subject hand is very close to efL
-				LOG_WARNING("motion stopped 1st->"<< enableHand)
+				Fzero = handForce;
+				enableHand = false;
+				LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
 			}
 			
 			/*when closed WITH object*/
-			// if( graspObject && closeGripper && (handForce.norm() >= 2.6) )
-			if( graspObject && closeGripper && (handForce.norm() >= Fzero.norm()*1.2) )
+			if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
+			// if( graspObject && closeGripper && (handForce.norm() >= Fzero.norm()*1.2) )
 			{
+				gClose = true;
+				closeGripper = true;
 				graspObject = false;
-				FNormAtClose = handForce.norm();
-				LOG_INFO("object is inside gripper with Force Norm At Close "<<FNormAtClose)
+
+				Fclose = handForce;
+				LOG_INFO("object is inside gripper??, closing with Forces during close "<<Fclose)
 			}
+
+
+			auto checkForce = [&](const char *axis_name, int idx)
+			{
+				objMass = Fload.norm()/9.81;
+				Finert = objMass * efAce;
+
+				Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
+				Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
+				Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
+
+				/*new threshold*/
+				newTh = Fload + Th;
+
+				if( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) )
+				{
+					if(enableHand)
+					{
+						enableHand=false;
+						LOG_WARNING("motion stopped, try to retreat object"<<enableHand)
+					}
+
+					if( (abs(Fpull[idx]) > newTh[idx]) )
+					{
+						gOpen=true;
+						restartHandover=true;
+						takeBackObject=false;
+
+						if(goBackInit)
+						{
+							goBackInit=false;
+
+							cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
+							cout << "Finert "<< Finert.transpose() << " object mass \n";
+							cout << objMass <<endl;
+							LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull force " << Fpull[idx]<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
+						}
+					}
+				}
+				return false;
+			};
 
 			/*check if object is being pulled*/
 			if(takeBackObject)
@@ -411,33 +388,42 @@ namespace mc_handover
 		/*restart handover*/
 		if( subj_rel_ef > 0.5 )
 		{
-			/*here comes only after object is grasped*/
-			// if( (closeGripper) && (!restartHandover) && (FNormAtClose >= 2.6) )
-			if( (closeGripper) && (!restartHandover) && (FNormAtClose >= Fzero.norm()*1.2) )
+
+			/*if closed WITHOUT object*/
+			if( (!graspObject) && ( (ef_area_wAB_gA < ef_area_wAB_O) || (ef_area_wAB_gB < ef_area_wAB_O) ) )
 			{
-				if( (e%200==0) && (enableHand==0) )//wait xx sec
+				graspObject = true;
+				closeGripper = false;
+				gClose = false;
+				LOG_WARNING("false close, try with object again")
+			}
+
+
+			/*here comes only after object is grasped*/
+			if( (closeGripper) && (!restartHandover) && (Fclose.norm() >= Fzero.norm()*1.2) )
+			{
+				if( (e%200==0) && (!enableHand) )//wait xx sec
 				{
-					enableHand=true;
-					takeBackObject=true;
-					LOG_INFO("motion restart 1st-> "<<enableHand)
+					enableHand = true;
+					takeBackObject = true;
 
 					Fload <<
 					accumulate( Floadx.begin(), Floadx.end(), 0.0)/double(Floadx.size()),
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
-					LOG_INFO("Fload  "<< Fload.transpose() << ", EF returning to init pos" )
+					LOG_INFO("motion enabled, Fload norm "<< Fload.norm() << ", EF returning to init pos" )
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
 
 					/*move EF to initial position*/
+					posTask->stiffness(2);
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
-					posTask->stiffness(2);
 					LOG_ERROR("robot has object")
 				}
-				else /*divide by 9.8 and you will get object mass*/
+				else /*divide by 9.81 and you will get object mass*/
 				{
 					Floadx.push_back( abs( abs(handForce[0])-abs(Fzero[0]) ) );
 					Floady.push_back( abs( abs(handForce[1])-abs(Fzero[1]) ) );
@@ -446,33 +432,33 @@ namespace mc_handover
 				e+=1;
 			}
 
+
 			if(restartHandover)
 			{
 				/*move EF to initial position*/
 				if(!goBackInit)
 				{
+					posTask->stiffness(2);
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
-					posTask->stiffness(2);
 
 					gClose = true;
 				}
 
-				openGripper=false;
-				closeGripper=false;
+				openGripper = false;
+				closeGripper = false;
 
-				graspObject=true;
-				goBackInit=true;
-				enableHand=true;
+				graspObject = true;
+				goBackInit = true;
+				enableHand = true;
 				e = 1;
 
 				if(restartHandover && posTask->eval().norm() <0.1)
 				{
 					posTask->stiffness(4);
-					restartHandover=false;
+					restartHandover = false;
 					LOG_INFO("object returned to subject")
-					LOG_INFO("motion restart last-> "<<enableHand)
-					LOG_INFO("/*******restarting handover*******/");
+					LOG_INFO("motion enabled, restarting handover "<<enableHand)
 				}
 
 			}

@@ -56,7 +56,7 @@ namespace mc_handover
 
 		bool goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos);
 
-		bool forceController(sva::MotionVecd BodyAccW, bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
+		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
 
@@ -110,8 +110,8 @@ namespace mc_handover
 	public:
 		std::vector<double> Floadx, Floady, Floadz;
 		double objMass;
-		double FNormAtClose;
-		Eigen::Vector3d efAce, Finert, Fzero, Fload, Fpull;
+		// double FNormAtClose{1.0};
+		Eigen::Vector3d efAce, newTh, Finert, Fzero, Fclose, Fload, Fpull;
 
 	};//strcut ApproachObject
 
