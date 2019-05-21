@@ -325,14 +325,13 @@ namespace mc_handover
 			
 			/*when closed WITH object*/
 			if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
-			// if( graspObject && closeGripper && (handForce.norm() >= Fzero.norm()*1.2) )
 			{
 				gClose = true;
 				closeGripper = true;
 				graspObject = false;
 
 				Fclose = handForce;
-				LOG_INFO("object is inside gripper??, closing with Forces during close "<<Fclose)
+				LOG_INFO("object is inside gripper??, closing with Forces during close "<<Fclose.norm())
 			}
 
 
@@ -400,9 +399,9 @@ namespace mc_handover
 
 
 			/*here comes only after object is grasped*/
-			if( (closeGripper) && (!restartHandover) && (Fclose.norm() >= Fzero.norm()*1.2) )
+			if( (closeGripper) && (!restartHandover) && (!enableHand)/*&& (Fclose.norm() >= Fzero.norm()*1.2)*/ )
 			{
-				if( (e%200==0) && (!enableHand) )//wait xx sec
+				if( (e%200==0) )//wait xx sec
 				{
 					enableHand = true;
 					takeBackObject = true;
