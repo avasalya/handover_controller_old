@@ -135,42 +135,44 @@ namespace mc_handover
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "reset"},
 				
-				mc_rtc::gui::Button("LEFT ARM init / set flags", [this, &ctl]()
-				{
-					posTaskL->position(initPosL);
-					oriTaskL->orientation(initRotL);
+				// mc_rtc::gui::Button("LEFT ARM init / set flags", [this, &ctl]()
+				// {
+				// 	posTaskL->position(initPosL);
+				// 	oriTaskL->orientation(initRotL);
 
-					approachObj->openGripper = false;
-					approachObj->enableLHand = true;
+				// 	approachObj->openGripper = false;
+				// 	approachObj->enableLHand = true;
 
-					auto gripper = ctl.grippers["l_gripper"].get();
-					gripper->setTargetQ({closeGrippers});
+				// 	auto gripper = ctl.grippers["l_gripper"].get();
+				// 	gripper->setTargetQ({closeGrippers});
 
-					// approachObj->closeGripper = false;
-					// approachObj->gClose = false;
-					// approachObj->graspObject=true;
-
-					LOG_ERROR("manual reset")
-				}),
+				// 	LOG_ERROR("manual reset")
+				// }),
 				
-				mc_rtc::gui::Button("RIGHT ARM init / set flags", [this, &ctl]()
+				// mc_rtc::gui::Button("RIGHT ARM init / set flags", [this, &ctl]()
+				// {
+				// 	posTaskR->position(initPosR);
+				// 	oriTaskR->orientation(initRotR);
+
+				// 	approachObj->openGripper = false;
+				// 	approachObj->enableRHand = true;
+
+				// 	auto gripper = ctl.grippers["r_gripper"].get();
+				// 	gripper->setTargetQ({closeGrippers});
+
+				// 	LOG_ERROR("manual reset")
+				// }),
+
+				mc_rtc::gui::Button("LEFT ARM orientation", [this, &ctl]()
 				{
-					posTaskR->position(initPosR);
-					oriTaskR->orientation(initRotR);
-
-					approachObj->openGripper = false;
-					approachObj->enableRHand = true;
-
-					auto gripper = ctl.grippers["r_gripper"].get();
-					gripper->setTargetQ({closeGrippers});
-
-					// approachObj->closeGripper = false;
-					// approachObj->gClose = false;
-					// approachObj->graspObject=true;
-
-					LOG_ERROR("manual reset")
+					oriTaskL->orientation(constRotL);
 				}),
-				
+
+				mc_rtc::gui::Button("RIGHT ARM orientation", [this, &ctl]()
+				{
+					oriTaskR->orientation(constRotR);
+				}),
+
 				mc_rtc::gui::Button("LEFT ARM init", [this, &ctl]()
 				{
 					posTaskL->position(initPosL);
@@ -181,16 +183,6 @@ namespace mc_handover
 				{
 					posTaskR->position(initPosR);
 					oriTaskR->orientation(initRotR);
-				}),
-
-				mc_rtc::gui::Button("LEFT ARM orientation", [this, &ctl]()
-				{
-					oriTaskL->orientation(constRotL);
-				}),
-
-				mc_rtc::gui::Button("RIGHT ARM orientation", [this, &ctl]()
-				{
-					oriTaskR->orientation(constRotR);
 				})
 				
 				);
@@ -360,17 +352,9 @@ namespace mc_handover
 
 			if( approachObj->i > 3 )
 			{
-			//	if(approachObj->enableLHand)
-			//	{
-					efPos[3-g] = ltPosW;
-					g++;
-			//	}
-			//	if(approachObj->enableRHand)
-			//	{
-			//		efPos[3-g] = rtPosW;
-			//		g++;
-			//	}
-			
+				efPos[3-g] = ltPosW;
+				g++;
+
 				if(g>3)
 				{
 					g = 1;
@@ -395,8 +379,8 @@ namespace mc_handover
 				auto gripper = ctl.grippers[gripperName].get();
 				gripper->setTargetQ({0.5});
 
-				approachObj->openGripper = true;
 				approachObj->gOpen = false;
+				approachObj->openGripper = true;
 			};
 
 

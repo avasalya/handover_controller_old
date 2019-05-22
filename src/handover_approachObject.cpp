@@ -271,7 +271,7 @@ namespace mc_handover
 		double ef_area_wAB_gB;
 		double ef_area_wAB_f;
 
-		double subj_rel_ef;
+		double subj_rel_ef, subj_rel_obj;
 
 		Eigen::Vector3d fingerPos, gripperEf;
 
@@ -303,6 +303,7 @@ namespace mc_handover
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
 
 		subj_rel_ef = (gripperEf - fingerPos).norm();
+		subj_rel_obj = (objectPos - fingerPos).norm();
 
 
 		if( subj_rel_ef < 0.3 )
@@ -323,15 +324,27 @@ namespace mc_handover
 				LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
 			}
 			
-			/*when closed WITH object*/
+			/*closed WITH object*/
 			if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
+			// (obj_rel_robotLtHand < 0.1) )
 			{
 				gClose = true;
 				closeGripper = true;
 				graspObject = false;
 
 				Fclose = handForce;
-				LOG_INFO("object is inside gripper??, closing with Forces during close "<<Fclose.norm())
+				LOG_INFO("closing with Fclose "<<Fclose.norm() << " is object inside gripper?")
+			}
+			/*closed WITHOUT object*/
+			else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) )
+			/*&& (0.1 < obj_rel_robotLtHand < 0.2)*/
+			{
+				gClose = false;
+				closeGripper = false;
+				graspObject = true;
+
+				gOpen = true;
+				LOG_WARNING("false close, try with object again")
 			}
 
 
@@ -347,7 +360,7 @@ namespace mc_handover
 				/*new threshold*/
 				newTh = Fload + Th;
 
-				if( subj_rel_ef<0.1 /*(ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f)*/ )
+				if( subj_rel_ef < 0.1 )
 				{
 					if(enableHand)
 					{
@@ -365,7 +378,7 @@ namespace mc_handover
 						{
 							goBackInit=false;
 
-							LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull force " << Fpull[idx]<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
+							LOG_SUCCESS("object pulled, threshold on " << axis_name << " with pull force " << Fpull[idx]<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
 							cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
 							cout << "Finert "<< Finert.transpose() <<endl;
 							cout <<"object mass " << objMass <<endl;
@@ -388,18 +401,8 @@ namespace mc_handover
 		if( subj_rel_ef > 0.5 )
 		{
 
-			/*if closed WITHOUT object*/
-			if( (!restartHandover) && (!graspObject) && ( (ef_area_wAB_gA < ef_area_wAB_O) || (ef_area_wAB_gB < ef_area_wAB_O) ) )
-			{
-				graspObject = true;
-				closeGripper = false;
-				gClose = false;
-				LOG_WARNING("false close, try with object again")
-			}
-
-
-			/*here comes only after object is grasped*/
-			if( (closeGripper) && (!restartHandover) && (!enableHand)/*&& (Fclose.norm() >= Fzero.norm()*1.2)*/ )
+			/*comes only if object is grasped*/
+			if( (closeGripper) && (!restartHandover) && (!enableHand) )
 			{
 				if( (e%200==0) )//wait xx sec
 				{
@@ -411,7 +414,7 @@ namespace mc_handover
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
-					LOG_INFO("motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pos" )
+					LOG_ERROR("robot has object, motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pos" )
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
@@ -420,7 +423,6 @@ namespace mc_handover
 					posTask->stiffness(2.0);
 					posTask->position(initPos);
 					oriTask->orientation(initRot);
-					LOG_ERROR("robot has object")
 				}
 				else /*divide by 9.81 and you will get object mass*/
 				{
@@ -456,10 +458,8 @@ namespace mc_handover
 				{
 					posTask->stiffness(4.0);
 					restartHandover = false;
-					LOG_INFO("object returned to subject")
-					LOG_INFO("motion enabled, restarting handover\n")
+					LOG_INFO("object returned to subject, motion enabled, restarting handover\n")
 				}
-
 			}
 		}
 		return false;
