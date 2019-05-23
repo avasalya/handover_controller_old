@@ -56,7 +56,7 @@ namespace mc_handover
 
 		bool goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos);
 
-		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
+		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th,  Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
 
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
 
@@ -79,7 +79,7 @@ namespace mc_handover
 
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
-		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers;
+		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers, subjMarkers;
 
 		Eigen::Vector3d objectPos, fingerPosL, fingerPosR;
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
@@ -110,8 +110,7 @@ namespace mc_handover
 	public:
 		std::vector<double> Floadx, Floady, Floadz;
 		double objMass;
-		// double FNormAtClose{1.0};
-		Eigen::Vector3d efAce, newTh, Finert, Fzero, Fclose, Fload, Fpull;
+		Eigen::Vector3d newTh, Finert, Fzero, Fclose, Fload, Fpull;
 
 	};//strcut ApproachObject
 

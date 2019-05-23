@@ -60,7 +60,7 @@ namespace mc_handover
 
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge
 
-			bool Flag_oneHand{true};//TRUE, otherwise use both hands
+			bool Flag_oneHand{false};//TRUE, otherwise use both hands
 
 
 			/*mocap_simulaton*/
@@ -80,7 +80,9 @@ namespace mc_handover
 			Eigen::Vector3d ltPosW, rtPosW;
 
 			sva::MotionVecd ltBodyAccW, rtBodyAccW;
-			std::vector<Eigen::Vector3d> efPos, efVel;
+			std::vector<Eigen::Vector3d> efLPos, efLVel;
+			std::vector<Eigen::Vector3d> efRPos, efRVel;
+			Eigen::Vector3d efLAce, efRAce;
 			int g{1};
 
 			

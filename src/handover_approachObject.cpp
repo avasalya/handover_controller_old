@@ -16,19 +16,23 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_obj_subj_right_hand", "3mars_subj_left_hand"};
+		// strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_obj_subj_right_hand", "3mars_subj_left_hand"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "8mars_obj_subj_hands"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
 		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//9-12
 		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//13-15
+		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //9-15
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), "object");
-		strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
-		strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
+
+		// strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
+		// strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
+		strMarkersName.insert(strMarkersName.end(), subjMarkers.begin(), subjMarkers.end());
 
 		totalMarkers = strMarkersName.size();
 
@@ -257,7 +261,7 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 

@@ -50,11 +50,11 @@ namespace mc_handover
 			approachObj->initials();
 
 
-			/*close grippers for safety*/
+			/*open grippers*/
 			auto  gripperL = ctl.grippers["l_gripper"].get();
 			auto  gripperR = ctl.grippers["r_gripper"].get();
-			gripperL->setTargetQ({closeGrippers});
-			gripperR->setTargetQ({closeGrippers});
+			gripperL->setTargetQ({openGrippers});
+			gripperR->setTargetQ({openGrippers});
 
 
 			constRotL<<
@@ -133,35 +133,7 @@ namespace mc_handover
 					{restartEverything = true; cout << "restarting Everything"<<endl; }));
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
-			ctl.gui()->addElement({"Handover", "reset"},
-				
-				// mc_rtc::gui::Button("LEFT ARM init / set flags", [this, &ctl]()
-				// {
-				// 	posTaskL->position(initPosL);
-				// 	oriTaskL->orientation(initRotL);
-
-				// 	approachObj->openGripper = false;
-				// 	approachObj->enableLHand = true;
-
-				// 	auto gripper = ctl.grippers["l_gripper"].get();
-				// 	gripper->setTargetQ({closeGrippers});
-
-				// 	LOG_ERROR("manual reset")
-				// }),
-				
-				// mc_rtc::gui::Button("RIGHT ARM init / set flags", [this, &ctl]()
-				// {
-				// 	posTaskR->position(initPosR);
-				// 	oriTaskR->orientation(initRotR);
-
-				// 	approachObj->openGripper = false;
-				// 	approachObj->enableRHand = true;
-
-				// 	auto gripper = ctl.grippers["r_gripper"].get();
-				// 	gripper->setTargetQ({closeGrippers});
-
-				// 	LOG_ERROR("manual reset")
-				// }),
+			ctl.gui()->addElement({"Handover", "Reset Pose"},
 
 				mc_rtc::gui::Button("LEFT ARM orientation", [this, &ctl]()
 				{
@@ -173,13 +145,13 @@ namespace mc_handover
 					oriTaskR->orientation(constRotR);
 				}),
 
-				mc_rtc::gui::Button("LEFT ARM init", [this, &ctl]()
+				mc_rtc::gui::Button("LEFT ARM half-sit", [this, &ctl]()
 				{
 					posTaskL->position(initPosL);
 					oriTaskL->orientation(initRotL);
 				}),
 
-				mc_rtc::gui::Button("RIGHT ARM init", [this, &ctl]()
+				mc_rtc::gui::Button("RIGHT ARM half-sit", [this, &ctl]()
 				{
 					posTaskR->position(initPosR);
 					oriTaskR->orientation(initRotR);
@@ -323,7 +295,8 @@ namespace mc_handover
 
 			ctl.logger().addLogEntry("Fzero",[this]() -> Eigen::Vector3d { return approachObj->Fzero; });
 			ctl.logger().addLogEntry("Fclose",[this]() -> Eigen::Vector3d { return approachObj->Fclose; });
-			ctl.logger().addLogEntry("ef Ace",[this]() -> Eigen::Vector3d { return approachObj->efAce; });
+			ctl.logger().addLogEntry("efL Ace",[this]() -> Eigen::Vector3d { return efLAce; });
+			ctl.logger().addLogEntry("efR Ace",[this]() -> Eigen::Vector3d { return efRAce; });
 			ctl.logger().addLogEntry("Finert",[this]() -> Eigen::Vector3d { return approachObj->Finert; });
 			ctl.logger().addLogEntry("Fload",[this]() -> Eigen::Vector3d { return approachObj->Fload; });
 			ctl.logger().addLogEntry("new thresh",[this]() -> Eigen::Vector3d { return approachObj->newTh; });
@@ -347,20 +320,30 @@ namespace mc_handover
 			rtPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK7")].translation();
 			rtRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")].rotation();
 
-			efPos.resize(3);
-			efVel.resize(2);
+			efLPos.resize(3);
+			efLVel.resize(2);
 
+			efRPos.resize(3);
+			efRVel.resize(2);
+
+			/*get ef(s) acceleration*/
 			if( approachObj->i > 3 )
 			{
-				efPos[3-g] = ltPosW;
+				efLPos[3-g] = ltPosW;
+				efRPos[3-g] = rtPosW;
 				g++;
 
 				if(g>3)
 				{
 					g = 1;
-					efVel[0] = (efPos[1]-efPos[2])*fps;
-					efVel[1] = (efPos[0]-efPos[1])*fps;
-					approachObj->efAce = (efVel[1]-efVel[0])*fps;
+					efLVel[0] = (efLPos[1]-efLPos[2])*fps;
+					efLVel[1] = (efLPos[0]-efLPos[1])*fps;
+					efLAce = (efLVel[1]-efLVel[0])*fps;
+
+
+					efRVel[0] = (efRPos[1]-efRPos[2])*fps;
+					efRVel[1] = (efRPos[0]-efRPos[1])*fps;
+					efRAce = (efRVel[1]-efRVel[0])*fps;
 				}
 			}
 
@@ -501,7 +484,7 @@ namespace mc_handover
 							/*subj right*/
 							taskOK = approachObj->goToHandoverPose(0.0, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
+							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers);
 
 							gripperControl("l_gripper");
 						}
@@ -543,13 +526,12 @@ namespace mc_handover
 										LOG_INFO("robotLeftHand in use\n")
 
 										stopRtHand = false;
-										posTaskR->stiffness(2);
-
+										posTaskR->stiffness(2.0);
 										posTaskR->position(initPosR);
 										oriTaskR->orientation(initRotR);
 
 										stopLtHand = true;
-										posTaskL->stiffness(4);
+										posTaskL->stiffness(4.0);
 									}
 
 									robotMarkersName = approachObj->robotLtMarkers;
@@ -565,12 +547,11 @@ namespace mc_handover
 										LOG_WARNING("robotRightHand in use\n")
 
 										stopLtHand = false;
-										posTaskL->stiffness(2);
-
+										posTaskL->stiffness(2.0);
 										posTaskL->position(initPosL);
 										oriTaskL->orientation(initRotL);
 
-										posTaskR->stiffness(4);
+										posTaskR->stiffness(4.0);
 										stopRtHand = true;
 									}
 
@@ -596,7 +577,7 @@ namespace mc_handover
 
 							taskOK = approachObj->goToHandoverPose(0.05, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
+							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName);
 
 							gripperControl("l_gripper");
 						}
@@ -606,7 +587,7 @@ namespace mc_handover
 
 							taskOK = approachObj->goToHandoverPose(-0.7, 0.05, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableRHand, initPosR, initRotR, rightForce, rightTh, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
+							taskOK = approachObj->forceController(approachObj->enableRHand, initPosR, initRotR, rightForce, rightTh, efRAce, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName);
 
 							gripperControl("r_gripper");
 						}
