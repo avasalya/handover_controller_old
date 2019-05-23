@@ -326,18 +326,17 @@ namespace mc_handover
 			
 			/*closed WITH object*/
 			else if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
-			// (obj_rel_robotLtHand < 0.1) )
 			{
 				gClose = true;
 				closeGripper = true;
 				graspObject = false;
 
 				Fclose = handForce;
-				LOG_INFO("closing with Fclose "<<Fclose.norm() << ",      is object inside gripper?")
+				LOG_INFO("closing with Fclose Norm "<<Fclose.norm() << ",	is object inside gripper?")
 			}
+
 			/*closed WITHOUT object*/
-			else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) &&
-			(obj_rel_robotLtHand < 0.2) && (0.1 < obj_rel_robotLtHand) && Fclose.norm() <2.0)
+			else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotLtHand < 0.2) && (0.1 < obj_rel_robotLtHand) && Fclose.norm() <2.0)
 			{
 				gClose = false;
 				closeGripper = false;
@@ -414,7 +413,7 @@ namespace mc_handover
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
-					LOG_SUCCESS("robot has object, motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pos" )
+					LOG_SUCCESS("robot has object, motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pose" )
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
