@@ -291,44 +291,6 @@ namespace mc_handover
 		if( subj_rel_ef < 0.3 )
 		{
 
-			/*open empty gripper when subject come near to robot*/
-			if( (!openGripper) )
-			{
-				gOpen = true;
-				LOG_INFO("opening " + gripperName)
-			}
-
-			/*stop motion*/
-			else if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.1) )
-			{
-				Fzero = handForce;
-				enableHand = false;
-				LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
-			}
-			
-			/*closed WITH object*/
-			else if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
-			{
-				gClose = true;
-				closeGripper = true;
-				graspObject = false;
-
-				Fclose = handForce;
-				LOG_INFO("closing with Fclose Norm "<<Fclose.norm() << ",	is object inside gripper?")
-			}
-
-			/*closed WITHOUT object*/
-			else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotHand < 0.2) && (0.1 < obj_rel_robotHand) && Fclose.norm() <2.0)
-			{
-				gClose = false;
-				closeGripper = false;
-				graspObject = true;
-
-				gOpen = true;
-				LOG_ERROR("false close, try with object again")
-			}
-
-
 			auto checkForce = [&](const char *axis_name, int idx)
 			{
 				objMass = Fload.norm()/9.81;
@@ -374,6 +336,45 @@ namespace mc_handover
 			{
 				posTask->stiffness(4.0);
 				return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+			}
+			else
+			{
+				/*open empty gripper when subject come near to robot*/
+				if( (!openGripper) )
+				{
+					gOpen = true;
+					LOG_INFO("opening " + gripperName)
+				}
+
+				/*stop motion*/
+				else if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.1) )
+				{
+					Fzero = handForce;
+					enableHand = false;
+					LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
+				}
+
+				/*closed WITH object*/
+				else if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
+				{
+					gClose = true;
+					closeGripper = true;
+					graspObject = false;
+
+					Fclose = handForce;
+					LOG_INFO("closing with Fclose Norm "<<Fclose.norm() << ",	is object inside gripper?")
+				}
+
+				/*closed WITHOUT object*/
+				else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotHand < 0.2) && (0.1 < obj_rel_robotHand) && Fclose.norm() <2.0)
+				{
+					gClose = false;
+					closeGripper = false;
+					graspObject = true;
+
+					gOpen = true;
+					LOG_ERROR("false close, try with object again")
+				}
 			}
 		}
 

@@ -112,8 +112,13 @@ namespace mc_handover
 
 	public:
 		std::vector<double> Floadx, Floady, Floadz;
-		double objMass;
-		Eigen::Vector3d newTh, Finert, Fzero, Fclose, Fload, Fpull;
+		double objMass{0.2};
+		Eigen::Vector3d newTh = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Finert = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fzero = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fclose = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fload = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fpull = Eigen::Vector3d::Zero();
 
 	};//strcut ApproachObject
 

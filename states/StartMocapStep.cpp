@@ -309,6 +309,8 @@ namespace mc_handover
 			ctl.logger().addLogEntry("Fpull",[this]() -> Eigen::Vector3d { return approachObj->Fpull; });
 
 			ctl.logger().addLogEntry("obj mass",[this]() -> double { return approachObj->objMass; });
+			ctl.logger().addLogEntry("bool enableLHand",[this]() -> double { return approachObj->enableLHand; });
+			ctl.logger().addLogEntry("bool enableRHand",[this]() -> double { return approachObj->enableRHand; });
 
 		}// start
 
@@ -527,7 +529,7 @@ namespace mc_handover
 								{
 									if( (approachObj->stopRtEf) && (approachObj->useLeftEf) )
 									{
-										LOG_INFO("robotLeftHand in use\n")
+										LOG_INFO("robotLeftHand in use")
 
 										approachObj->stopRtEf = false;
 										posTaskR->stiffness(2.0);
@@ -545,7 +547,7 @@ namespace mc_handover
 								{
 									if( (approachObj->stopLtEf) && (approachObj->useRightEf) )
 									{
-										LOG_WARNING("robotRightHand in use\n")
+										LOG_WARNING("robotRightHand in use")
 
 										approachObj->stopLtEf = false;
 										posTaskL->stiffness(2.0);
@@ -564,7 +566,7 @@ namespace mc_handover
 							
 
 							/* start only if object is within robot constraint space*/
-							if( approachObj->objectPos[0] < 0.7 )
+							if( approachObj->objectPos[0] < 1.0 )
 							{ obj_rel_robot(); }
 
 
