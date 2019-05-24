@@ -50,11 +50,11 @@ namespace mc_handover
 			approachObj->initials();
 
 
-			/*open grippers*/
+			/*close grippers*/
 			auto  gripperL = ctl.grippers["l_gripper"].get();
 			auto  gripperR = ctl.grippers["r_gripper"].get();
-			gripperL->setTargetQ({openGrippers});
-			gripperR->setTargetQ({openGrippers});
+			gripperL->setTargetQ({closeGrippers});
+			gripperR->setTargetQ({closeGrippers});
 
 
 			constRotL<<
