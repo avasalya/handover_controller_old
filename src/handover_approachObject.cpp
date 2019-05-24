@@ -303,12 +303,13 @@ namespace mc_handover
 				/*new threshold*/
 				newTh = Fload + Th;
 
-				if( subj_rel_ef < 0.1 )
+				if( subj_rel_ef < 0.15 )
 				{
 					if(enableHand)
 					{
 						enableHand=false;
 						LOG_WARNING("2nd cycle, motion stopped, try to retreat object")
+						LOG_INFO("subj_rel_ef " << subj_rel_ef)
 					}
 
 					if( (abs(Fpull[idx]) > newTh[idx]) )
@@ -347,11 +348,12 @@ namespace mc_handover
 				}
 
 				/*stop motion*/
-				else if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.1) )
+				else if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.12) )
 				{
 					Fzero = handForce;
 					enableHand = false;
 					LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
+					LOG_INFO("subj_rel_ef " << subj_rel_ef)
 				}
 
 				/*closed WITH object*/
