@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <ctime>
 
 #include <mc_control/fsm/Controller.h>
 #include <mc_control/fsm/State.h>
@@ -60,7 +61,7 @@ namespace mc_handover
 
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge
 
-			bool Flag_oneHand{true};//TRUE, otherwise use both hands
+			bool Flag_oneHand{false};//TRUE, otherwise use both hands
 
 
 			/*mocap_simulaton*/
@@ -134,8 +135,6 @@ namespace mc_handover
 			bool startCapture{false};
 			bool startHandover{false};
 
-			bool stopRtHand{true};
-			bool stopLtHand{true};
 			bool taskOK{false};
 
 			bool restartEverything{false};

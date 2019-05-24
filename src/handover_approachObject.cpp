@@ -16,7 +16,6 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		// strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_obj_subj_right_hand", "3mars_subj_left_hand"};
 		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "8mars_obj_subj_hands"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
@@ -29,9 +28,6 @@ namespace mc_handover
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), "object");
-
-		// strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
-		// strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), subjMarkers.begin(), subjMarkers.end());
 
 		totalMarkers = strMarkersName.size();
@@ -57,7 +53,6 @@ namespace mc_handover
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2);//t_predict/t_observe;
-
 	}
 
 
@@ -214,54 +209,37 @@ namespace mc_handover
 		if(Flag_prediction)
 		{
 			it+= (int)tuner(2);
-
 			if( it < get<1>(handPredict).cols() )
 			{
 				wp << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
-
 				handoverPos = curPosEf + (wp - get<2>(handPredict));
-
-				 /*robot constraint*/
-				if(enableHand &&
-					(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-					(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-					(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
-					)
-				{
-					sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
-					posTask->position(new_pose.translation());
-					oriTask->orientation(new_pose.rotation());
-
-					// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
-				}
-
-				return true;
 			}
 		}
 		else
 		{
 			handoverPos = fingerPos;
-
-			 /*robot constraint*/
-			if(enableHand &&
-				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-				(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
-				)
-			{
-				sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
-				posTask->position(new_pose.translation());
-				oriTask->orientation(new_pose.rotation());
-			}
-
-			return true;
 		}
 
+		/*robot constraint*/
+		if(enableHand &&
+			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+			(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
+			(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+			)
+		{
+			sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+			posTask->position(new_pose.translation());
+			oriTask->orientation(new_pose.rotation());
+
+			// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
+		}
+
+		return true;
 	}
 
 
 
-	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName, double obj_rel_robotHand)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -340,7 +318,7 @@ namespace mc_handover
 			}
 
 			/*closed WITHOUT object*/
-			else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotLtHand < 0.2) && (0.1 < obj_rel_robotLtHand) && Fclose.norm() <2.0)
+			else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotHand < 0.2) && (0.1 < obj_rel_robotHand) && Fclose.norm() <2.0)
 			{
 				gClose = false;
 				closeGripper = false;
@@ -461,6 +439,12 @@ namespace mc_handover
 				{
 					posTask->stiffness(4.0);
 					restartHandover = false;
+
+					useLeftEf=true;
+					stopLtEf=true;
+
+					useRightEf=true;
+					stopRtEf=true;
 					LOG_INFO("object returned to subject, motion enabled, restarting handover\n")
 				}
 			}
