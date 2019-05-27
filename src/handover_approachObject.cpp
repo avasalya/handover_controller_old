@@ -309,7 +309,6 @@ namespace mc_handover
 					{
 						enableHand=false;
 						LOG_WARNING("2nd cycle, motion stopped, try to retreat object")
-						LOG_INFO("subj_rel_ef " << subj_rel_ef)
 					}
 
 					if( (abs(Fpull[idx]) > newTh[idx]) )
@@ -317,6 +316,7 @@ namespace mc_handover
 						gOpen=true;
 						restartHandover=true;
 						takeBackObject=false;
+						pickaHand=false;
 
 						if(goBackInit)
 						{
@@ -353,7 +353,6 @@ namespace mc_handover
 					Fzero = handForce;
 					enableHand = false;
 					LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
-					LOG_INFO("subj_rel_ef " << subj_rel_ef)
 				}
 
 				/*closed WITH object*/
@@ -368,14 +367,19 @@ namespace mc_handover
 				}
 
 				/*closed WITHOUT object*/
-				else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotHand < 0.2) && (0.1 < obj_rel_robotHand) && Fclose.norm() <2.0)
+				else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotHand < 0.2) && (0.1 < obj_rel_robotHand) )
 				{
-					gClose = false;
-					closeGripper = false;
-					graspObject = true;
+					if( (Fclose.norm() < 2.0) )
+					{
+						gClose = false;
+						closeGripper = false;
+						graspObject = true;
 
-					gOpen = true;
-					LOG_ERROR("false close, try with object again")
+						gOpen = true;
+						LOG_ERROR("false close, try with object again")
+					}
+					else
+					{ Fclose = Eigen::Vector3d(1,1,1); }
 				}
 			}
 		}

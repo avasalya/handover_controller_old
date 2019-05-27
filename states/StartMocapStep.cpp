@@ -136,7 +136,7 @@ namespace mc_handover
 			/*restart mocapStep*/
 			ctl.gui()->addElement({"Handover", "Restart"}, 
 				mc_rtc::gui::Button("restartHandover", [this]()
-					{restartEverything = true; cout << "restarting Everything"<<endl; }));
+					{restartEverything = true; cout << "restarting handover"<<endl; }));
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "Reset Pose"},
@@ -525,7 +525,8 @@ namespace mc_handover
 							{
 								obj_rel_subj();
 
-								if(approachObj->obj_rel_robotLtHand < approachObj->obj_rel_robotRtHand)
+								// if(approachObj->obj_rel_robotLtHand < approachObj->obj_rel_robotRtHand)
+								if( fingerPos(1) > 0 )
 								{
 									if( (approachObj->stopRtEf) && (approachObj->useLeftEf) )
 									{
@@ -563,17 +564,21 @@ namespace mc_handover
 								}
 								return false;
 							};
-							
+
 
 							/* start only if object is within robot constraint space*/
-							if( approachObj->objectPos[0] < 1.0 )
+							if( (approachObj->objectPos[0] > 1.1) &&  (approachObj->objectPos[0] < 2.0)  )
+							{ approachObj->pickaHand = true; }
+
+							if( approachObj->pickaHand )
 							{ obj_rel_robot(); }
 
 
 						}// i%t_observe
 
+
 						/*feed ef pose*/
-						if( /*approachObj->useLeftEf*/ (!approachObj->stopRtEf) )
+						if( (!approachObj->stopRtEf) )
 						{
 							approachObj->useRightEf=false;
 
@@ -582,7 +587,7 @@ namespace mc_handover
 							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotLtHand);
 							gripperControl("l_gripper");
 						}
-						else if( /*approachObj->useRightEf*/ (!approachObj->stopLtEf) )
+						else if( (!approachObj->stopLtEf) )
 						{
 							approachObj->useLeftEf = false;
 
@@ -603,14 +608,56 @@ namespace mc_handover
 
 			if(restartEverything)
 			{
-				restartEverything = false;
-				if(Flag_CORTEX)
+				posTaskL->stiffness(2.0);
+				posTaskL->position(initPosL);
+
+				posTaskR->stiffness(2.0);
+				posTaskR->position(initPosR);
+
+				oriTaskL->orientation(initRotL);
+				oriTaskR->orientation(initRotR);
+
+				approachObj->e = 1;
+
+				approachObj->gClose = false;
+				approachObj->gOpen = false;
+				approachObj->openGripper = false;
+				approachObj->closeGripper = false;
+
+				approachObj->graspObject = true;
+				approachObj->goBackInit = true;
+				approachObj->takeBackObject = false;
+				approachObj->restartHandover = false;
+
+				approachObj->useLeftEf = true;
+				approachObj->stopLtEf = true;
+
+				approachObj->useRightEf = true;
+				approachObj->stopRtEf = true;
+
+				approachObj->pickaHand = false;
+
+				approachObj->newTh = Eigen::Vector3d::Zero();
+				approachObj->Finert = Eigen::Vector3d::Zero();
+				approachObj->Fzero = Eigen::Vector3d::Zero();
+				approachObj->Fclose = Eigen::Vector3d::Zero();
+				approachObj->Fload = Eigen::Vector3d::Zero();
+				approachObj->Fpull = Eigen::Vector3d::Zero();
+
+
+				if( (posTaskL->eval().norm() <0.1)  && (posTaskR->eval().norm() <0.1) )
 				{
-					Cortex_Request("Pause", &pResponse, &nBytes);
-					Cortex_Exit();
+					posTaskL->stiffness(4.0);
+					posTaskR->stiffness(4.0);
+
+					approachObj->enableLHand = true;
+					approachObj->enableRHand = true;
+
+					restartEverything = false;
+					return true;
+
+					LOG_ERROR("handover fresh start")
 				}
-				output("Repeat");
-				return true;
 			}
 			else
 				{ return false; }

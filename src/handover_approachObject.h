@@ -44,8 +44,6 @@ namespace mc_handover
 		ApproachObject();
 		~ApproachObject();
 
-		// ApproachObject(const ApproachObject & );
-
 		void initials();
 
 		bool checkFrameOfData(std::vector<Eigen::Vector3d>);
@@ -108,6 +106,8 @@ namespace mc_handover
 
 		bool goBackInit{true};
 		bool restartHandover{false};
+
+		bool pickaHand{false};
 
 
 	public:
