@@ -526,41 +526,44 @@ namespace mc_handover
 								obj_rel_subj();
 
 								// if(approachObj->obj_rel_robotLtHand < approachObj->obj_rel_robotRtHand)
-								if( fingerPos(1) > 0 )
+								if(fingerPos(0) < 0.7)
 								{
-									if( (approachObj->stopRtEf) && (approachObj->useLeftEf) )
+									if( fingerPos(1) >= 0 )
 									{
-										LOG_INFO("robotLeftHand in use")
+										if( (approachObj->stopRtEf) && (approachObj->useLeftEf) )
+										{
+											LOG_INFO("robotLeftHand in use")
 
-										approachObj->stopRtEf = false;
-										posTaskR->stiffness(2.0);
-										posTaskR->position(initPosR);
-										oriTaskR->orientation(initRotR);
+											approachObj->stopRtEf = false;
+											posTaskR->stiffness(2.0);
+											posTaskR->position(initPosR);
+											oriTaskR->orientation(initRotR);
 
-										approachObj->stopLtEf = true;
-										posTaskL->stiffness(4.0);
+											approachObj->stopLtEf = true;
+											posTaskL->stiffness(4.0);
+										}
+
+										robotMarkersName = approachObj->robotLtMarkers;
+										approachObj->lHandPredict = approachObj->predictionController(ltPosW, constRotL, subjMarkersName);
 									}
-
-									robotMarkersName = approachObj->robotLtMarkers;
-									approachObj->lHandPredict = approachObj->predictionController(ltPosW, constRotL, subjMarkersName);
-								}
-								else
-								{
-									if( (approachObj->stopLtEf) && (approachObj->useRightEf) )
+									else
 									{
-										LOG_WARNING("robotRightHand in use")
+										if( (approachObj->stopLtEf) && (approachObj->useRightEf) )
+										{
+											LOG_WARNING("robotRightHand in use")
 
-										approachObj->stopLtEf = false;
-										posTaskL->stiffness(2.0);
-										posTaskL->position(initPosL);
-										oriTaskL->orientation(initRotL);
+											approachObj->stopLtEf = false;
+											posTaskL->stiffness(2.0);
+											posTaskL->position(initPosL);
+											oriTaskL->orientation(initRotL);
 
-										approachObj->stopRtEf = true;
-										posTaskR->stiffness(4.0);
+											approachObj->stopRtEf = true;
+											posTaskR->stiffness(4.0);
+										}
+
+										robotMarkersName = approachObj->robotRtMarkers;
+										approachObj->rHandPredict = approachObj->predictionController(rtPosW, constRotR, subjMarkersName);
 									}
-
-									robotMarkersName = approachObj->robotRtMarkers;
-									approachObj->rHandPredict = approachObj->predictionController(rtPosW, constRotR, subjMarkersName);
 								}
 								return false;
 							};
@@ -656,7 +659,7 @@ namespace mc_handover
 					restartEverything = false;
 					return true;
 
-					LOG_ERROR("handover fresh start")
+					cout<<"\033[1;33m***handover fresh start***\033[0m\n";
 				}
 			}
 			else
