@@ -136,7 +136,7 @@ namespace mc_handover
 			/*restart mocapStep*/
 			ctl.gui()->addElement({"Handover", "Restart"}, 
 				mc_rtc::gui::Button("restartHandover", [this]()
-					{restartEverything = true; cout << "restarting handover"<<endl; }));
+					{restartEverything = true; }));
 
 			/*Motion FOR CREATING MOCAP TEMPLATE*/
 			ctl.gui()->addElement({"Handover", "Reset Pose"},
@@ -543,7 +543,6 @@ namespace mc_handover
 											posTaskL->stiffness(4.0);
 										}
 
-										robotMarkersName = approachObj->robotLtMarkers;
 										approachObj->lHandPredict = approachObj->predictionController(ltPosW, constRotL, subjMarkersName);
 									}
 									else
@@ -561,7 +560,6 @@ namespace mc_handover
 											posTaskR->stiffness(4.0);
 										}
 
-										robotMarkersName = approachObj->robotRtMarkers;
 										approachObj->rHandPredict = approachObj->predictionController(rtPosW, constRotR, subjMarkersName);
 									}
 								}
@@ -584,6 +582,7 @@ namespace mc_handover
 						if( (!approachObj->stopRtEf) )
 						{
 							approachObj->useRightEf=false;
+							robotMarkersName = approachObj->robotLtMarkers;
 
 							taskOK = approachObj->goToHandoverPose(0.05, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
 
@@ -593,6 +592,7 @@ namespace mc_handover
 						else if( (!approachObj->stopLtEf) )
 						{
 							approachObj->useLeftEf = false;
+							robotMarkersName = approachObj->robotRtMarkers;
 
 							taskOK = approachObj->goToHandoverPose(-0.7, 0.05, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
 
@@ -611,6 +611,12 @@ namespace mc_handover
 
 			if(restartEverything)
 			{
+				auto  gripperL = ctl.grippers["l_gripper"].get();
+				auto  gripperR = ctl.grippers["r_gripper"].get();
+
+				gripperL->setTargetQ({openGrippers});
+				gripperR->setTargetQ({openGrippers});
+
 				posTaskL->stiffness(2.0);
 				posTaskL->position(initPosL);
 
@@ -656,14 +662,15 @@ namespace mc_handover
 					approachObj->enableLHand = true;
 					approachObj->enableRHand = true;
 
+					gripperL->setTargetQ({closeGrippers});
+					gripperR->setTargetQ({closeGrippers});
+
 					restartEverything = false;
-					return true;
 
 					cout<<"\033[1;33m***handover fresh start***\033[0m\n";
 				}
 			}
-			else
-				{ return false; }
+			return false;
 
 		}// run
 
