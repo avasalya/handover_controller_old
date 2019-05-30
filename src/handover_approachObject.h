@@ -44,22 +44,24 @@ namespace mc_handover
 		ApproachObject();
 		~ApproachObject();
 
-		// ApproachObject(const ApproachObject & );
-
 		void initials();
 
 		bool checkFrameOfData(std::vector<Eigen::Vector3d>);
 
 		bool handoverRun();
 
-		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> lShpMarkersName, std::vector<std::string> robotMarkersName);
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> lShpMarkersName);
 
-		bool goToHandoverPose(std::string robotHand, std::vector<std::string> subjMarkersName, double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> handPredict);
+		bool goToHandoverPose(std::string robotHand, double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos);
 
-		bool handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName);
+		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th,  Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName, double obj_rel_robotHand);
 
-		bool Flag_withoutRobot{true}; // default True for using MOCAP without ROBOT_Markers
-		
+
+		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
+
+		bool Flag_prediction{false}; //TRUE otherwise, use fingerPos
+
+
 		Eigen::Vector3d tuner;
 
 		int fps{200};
@@ -68,28 +70,32 @@ namespace mc_handover
 		int it;
 
 		int i{0};
-		int e{0};
+		int e{1};
 		
-		int totalMarkers{20};//18, 20
-		
-		std::vector<Eigen::Vector3d> Markers;
+		int totalMarkers;
+
 		std::vector<Eigen::Vector3d> object;
+		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;
 
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
-		std::vector<std::string> robotLtMarkers, robotRtMarkers, objMarkers, subjRtMarkers, subjLtMarkers;
+		std::vector<std::string> robotLtMarkers, robotRtMarkers, objMarkers, subjRtMarkers, subjLtMarkers, subjMarkers;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-
-		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
+		Eigen::Vector3d fingerPosL, fingerPosR;
 		Eigen::Vector3d objectPos, obj_to_robotLtHand, obj_to_robotRtHand;
+		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
 
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> lHandPredict, rHandPredict;
 
-		bool useLeftEf{false};
-		bool useRightEf{false};
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> lHandPredict, rHandPredict;
+
+		bool useLeftEf{true};
+		bool stopLtEf{true};
+
+		bool useRightEf{true};
+		bool stopRtEf{true};
 
 		bool enableLHand{true};
 		bool enableRHand{true};
@@ -105,6 +111,17 @@ namespace mc_handover
 		bool goBackInit{true};
 		bool restartHandover{false};
 
+		bool pickaHand{false};
+
+	public:
+		std::vector<double> Floadx, Floady, Floadz;
+		double objMass{0.2};
+		Eigen::Vector3d newTh = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Finert = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fzero = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fclose = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fload = Eigen::Vector3d::Zero();
+		Eigen::Vector3d Fpull = Eigen::Vector3d::Zero();
 
 	};//strcut ApproachObject
 

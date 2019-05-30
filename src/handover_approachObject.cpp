@@ -3,12 +3,12 @@
 namespace mc_handover
 {
 	ApproachObject::ApproachObject()
-	{ cout<<"\033[1;50m handover object created\033[0m\n"; }
+	{ cout<<"\033[1;50mhandover object created\033[0m\n"; }
 
 
 
 	ApproachObject::~ApproachObject()
-	{ cout<<"\033[1;50m handover object destroyed\033[0m\n"; }
+	{ cout<<"\033[1;50mhandover object destroyed\033[0m\n"; }
 
 
 
@@ -16,25 +16,28 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "5mars_subj_right_hand", "4mars_subj_left_hand"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "7mars_subj_hands"};
 
-		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3
+		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
 		objMarkers = {"left", "center", "right"};//8-10
 
-		subjRtMarkers = {"fingerSubjRt", "lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-15
-		subjLtMarkers = {"fingerSubjLt", "lShapeLtA", "lShapeLtC", "lShapeLtD"};//16-19
+		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-14
+		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//15-17
+		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //11-17
+
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
-
 		strMarkersName.insert(strMarkersName.end(), objMarkers.begin(), objMarkers.end());
+		strMarkersName.insert(strMarkersName.end(), subjMarkers.begin(), subjMarkers.end());
 
-		strMarkersName.insert(strMarkersName.end(), subjRtMarkers.begin(), subjRtMarkers.end());
-		strMarkersName.insert(strMarkersName.end(), subjLtMarkers.begin(), subjLtMarkers.end());
 
-		for(unsigned int k=0; k<strMarkersName.size(); k++)
+		totalMarkers = strMarkersName.size();
+
+
+		for(unsigned int k=0; k<totalMarkers; k++)
 			markers_name_index[strMarkersName[k]] = k;
 
 		Markers.resize(totalMarkers);
@@ -42,10 +45,17 @@ namespace mc_handover
 
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
-			{ markersPos[m] = Eigen::MatrixXd::Zero(3,60000); }
+			{ markersPos[m] = Eigen::MatrixXd::Zero(3,600000); }
+
+
+		if(Flag_withoutRobot)
+		{	LOG_ERROR("robot markers are not considered") }
+		else
+		{	LOG_WARNING("robot markers are considered")	}
+
 
 		/*prediction controller parameter*/
-		tuner << 600., 30., 20.;
+		tuner << 100., 10., 10.;
 		// tuner(2) = tuner(0)/tuner(1);
 	
 		t_predict = (int)tuner(0);
@@ -74,10 +84,8 @@ namespace mc_handover
 			Markers[7] << 0.202506, -0.293441, 0.425241;
 		}
 
-		// for(const auto &p : markers_name_index)
-		// { LOG_INFO(p.first << " "<< p.second) }
 
-		for(unsigned int k=0; k<strMarkersName.size(); k++)
+		for(unsigned int k=8; k<totalMarkers; k++)
 		{
 			// LOG_WARNING(k<<" "<<strMarkersName[k])//<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
 			if( Markers[k](0)>-10 && Markers[k](0)!=0 && Markers[k](0)<10 )
@@ -106,6 +114,9 @@ namespace mc_handover
 			
 			objectPos = markersPos[9].col(i); //object[1]//center
 
+			fingerPosR = markersPos[11].col(i); //lShapeRtA
+			fingerPosL = markersPos[15].col(i); //lShapeLtA
+
 			/*move EF when subject approaches object 1st time*/
 			obj_to_robotLtHand = ( markersPos[2].col(i) - object[2] );//gripperLtEfA - objRight
 			obj_to_robotRtHand = ( markersPos[6].col(i) - object[0] );//gripperRtEfA - objLeft
@@ -113,8 +124,8 @@ namespace mc_handover
 			obj_rel_robotLtHand = ( markersPos[2].col(i) - object[2] ).norm();//gripperLtEfA - objRight
 			obj_rel_robotRtHand = ( markersPos[6].col(i) - object[0] ).norm();//gripperRtEfA - objLeft
 
-			obj_rel_subjRtHand = ( markersPos[14].col(i) - object[2] ).norm();//lshpRtC - objRight
-			obj_rel_subjLtHand = ( markersPos[18].col(i) - object[0] ).norm();//lshpLtC - objLeft
+			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight
+			obj_rel_subjLtHand = ( fingerPosL - object[0] ).norm();//lshpLtA - objLeft
 
 			return true;
 		}
@@ -123,168 +134,153 @@ namespace mc_handover
 	}
 
 
-	
-	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> ApproachObject::predictionController(const sva::PTransformd& robotEf, const Eigen::Matrix3d & curRotLink6, std::vector<std::string> subjMarkersName, std::vector<std::string> robotMarkersName)
+
+	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> subjMarkersName)
 	{
 		bool ready{false};
 
-		Eigen::Vector3d initRefPos, curPosEf, curPosEfMarker, ithPosSubj, avgVelSubj, predictPos;
+		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
+		Eigen::Vector3d initRefPos, curPosLshp, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
-		Eigen::MatrixXd curVelSubj, newPosSubj, wp;
+		Eigen::MatrixXd curVelSubj, P_M_Subj, wp;
+
+		Eigen::Matrix3d subjHandRot, handoverRot;
 
 		sva::PTransformd X_R_ef;
-		sva::PTransformd X_M_efMarker;
 		sva::PTransformd X_R_M;
+
 		sva::PTransformd X_M_Subj;
 		sva::PTransformd X_ef_Subj;
 
-		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_efL_Subj;
-
+		std::tuple<Eigen::MatrixXd, Eigen::Vector3d, Eigen::Vector3d> wp_ef_Subj;
 
 		/*prediction_ tuner*/
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2); //t_predict/t_observe;
 
-		newPosSubj = Eigen::MatrixXd::Zero(3, t_observe);
-
-		/*get robot ef current pose*/
-		curPosEf = robotEf.translation();
-
-
-		/*get robot ef marker(s) current pose*/
-		curPosEfMarker << 0.25*( 
-			markersPos[markers_name_index[robotMarkersName[0]]].col((i-t_observe)+1) +
-			markersPos[markers_name_index[robotMarkersName[1]]].col((i-t_observe)+1) +
-			markersPos[markers_name_index[robotMarkersName[2]]].col((i-t_observe)+1) + 
-			markersPos[markers_name_index[robotMarkersName[3]]].col((i-t_observe)+1) );
-
-
-		X_R_ef = sva::PTransformd(curRotLink6, curPosEf);
-		X_M_efMarker = sva::PTransformd(curRotLink6, curPosEfMarker);
-		X_R_M = X_M_efMarker.inv() * X_R_ef;
-
-
-		/*subj marker(s) pose w.r.t to robot EF frame*/
-		for(int j=1;j<=t_observe; j++)
-		{
-			X_M_Subj =
-			sva::PTransformd(idtMat, markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j));
-
-			X_ef_Subj = X_R_ef.inv()*X_M_Subj*X_M_efMarker.inv()*X_R_ef;
-
-			newPosSubj.col(j-1) = X_ef_Subj.translation();
-			// cout << "newPosSubj.col(j-1) " << newPosSubj.col(j-1).transpose() <<endl;
-			
-			if(j==t_observe)
-				{ ithPosSubj = newPosSubj.col(t_observe-1); }
-		}
-
-		/*get average velocity of previous *t_observe* sec Subj movement*/
-		curVelSubj  = handoverTraj->diff(newPosSubj)*fps;//ignore diff > XXXX
-		avgVelSubj  << handoverTraj->takeAverage(curVelSubj);
-		
-		/*predict position in straight line after t_predict time*/
-		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
-
-		/*get predicted way points between left ef and Subj*/	/*** GET NEW VELOCITY PROFILE ****/	
-		wp_efL_Subj=handoverTraj->constVelocity(ithPosSubj, predictPos, t_predict);
-		
-		wp = get<0>(wp_efL_Subj);
-		
-		initRefPos << wp(0,it), wp(1,it), wp(2,it);
-
-		ready = true;
-		return std::make_tuple(ready, wp, initRefPos);
-	}
-
-
-
-	bool ApproachObject::goToHandoverPose(std::string robotHand, std::vector<std::string> subjMarkersName, double min, double max, bool& enableHand, const sva::PTransformd& robotEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d> handPredict)
-	{
-		Eigen::Vector3d curEfPos, refPos, handoverPos, P_, bodyVec, fingerPos;
-		Eigen::Vector3d curPosLshp, x, y, lshp_X, lshp_Y, lshp_Z;
-		int n;
-
-		it+= (int)tuner(2);
-
-		/*get unit vectors XYZ of subject LEFT hand*/
+		/*Subject Hand L SHAPE*/
 		auto sizeStr = subjMarkersName.size();
 		curPosLshp = markersPos[markers_name_index[subjMarkersName[sizeStr-2]]].col(i);//C
 		y = markersPos[markers_name_index[subjMarkersName[sizeStr-1]]].col(i) - curPosLshp;//vCD=Y
-		x = markersPos[markers_name_index[subjMarkersName[1]]].col(i) - curPosLshp;//vCA=X
+		x = curPosLshp - markersPos[markers_name_index[subjMarkersName[0]]].col(i);//vAC=X
 
 		lshp_X = x/x.norm();
 		lshp_Y = y/y.norm();
 		lshp_Z = lshp_X.cross(lshp_Y);
 
-		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
+		subjHandRot.col(0) = lshp_X;
+		subjHandRot.col(1) = lshp_Y;
+		subjHandRot.col(2) = lshp_Z/lshp_Z.norm();
+		// LOG_ERROR(subjHandRot<<"\n\n")
 
-		curEfPos = robotEf.translation();
 
-		if(it < get<1>(handPredict).cols())
+		P_M_Subj = Eigen::MatrixXd::Zero(3, t_observe);
+		for(int j=1;j<=t_observe; j++)
 		{
-			refPos << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
-			
-			P_ = curEfPos + (refPos - get<2>(handPredict));//initRefPos
+			P_M_Subj.col(j-1) = markersPos[markers_name_index[subjMarkersName[0]]].col((i-t_observe)+j);
+			// cout << "P_M_Subj.col(j-1) " << P_M_Subj.col(j-1).transpose() <<endl;
 
-			
-			/*offset in y-axis to w.r.t. subject's hand*/
-			if(robotHand == "right")
-			{
-				bodyVec << 0., -1., 0.;
-				// P_(1) = max - abs( P_(1)-object[0][1] );
-				// P_(1) = max - abs( fingerPos(1)-object[0][1] );
-				if(n%400 == 0)
-				{LOG_WARNING(P_(1))}
-			}
-			else if(robotHand == "left")
-			{
-				bodyVec << 0., 1., 0.;
-				// P_(1) = min + abs( P_(1)-object[2][1] );
-				// P_(1) = min + abs( fingerPos(1)-object[2][1] );
-				if(n%400 == 0)
-				{LOG_ERROR(P_(1))}
-			}n+=1;
-			
-			
-			handoverPos << P_(0), P_(1), P_(2);
+			if(j==1)
+				{ initPosSubj = P_M_Subj.col(j-1); }
 
-			 /*robot constraint*/
-			if(enableHand &&
-				(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
-				(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-				(handoverPos(2)>= 0.90) && (handoverPos(2)<= 1.5)
-				)
-			{
-				/*handover pose*/
-				posTask->position(handoverPos);
-
-				vecOriTask->bodyVector(bodyVec);
-				vecOriTask->targetVector(lshp_Z);
-				// vecOriTask->targetVector({0., 0., 1.});
-
-
-
-				// if( objectPos(1)>=-0.15 && objectPos(1)<=0.15)
-				// { posTask->position(objectPos); }
-				// else { posTask->position(handoverPos); }
-				// vecOriTask->targetVector(lshp_Z);
-				
-			}
-			return true;
+			if(j==t_observe)
+				{ ithPosSubj = P_M_Subj.col(t_observe-1); }
 		}
-		if(it == get<1>(handPredict).cols())
+
+		/*get average velocity of previous *t_observe* sec Subj movement*/
+		avgVelSubj = (ithPosSubj - initPosSubj)/0.1;
+		// cout<< " vel " << avgVelSubj.transpose() <<endl;
+
+
+		/*predict position in straight line after t_predict time*/
+		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
+
+		X_M_Subj = sva::PTransformd(subjHandRot, predictPos);
+
+		X_R_ef = sva::PTransformd(constRotLink6, curPosEf);
+		X_R_M = sva::PTransformd(idtMat, Eigen::Vector3d(0., 0., 0.));
+
+		X_ef_Subj = X_M_Subj * X_R_M * X_R_ef.inv();
+
+		handoverRot = X_ef_Subj.rotation().transpose();
+
+		/*** way points for robot ef to predict pos ****/
+		wp_ef_Subj=handoverTraj->constVelocity(curPosEf, predictPos, t_predict);
+		// wp_ef_Subj=handoverTraj->constVelocity(curPosEf, X_ef_Subj.translation(), t_predict);
+		wp = get<0>(wp_ef_Subj);
+		initRefPos << wp(0,it), wp(1,it), wp(2,it);
+
+		ready = true;
+
+		return std::make_tuple(ready, wp, initRefPos, handoverRot);
+	}
+
+
+	bool ApproachObject::goToHandoverPose(std::string robotHand, double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
+	{
+		Eigen::Vector3d wp, handoverPos;
+
+		if(Flag_prediction)
 		{
-			useLeftEf = false;
-			useRightEf = false;
-			return false;
+			it+= (int)tuner(2);
+			if( it < get<1>(handPredict).cols() )
+			{
+				wp << get<1>(handPredict)(0,it), get<1>(handPredict)(1,it), get<1>(handPredict)(2,it);
+				handoverPos = curPosEf + (wp - get<2>(handPredict));
+			}
 		}
+		else
+		{
+			handoverPos = fingerPos;
+		}
+
+		/*robot constraint*/
+		if(enableHand &&
+			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+			(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
+			(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+			)
+		{
+			sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
+			posTask->position(new_pose.translation());
+			oriTask->orientation(new_pose.rotation());
+
+			// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
+		}
+
+
+		// Eigen::Vector3d fingerPos, P_;
+		// int n;
+
+		// fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
+
+		// /*offset in y-axis to w.r.t. subject's hand*/
+		// if(robotHand == "right")
+		// {
+		// 	bodyVec << 0., -1., 0.;
+		// 	// P_(1) = max - abs( P_(1)-object[0][1] );
+		// 	// P_(1) = max - abs( fingerPos(1)-object[0][1] );
+		// 	if(n%400 == 0)
+		// 	{LOG_WARNING(P_(1))}
+		// }
+		// else if(robotHand == "left")
+		// {
+		// 	bodyVec << 0., 1., 0.;
+		// 	// P_(1) = min + abs( P_(1)-object[2][1] );
+		// 	// P_(1) = min + abs( fingerPos(1)-object[2][1] );
+		// 	if(n%400 == 0)
+		// 	{LOG_ERROR(P_(1))}
+		// }n+=1;
+
+
+
+		return true;
 	}
 
 
 
-	bool ApproachObject::handoverForceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Vector3d handForce, Eigen::Vector3d Th, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::VectorOrientationTask>& vecOriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName)
+	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName, double obj_rel_robotHand)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -298,15 +294,9 @@ namespace mc_handover
 		double ef_area_wAB_gB;
 		double ef_area_wAB_f;
 
-		double subj_rel_ef;
+		double subj_rel_ef, subj_rel_obj;
 
-		double efMass, FNormAtClose;
-		std::vector<double> Floadx, Floady, Floadz;
-		std::vector<Eigen::Vector3d> efPos, efVel;
-		Eigen::Vector3d fingerPos, gripperEf, efAce, Finert, Fzero, Fload, Fpull;
-
-		efPos.resize(3);
-		efVel.resize(2);
+		Eigen::Vector3d fingerPos, gripperEf;
 
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
 		
@@ -336,96 +326,102 @@ namespace mc_handover
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
 
 		subj_rel_ef = (gripperEf - fingerPos).norm();
+		subj_rel_obj = (objectPos - fingerPos).norm();
 
 
-		auto checkForce = [&](const char *axis_name, int idx)
+		if( subj_rel_ef < 0.3 )
 		{
-			/*get acceleration of lHand*/
-			if(i>3)
+
+			auto checkForce = [&](const char *axis_name, int idx)
 			{
-				for(int g=1; g<=3; g++)
+				objMass = Fload.norm()/9.81;
+				Finert = objMass * efAce;
+
+				Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
+				Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
+				Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
+
+				/*new threshold*/
+				newTh = Fload + Th;
+
+				if( subj_rel_ef < 0.15 )
 				{
-					efPos[3-g] = 0.25*(
-						markersPos[markers_name_index[robotMarkersName[0]]].col(i-g) +
-						markersPos[markers_name_index[robotMarkersName[1]]].col(i-g) +
-						markersPos[markers_name_index[robotMarkersName[2]]].col(i-g) +
-						markersPos[markers_name_index[robotMarkersName[3]]].col(i-g)
-						);
+					if(enableHand)
+					{
+						enableHand=false;
+						LOG_WARNING("2nd cycle, motion stopped, try to retreat object")
+					}
+
+					if( (abs(Fpull[idx]) > newTh[idx]) )
+					{
+						gOpen=true;
+						restartHandover=true;
+						takeBackObject=false;
+						pickaHand=false;
+
+						if(goBackInit)
+						{
+							goBackInit=false;
+
+							LOG_SUCCESS("object pulled, threshold on " << axis_name << " with pull force " << Fpull[idx]<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
+							cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
+							cout << "Finert "<< Finert.transpose() <<endl;
+							cout <<"object mass " << objMass <<endl;
+						}
+					}
 				}
-				efVel[0] = (efPos[1]-efPos[0])*fps;
-				efVel[1] = (efPos[2]-efPos[1])*fps;
-				efAce = (efVel[1]-efVel[0])*fps;
-
-				efMass = Fload.norm()/9.8; //HandMass + objMass;
-				Finert = efMass*efAce; //inertial Force at ef
-
-				Fpull[0] = abs(handForce[0])-abs(Finert[0]); //-abs(Fzero[0]);
-				Fpull[1] = abs(handForce[1])-abs(Finert[1]); //-abs(Fzero[1]);
-				Fpull[2] = abs(handForce[2])-abs(Finert[2]); //-abs(Fzero[2]);
-			}
-
-			/*new threshold*/
-			auto newTh = Fload + Th;
-
-			/* MAY BE check torque too ???? */
-			if( (abs(Fpull[idx]) > newTh[idx]) && ( (ef_area_wAB_gA > ef_area_wAB_f) || (ef_area_wAB_gB > ef_area_wAB_f) ) )
-			{
-				gOpen=true;/*open_gripper();*/
-				restartHandover=true;
-				takeBackObject=false;
-
-				if(goBackInit)
-				{
-					goBackInit=false;
-					enableHand=false;
-
-					cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
-					cout << "Finert "<< Finert.transpose() << " object mass " << efMass <<endl;
-					LOG_SUCCESS("object returned, threshold on " << axis_name << " with pull forces " << Fpull.transpose()<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
-				}
-			}
-			return false;
-		};
-
-
-
-		
-		if( subj_rel_ef < 0.2 )
-		{
-			/*open empty gripper when subject come near to robot*/
-			if( (!openGripper) && (handForce.norm()<1.0) )
-			{
-				Fzero = handForce; //this has Finertia too
-				gOpen = true;/*open_gripper();*/
-				openGripper = true;
-				LOG_WARNING("opening " + gripperName<< " with Force Norm "<< handForce.norm())
-			}
-
-			/*close gripper*/
-			if( (openGripper) && (!closeGripper) && (!restartHandover) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
-			{
-				gClose = true;/*close_gripper();*/
-				closeGripper = true;
-				enableHand=false; //when subject hand is very close to efL
-			}
-			
-			/*when closed WITH object*/
-			if( graspObject && closeGripper && (handForce.norm()>=2.0) )
-			{
-				graspObject = false;
-				FNormAtClose = handForce.norm();
-				LOG_INFO(" object is inside gripper "<< handForce.norm() )
-
-				/*move EF to initial position*/
-				posTask->position(initPos);
-				vecOriTask->bodyVector({0., 1., 0.});
-				vecOriTask->targetVector({0., 1., 0.});
-			}
+				return false;
+			};
 
 			/*check if object is being pulled*/
 			if(takeBackObject)
 			{
+				posTask->stiffness(4.0);
 				return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
+			}
+			else
+			{
+				/*open empty gripper when subject come near to robot*/
+				if( (!openGripper) )
+				{
+					gOpen = true;
+					LOG_INFO("opening " + gripperName)
+				}
+
+				/*stop motion*/
+				else if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.12) )
+				{
+					Fzero = handForce;
+					enableHand = false;
+					LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
+				}
+
+				/*closed WITH object*/
+				else if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
+				{
+					gClose = true;
+					closeGripper = true;
+					graspObject = false;
+
+					Fclose = handForce;
+					LOG_INFO("closing with Fclose Norm "<<Fclose.norm() << ",	is object inside gripper?")
+				}
+
+				/*closed WITHOUT object*/
+				else if( (!restartHandover) && (!graspObject) && (ef_area_wAB_gA < ef_area_wAB_O) && (ef_area_wAB_gB < ef_area_wAB_O) && (obj_rel_robotHand < 0.2) && (0.1 < obj_rel_robotHand) )
+				{
+					if( (Fclose.norm() < 2.0) )
+					{
+						gClose = false;
+						closeGripper = false;
+						graspObject = true;
+
+						gOpen = true;
+						LOG_ERROR("false close, try with object again")
+					}
+					else
+					{ Fclose = Eigen::Vector3d(1,1,1); }
+				}
 			}
 		}
 
@@ -433,55 +429,76 @@ namespace mc_handover
 		/*restart handover*/
 		if( subj_rel_ef > 0.5 )
 		{
-			/*here comes only after object is grasped*/
-			if( (closeGripper) && (!restartHandover) && (FNormAtClose>=2.0) )
+
+			/*comes only if object is grasped*/
+			if( (closeGripper) && (!restartHandover) && (!enableHand) )
 			{
-				if(e%200==0)//wait xx sec
+				if( (e%200==0) )//wait xx sec
 				{
-					enableHand=true;
-					takeBackObject=true;
+					enableHand = true;
+					takeBackObject = true;
 
 					Fload <<
 					accumulate( Floadx.begin(), Floadx.end(), 0.0)/double(Floadx.size()),
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
-					// LOG_INFO("ready to grasp again, avg itr size "<< Floadx.size())
+					LOG_SUCCESS("robot has object, motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pose" )
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
+
+					/*move EF to initial position*/
+					posTask->stiffness(2.0);
+					posTask->position(initPos);
+					oriTask->orientation(initRot);
 				}
-				/*divide by 9.8 and you will get object mass*/
-				else
+				else /*divide by 9.81 and you will get object mass*/
 				{
 					Floadx.push_back( abs( abs(handForce[0])-abs(Fzero[0]) ) );
 					Floady.push_back( abs( abs(handForce[1])-abs(Fzero[1]) ) );
 					Floadz.push_back( abs( abs(handForce[2])-abs(Fzero[2]) ) );
 				}
-				e+=1;//cout << "e " << e << endl;
+				e+=1;
 			}
+
 
 			if(restartHandover)
 			{
 				/*move EF to initial position*/
 				if(!goBackInit)
 				{
+					posTask->stiffness(2.0);
 					posTask->position(initPos);
-					vecOriTask->bodyVector({0., 1., 0.});
-					vecOriTask->targetVector({0., 1., 0.});
+					oriTask->orientation(initRot);
+
+					gClose = true;
 				}
 
-				openGripper=false;
-				closeGripper=false;
-				restartHandover=false;
+				openGripper = false;
+				closeGripper = false;
 
-				graspObject=true;
-				goBackInit=true;
-				enableHand=true;
-				cout<<"/*******restarting handover*******/"<<endl;
+				graspObject = true;
+				goBackInit = true;
+				enableHand = true;
+				e = 1;
+
+				if(restartHandover && posTask->eval().norm() <0.1)
+				{
+					posTask->stiffness(4.0);
+					restartHandover = false;
+
+					useLeftEf=true;
+					stopLtEf=true;
+
+					useRightEf=true;
+					stopRtEf=true;
+					LOG_INFO("object returned to subject, motion enabled, restarting handover\n")
+				}
 			}
 		}
 		return false;
 	}
+
 
 }//namespace mc_handover
