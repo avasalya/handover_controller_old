@@ -568,7 +568,9 @@ namespace mc_handover
 
 
 							/* start only if object is within robot constraint space*/
-							if( (approachObj->objectPos[0] > 1.1) &&  (approachObj->objectPos[0] < 2.0)  )
+							if( (approachObj->objectPos[0] > 1.1) && (approachObj->objectPos[0] < 2.0) && 
+							    (approachObj->fingerPosL[0] > 1.1) && (approachObj->fingerPosL[0] < 2.0) &&
+							    (approachObj->fingerPosR[0] > 1.1) && (approachObj->fingerPosR[0] < 2.0) )  
 							{ approachObj->pickaHand = true; }
 
 							if( approachObj->pickaHand )
@@ -584,7 +586,7 @@ namespace mc_handover
 							approachObj->useRightEf=false;
 							robotMarkersName = approachObj->robotLtMarkers;
 
-							taskOK = approachObj->goToHandoverPose(0.05, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
+							taskOK = approachObj->goToHandoverPose(-0.1, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
 
 							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotLtHand);
 							gripperControl("l_gripper");
@@ -594,7 +596,7 @@ namespace mc_handover
 							approachObj->useLeftEf = false;
 							robotMarkersName = approachObj->robotRtMarkers;
 
-							taskOK = approachObj->goToHandoverPose(-0.7, 0.05, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
+							taskOK = approachObj->goToHandoverPose(-0.7, 0.10, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
 
 							taskOK = approachObj->forceController(approachObj->enableRHand, initPosR, initRotR, rightForce, rightTh, efRAce, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotRtHand);
 							gripperControl("r_gripper");
@@ -653,6 +655,7 @@ namespace mc_handover
 				approachObj->Fload = Eigen::Vector3d::Zero();
 				approachObj->Fpull = Eigen::Vector3d::Zero();
 
+				approachObj->objMass = 0.2;
 
 				if( (posTaskL->eval().norm() <0.1)  && (posTaskR->eval().norm() <0.1) )
 				{
