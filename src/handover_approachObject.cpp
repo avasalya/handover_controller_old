@@ -87,7 +87,7 @@ namespace mc_handover
 
 		for(unsigned int k=8; k<totalMarkers; k++)
 		{
-			// LOG_WARNING(k<<" "<<strMarkersName[k])//<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
+			// LOG_WARNING(k<<" "<<strMarkersName[k]<<" "<< Markers[ markers_name_index[ strMarkersName[k] ] ].transpose())
 			if( Markers[k](0)>-10 && Markers[k](0)!=0 && Markers[k](0)<10 )
 				{ checkNonZero = true; }
 			else
@@ -118,14 +118,14 @@ namespace mc_handover
 			fingerPosL = markersPos[15].col(i); //lShapeLtA
 
 			/*move EF when subject approaches object 1st time*/
-			obj_to_robotLtHand = ( markersPos[2].col(i) - object[2] );//gripperLtEfA - objRight
 			obj_to_robotRtHand = ( markersPos[6].col(i) - object[0] );//gripperRtEfA - objLeft
+			obj_to_robotLtHand = ( markersPos[2].col(i) - object[2] );//gripperLtEfA - objRight
 
-			obj_rel_robotLtHand = ( markersPos[2].col(i) - object[2] ).norm();//gripperLtEfA - objRight
 			obj_rel_robotRtHand = ( markersPos[6].col(i) - object[0] ).norm();//gripperRtEfA - objLeft
+			obj_rel_robotLtHand = ( markersPos[2].col(i) - object[2] ).norm();//gripperLtEfA - objRight
 
-			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight
 			obj_rel_subjLtHand = ( fingerPosL - object[0] ).norm();//lshpLtA - objLeft
+			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight
 
 			return true;
 		}
@@ -205,13 +205,15 @@ namespace mc_handover
 
 		handoverRot = X_ef_Subj.rotation().transpose();
 
-		/*** way points for robot ef to predict pos ****/
+		/*way points for robot ef to predict pos*/
 		wp_ef_Subj=handoverTraj->constVelocity(curPosEf, predictPos, t_predict);
 		// wp_ef_Subj=handoverTraj->constVelocity(curPosEf, X_ef_Subj.translation(), t_predict);
 		wp = get<0>(wp_ef_Subj);
 		initRefPos << wp(0,it), wp(1,it), wp(2,it);
 
 		ready = true;
+
+		handoverRot_ = subjHandRot; //handoverRot;
 
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
@@ -220,6 +222,31 @@ namespace mc_handover
 	bool ApproachObject::goToHandoverPose(std::string robotHand, double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
 	{
 		Eigen::Vector3d wp, handoverPos;
+
+		// Eigen::Vector3d fingerPos, P_;
+		// int n;
+
+		// fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
+
+		// /*offset in y-axis to w.r.t. subject's hand*/
+		// if(robotHand == "right")
+		// {
+		// 	bodyVec << 0., -1., 0.;
+		// 	// P_(1) = max - abs( P_(1)-object[0][1] );
+		// 	// P_(1) = max - abs( fingerPos(1)-object[0][1] );
+		// 	if(n%400 == 0)
+		// 	{LOG_WARNING(P_(1))}
+		// }
+		// else if(robotHand == "left")
+		// {
+		// 	bodyVec << 0., 1., 0.;
+		// 	// P_(1) = min + abs( P_(1)-object[2][1] );
+		// 	// P_(1) = min + abs( fingerPos(1)-object[2][1] );
+		// 	if(n%400 == 0)
+		// 	{LOG_ERROR(P_(1))}
+		// }n+=1;
+
+
 
 		if(Flag_prediction)
 		{
@@ -250,33 +277,48 @@ namespace mc_handover
 		}
 
 
-		// Eigen::Vector3d fingerPos, P_;
-		// int n;
-
-		// fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
-
-		// /*offset in y-axis to w.r.t. subject's hand*/
-		// if(robotHand == "right")
-		// {
-		// 	bodyVec << 0., -1., 0.;
-		// 	// P_(1) = max - abs( P_(1)-object[0][1] );
-		// 	// P_(1) = max - abs( fingerPos(1)-object[0][1] );
-		// 	if(n%400 == 0)
-		// 	{LOG_WARNING(P_(1))}
-		// }
-		// else if(robotHand == "left")
-		// {
-		// 	bodyVec << 0., 1., 0.;
-		// 	// P_(1) = min + abs( P_(1)-object[2][1] );
-		// 	// P_(1) = min + abs( fingerPos(1)-object[2][1] );
-		// 	if(n%400 == 0)
-		// 	{LOG_ERROR(P_(1))}
-		// }n+=1;
 
 
 
 		return true;
 	}
+
+
+	// auto compareLogic = [&](const char * axis_name, int idx)
+	// {
+	// 	if(fabs(leftForce[idx]) > leftTh[idx+3])
+	// 	{
+	// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
+	// 		{
+	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
+	// 		}
+	// 		else
+	// 		{
+	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
+	// 		}
+	// 		open_grippers();
+	// 		return true;
+	// 	}
+	// 	else
+	// 	{
+	// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
+	// 		{
+	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
+	// 			open_grippers();
+	// 			return true;
+	// 		}
+	// 		return false;
+	// 	}
+	// };
+
+	// if(ctl.runOnce)
+	// {
+	// 	return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
+	// }
+	// else
+	// {
+	// 	return true;
+	// }
 
 
 

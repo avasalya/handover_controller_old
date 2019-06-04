@@ -61,7 +61,7 @@ namespace mc_handover
 
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge
 
-			bool Flag_oneHand{false};//TRUE, otherwise use both hands
+			// bool Flag_oneHand{false};//TRUE, otherwise use both hands
 
 
 			/*mocap_simulaton*/
@@ -73,6 +73,7 @@ namespace mc_handover
 
 			int fps{200};
 			int b_;
+			int dt{1};
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
@@ -83,7 +84,6 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> efRPos, efRVel;
 			Eigen::Vector3d efLAce, efRAce;
 			int g{1};
-
 
 
 			Eigen::Matrix3d ltRotW, rtRotW;
@@ -109,6 +109,8 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 
+			std::shared_ptr<mc_tasks::EndEffectorTask>objEfTask;
+
 			std::shared_ptr<mc_tasks::LookAtTask> headTask;
 
 			std::shared_ptr<mc_tasks::CoMTask> comTask;
@@ -117,6 +119,10 @@ namespace mc_handover
 
 			std::vector<std::string> subjMarkersName, robotMarkersName;
 
+
+			std::string SubjHandOnObj;
+			double offsetLtEf,offsetRtEf;
+			bool case1{false}, case2{false}, case3{false}, case4{false};
 
 		private:
 			sBodyDefs* pBodyDefs{NULL};
@@ -136,6 +142,8 @@ namespace mc_handover
 			double del{0};
 
 			bool startCapture{false};
+
+			bool startHandover{false};
 
 			bool taskOK{false};
 

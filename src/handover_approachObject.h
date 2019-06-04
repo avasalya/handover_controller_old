@@ -69,7 +69,7 @@ namespace mc_handover
 		int t_observe;
 		int it;
 
-		int i{0};
+		int i{1};
 		int e{1};
 		
 		int totalMarkers;
@@ -83,6 +83,7 @@ namespace mc_handover
 		std::vector<std::string> robotLtMarkers, robotRtMarkers, objMarkers, subjRtMarkers, subjLtMarkers, subjMarkers;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
+		Eigen::Matrix3d handoverRot_ = idtMat;
 		Eigen::Vector3d fingerPosL, fingerPosR;
 		Eigen::Vector3d objectPos, obj_to_robotLtHand, obj_to_robotRtHand;
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
