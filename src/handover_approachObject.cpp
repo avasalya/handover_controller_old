@@ -112,7 +112,9 @@ namespace mc_handover
 			object[1] = markersPos[9].col(i);//center
 			object[2] = markersPos[10].col(i);//right
 			
-			objectPos = markersPos[9].col(i); //object[1]//center
+			objectPosL = object[0];
+			objectPosC = object[1];
+			objectPosR = object[2];
 
 			fingerPosR = markersPos[11].col(i); //lShapeRtA
 			fingerPosL = markersPos[15].col(i); //lShapeLtA
@@ -223,31 +225,6 @@ namespace mc_handover
 	{
 		Eigen::Vector3d wp, handoverPos;
 
-		// Eigen::Vector3d fingerPos, P_;
-		// int n;
-
-		// fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
-
-		// /*offset in y-axis to w.r.t. subject's hand*/
-		// if(robotHand == "right")
-		// {
-		// 	bodyVec << 0., -1., 0.;
-		// 	// P_(1) = max - abs( P_(1)-object[0][1] );
-		// 	// P_(1) = max - abs( fingerPos(1)-object[0][1] );
-		// 	if(n%400 == 0)
-		// 	{LOG_WARNING(P_(1))}
-		// }
-		// else if(robotHand == "left")
-		// {
-		// 	bodyVec << 0., 1., 0.;
-		// 	// P_(1) = min + abs( P_(1)-object[2][1] );
-		// 	// P_(1) = min + abs( fingerPos(1)-object[2][1] );
-		// 	if(n%400 == 0)
-		// 	{LOG_ERROR(P_(1))}
-		// }n+=1;
-
-
-
 		if(Flag_prediction)
 		{
 			it+= (int)tuner(2);
@@ -284,44 +261,6 @@ namespace mc_handover
 	}
 
 
-	// auto compareLogic = [&](const char * axis_name, int idx)
-	// {
-	// 	if(fabs(leftForce[idx]) > leftTh[idx+3])
-	// 	{
-	// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
-	// 		{
-	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
-	// 		}
-	// 		else
-	// 		{
-	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
-	// 		}
-	// 		open_grippers();
-	// 		return true;
-	// 	}
-	// 	else
-	// 	{
-	// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
-	// 		{
-	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
-	// 			open_grippers();
-	// 			return true;
-	// 		}
-	// 		return false;
-	// 	}
-	// };
-
-	// if(ctl.runOnce)
-	// {
-	// 	return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
-	// }
-	// else
-	// {
-	// 	return true;
-	// }
-
-
-
 	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName, double obj_rel_robotHand)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
@@ -344,7 +283,7 @@ namespace mc_handover
 		
 		/*direction vectors, projections and area*/
 		ef_wA_O  =
-		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - objectPos;
+		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - objectPosC;
 		ef_wA_f  =
 		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - fingerPos;
 		ef_wA_wB =
@@ -368,7 +307,7 @@ namespace mc_handover
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
 
 		subj_rel_ef = (gripperEf - fingerPos).norm();
-		subj_rel_obj = (objectPos - fingerPos).norm();
+		subj_rel_obj = (objectPosC - fingerPos).norm();
 
 
 		if( subj_rel_ef < 0.3 )
@@ -544,3 +483,41 @@ namespace mc_handover
 
 
 }//namespace mc_handover
+
+
+
+	// auto compareLogic = [&](const char * axis_name, int idx)
+	// {
+	// 	if(fabs(leftForce[idx]) > leftTh[idx+3])
+	// 	{
+	// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
+	// 		{
+	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
+	// 		}
+	// 		else
+	// 		{
+	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
+	// 		}
+	// 		open_grippers();
+	// 		return true;
+	// 	}
+	// 	else
+	// 	{
+	// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
+	// 		{
+	// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
+	// 			open_grippers();
+	// 			return true;
+	// 		}
+	// 		return false;
+	// 	}
+	// };
+
+	// if(ctl.runOnce)
+	// {
+	// 	return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
+	// }
+	// else
+	// {
+	// 	return true;
+	// }

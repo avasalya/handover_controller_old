@@ -94,11 +94,13 @@ namespace mc_handover
 			Eigen::Vector3d initPosL, initPosR;
 			Eigen::Vector3d constPosL, constPosR;
 
+			std::string SubjHandOnObj;
+			double offset{0.05}, offsetLtEf{0.0}, offsetRtEf{0.0};
+			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
-
 
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
@@ -120,9 +122,6 @@ namespace mc_handover
 			std::vector<std::string> subjMarkersName, robotMarkersName;
 
 
-			std::string SubjHandOnObj;
-			double offsetLtEf,offsetRtEf;
-			bool case1{false}, case2{false}, case3{false}, case4{false};
 
 		private:
 			sBodyDefs* pBodyDefs{NULL};
