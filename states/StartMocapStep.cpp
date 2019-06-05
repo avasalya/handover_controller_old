@@ -567,90 +567,114 @@ namespace mc_handover
 					};
 
 
-					auto subjLtHandOnObj = [&]() -> double
-					{
-						LOG_ERROR("left hand on object")
 
-						if(caseA)
-						{	// Ol < Rr < Oc
-							offsetRtEf = posTaskR->position()(1) +
-										(abs( approachObj->objectPosL(1) - approachObj->fingerPosL(1) ) + offset);
-						}
-						else if(caseB)
-						{	// Rr < Ol
-							offsetRtEf = posTaskR->position()(1) -
-										(abs( approachObj->objectPosL(1) - approachObj->fingerPosL(1) ) + offset);
-						}
-						return offsetRtEf;
-					};
+					offset << 0.0, 0.05, 0.0;
+					P_M_offset = sva::PTransformd(offset);
+
+					X_M_subjObjL = sva::PTransformd(approachObj->handoverRot_, (approachObj->objectPosL - approachObj->fingerPosL));
+					X_R_offsetL = P_M_offset * X_M_subjObjL;
+
+					X_M_subjObjR = sva::PTransformd(approachObj->handoverRot_, (approachObj->objectPosR - approachObj->fingerPosR));
+					X_R_offsetR = P_M_offset * X_M_subjObjR;
 
 
-					auto subjRtHandOnObj = [&]() ->double
-					{
-						LOG_SUCCESS("right hand on object")
-
-						if(caseC)
-						{	// Oc < Rl < Or
-							offsetLtEf = posTaskL->position()(1) -
-										(abs( approachObj->objectPosR(1) - approachObj->fingerPosR(1) ) + offset);
-						}
-						else if(caseD)
-						{	// Rl > Or
-							offsetLtEf = posTaskL->position()(1) +
-										(abs( approachObj->objectPosR(1) - approachObj->fingerPosR(1) ) + offset);
-						}
-						return offsetLtEf;
-					};
-
-					auto obj_rel_subjHandPos = [&]()
-					{
-						obj_rel_subjHand();
-
-						/*check rel y-cooridnate*/
-						caseA = (approachObj->fingerPosL(1) < approachObj->objectPosL(1)) &&	// Hl < Ol < Oc
-								(approachObj->fingerPosL(1) < approachObj->objectPosC(1));		// Ol < Rr < Oc
-
-						caseB = (approachObj->fingerPosL(1) > approachObj->objectPosL(1)) &&	// Ol < Hl < Oc
-								(approachObj->fingerPosL(1) < approachObj->objectPosC(1));		//		Rr < Ol
+					approachObj->lHandPredict = approachObj->predictionController(ltPosW, constRotL, subjRtMarkers);
 
 
-						caseC = (approachObj->fingerPosR(1) > approachObj->objectPosC(1)) &&	// Hr > Oc > Or
-								(approachObj->fingerPosR(1) > approachObj->objectPosR(1));		// Oc < Rl < Or
+					posTaskL->position(X_R_offsetL.translation());
+					oriTaskL->orientation(X_R_offsetL.rotation());
 
-						caseD = (approachObj->fingerPosR(1) > approachObj->objectPosC(1)) &&	// Oc < Hr < Or
-								(approachObj->fingerPosR(1) < approachObj->objectPosR(1));		//		Rl > Or
+					approachObj->rHandPredict = approachObj->predictionController(rtPosW, constRotR, subjLtMarkers);
+					posTaskR->position(X_R_offsetR.translation());
+					oriTaskR->orientation(X_R_offsetR.rotation());
 
 
-						if(SubjHandOnObj == "both")
-						{
-							LOG_INFO("both hands on object")
 
-							headTask->target(approachObj->fingerPosR);
 
-							subjLtHandOnObj();
-							subjRtHandOnObj();
-						}
-						else if(SubjHandOnObj == "left")
-						{
-							headTask->target(approachObj->fingerPosL);
+					// auto subjLtHandOnObj = [&]() -> double
+					// {
+					// 	LOG_ERROR("left hand on object")
 
-							subjLtHandOnObj();
+					// 	if(caseA)
+					// 	{	// Ol < Rr < Oc
+					// 		offsetRtEf << (approachObj->objectPosL - approachObj->fingerPosL);
+					// 	}
+					// 	else if(caseB)
+					// 	{	// Rr < Ol
+					// 		offsetRtEf << (approachObj->objectPosL - approachObj->fingerPosL); 
+					// 	}
+					// 	return offsetRtEf;
+					// };
 
-							// Rl > Or  // manual fixed pos
-							offsetLtEf = posTaskL->position()(1) +
-										(abs( approachObj->objectPosR(1) - approachObj->fingerPosR(1) ) + offset);
-						}
-						else if(SubjHandOnObj == "right")
-						{
-							headTask->target(approachObj->fingerPosR);
 
-							subjRtHandOnObj();
+					// auto subjRtHandOnObj = [&]() ->double
+					// {
+					// 	LOG_SUCCESS("right hand on object")
 
-							// Rr < Ol // manual fixed pos
-							offsetRtEf = posTaskR->position()(1) -
-											(abs( approachObj->objectPosL(1) - approachObj->fingerPosL(1) ) + offset);
-						}
-					};
+					// 	if(caseC)
+					// 	{	// Oc < Rl < Or
+					// 		offsetLtEf = posTaskL->position()(1) -
+					// 					(abs( approachObj->objectPosR(1) - approachObj->fingerPosR(1) ) + offset);
+					// 	}
+					// 	else if(caseD)
+					// 	{	// Rl > Or
+					// 		offsetLtEf = posTaskL->position()(1) +
+					// 					(abs( approachObj->objectPosR(1) - approachObj->fingerPosR(1) ) + offset);
+					// 	}
+					// 	return offsetLtEf;
+					// };
+
+					// auto obj_rel_subjHandPos = [&]()
+					// {
+					// 	obj_rel_subjHand();
+
+					// 	/*check rel y-cooridnate*/
+					// 	caseA = (approachObj->fingerPosL(1) < approachObj->objectPosL(1)) &&	// Hl < Ol < Oc
+					// 			(approachObj->fingerPosL(1) < approachObj->objectPosC(1));		// Ol < Rr < Oc
+
+					// 	caseB = (approachObj->fingerPosL(1) > approachObj->objectPosL(1)) &&	// Ol < Hl < Oc
+					// 			(approachObj->fingerPosL(1) < approachObj->objectPosC(1));		//		Rr < Ol
+
+
+					// 	caseC = (approachObj->fingerPosR(1) > approachObj->objectPosC(1)) &&	// Hr > Oc > Or
+					// 			(approachObj->fingerPosR(1) > approachObj->objectPosR(1));		// Oc < Rl < Or
+
+					// 	caseD = (approachObj->fingerPosR(1) > approachObj->objectPosC(1)) &&	// Oc < Hr < Or
+					// 			(approachObj->fingerPosR(1) < approachObj->objectPosR(1));		//		Rl > Or
+
+
+					// 	if(SubjHandOnObj == "both")
+					// 	{
+					// 		LOG_INFO("both hands on object")
+
+					// 		headTask->target(approachObj->fingerPosR);
+
+					// 		subjLtHandOnObj();
+					// 		subjRtHandOnObj();
+					// 	}
+					// 	else if(SubjHandOnObj == "left")
+					// 	{
+					// 		headTask->target(approachObj->fingerPosL);
+
+					// 		subjLtHandOnObj();
+
+					// 		// Rl > Or  // manual fixed pos
+					// 		offsetLtEf = posTaskL->position()(1) +
+					// 					(abs( approachObj->objectPosR(1) - approachObj->fingerPosR(1) ) + offset);
+					// 	}
+					// 	else if(SubjHandOnObj == "right")
+					// 	{
+					// 		headTask->target(approachObj->fingerPosR);
+
+					// 		subjRtHandOnObj();
+
+					// 		// Rr < Ol // manual fixed pos
+					// 		offsetRtEf = posTaskR->position()(1) -
+					// 						(abs( approachObj->objectPosL(1) - approachObj->fingerPosL(1) ) + offset);
+					// 	}
+					// };
+
+
 
 
 

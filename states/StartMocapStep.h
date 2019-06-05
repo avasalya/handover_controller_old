@@ -94,9 +94,18 @@ namespace mc_handover
 			Eigen::Vector3d initPosL, initPosR;
 			Eigen::Vector3d constPosL, constPosR;
 
+
+
 			std::string SubjHandOnObj;
-			double offset{0.05}, offsetLtEf{0.0}, offsetRtEf{0.0};
+
+			Eigen::Vector3d offset, offsetLtEf, offsetRtEf;
+
+			sva::PTransformd X_M_subjObjL, X_M_subjObjR;
+			sva::PTransformd X_R_offsetL, X_R_offsetR;
+
 			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
+
+
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
