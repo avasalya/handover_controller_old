@@ -100,7 +100,7 @@ namespace mc_handover
 
 			Eigen::Vector3d offsetLIn, offsetLOut;
 			Eigen::Vector3d offsetRIn, offsetROut;
-			Eigen::Vector3d offsetPosR, offsetPosL;
+			Eigen::Vector3d localObjOffsetL, localObjOffsetR;
 			Eigen::Vector3d updateOffsetPosL, updateOffsetPosR;
 
 			sva::PTransformd P_M_offset, X_R_Pipe0;

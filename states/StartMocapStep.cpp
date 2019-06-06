@@ -383,11 +383,11 @@ namespace mc_handover
 
 
 			/*offsets for robot grippers to grasp object*/
-			offsetLIn  << 0.0, 0.15, 0.0;
-			offsetRIn  << 0.0, -0.15, 0.0;
+			offsetLIn  << 0.0, 0.05, 0.0;
+			offsetRIn  << 0.0, -0.05, 0.0;
 
-			offsetLOut << 0.0, -0.10, 0.0;
-			offsetROut << 0.0, 0.10, 0.0;
+			offsetLOut << 0.0, -0.05, 0.0;
+			offsetROut << 0.0, 0.05, 0.0;
 
 		}// start
 
@@ -567,7 +567,7 @@ namespace mc_handover
 						if( (approachObj->obj_rel_subjRtHand < 0.25)  && (approachObj->obj_rel_subjLtHand < 0.25) )
 						{
 							SubjHandOnObj = "both";
-						}						
+						}
 						else if(approachObj->obj_rel_subjRtHand < 0.25)
 						{
 							SubjHandOnObj = "right";
@@ -584,18 +584,17 @@ namespace mc_handover
 					{
 						if(caseA)
 						{	// Ol < Rr < Oc
-							offsetPosR << (approachObj->objectPosL + offsetLIn);
+							localObjOffsetL << (Eigen::Vector3d(0.0, -0.3, 0.0) + offsetLIn);
 						}
 						else if(caseB)
 						{	// Rr < Ol
-							offsetPosR << (approachObj->objectPosL + offsetLOut);
+							localObjOffsetL << (Eigen::Vector3d(0.0, -0.3, 0.0) + offsetLOut);
 						}
-						
-						P_M_offset = sva::PTransformd(offsetPosR);
-						X_R_Pipe0 = sva::PTransformd(approachObj->subjLHandRot.transpose(), approachObj->objectPosC);
-						// X_R_offsetR = P_M_offset * X_R_Pipe0;
 
-						X_R_offsetR = sva::PTransformd(approachObj->subjLHandRot.transpose(), offsetPosR);
+						P_M_offset = sva::PTransformd(localObjOffsetL);
+						X_R_Pipe0 = sva::PTransformd(approachObj->subjLHandRot.transpose(), approachObj->objectPosC);
+						
+						X_R_offsetR = X_R_Pipe0 * P_M_offset;
 
 						return X_R_offsetR;
 					};
@@ -605,18 +604,17 @@ namespace mc_handover
 					{
 						if(caseC)
 						{	// Oc < Rl < Or
-							offsetPosL = (approachObj->objectPosR + offsetRIn);
+							localObjOffsetR = (Eigen::Vector3d(0.0, 0.3, 0.0) + offsetRIn);
 						}
 						else if(caseD)
 						{	// Rl > Or
-							offsetPosL = (approachObj->objectPosR + offsetROut);
+							localObjOffsetR = (Eigen::Vector3d(0.0, 0.3, 0.0) + offsetROut);
 						}
 
-						P_M_offset = sva::PTransformd(offsetPosL);
+						P_M_offset = sva::PTransformd(localObjOffsetR);
 						X_R_Pipe0 = sva::PTransformd(approachObj->subjRHandRot.transpose(), approachObj->objectPosC);
-						// X_R_offsetL = P_M_offset * X_R_Pipe0;
 
-						X_R_offsetL = sva::PTransformd(approachObj->subjRHandRot.transpose(), offsetPosL);
+						X_R_offsetL = X_R_Pipe0 * P_M_offset;
 
 						return X_R_offsetL;
 					};
@@ -698,9 +696,20 @@ namespace mc_handover
 							updateOffsetPosL = X_R_offsetL.translation();
 							updateOffsetPosR = X_R_offsetR.translation();
 
-							cout<<updateOffsetPosR.transpose()<<"            "<<updateOffsetPosL.transpose()<<endl;
-							// updateOffsetPosL = approachObj->fingerPosL;
-							// updateOffsetPosR = approachObj->fingerPosR;
+							// if((updateOffsetPosR(0)>= 0.10) && (updateOffsetPosR(0)<= 0.7) &&
+							// 	(updateOffsetPosR(1)>= -.75)  && (updateOffsetPosR(1)<= 0.0) &&
+							// 	(updateOffsetPosR(2)>= 0.80) && (updateOffsetPosR(2)<= 1.4))
+							// {
+							// 	cout<<updateOffsetPosR.transpose()<<endl;
+							// }
+
+
+							// if((updateOffsetPosL(0)>= 0.10) && (updateOffsetPosL(0)<= 0.7) &&
+							// 	(updateOffsetPosL(1)>= 0.0)  && (updateOffsetPosL(1)<= .75) &&
+							// 	(updateOffsetPosL(2)>= 0.80) && (updateOffsetPosL(2)<= 1.4))
+							// {
+							// 	LOG_INFO(updateOffsetPosL.transpose())
+							// }
 						}
 						else
 						{
@@ -708,9 +717,9 @@ namespace mc_handover
 							updateOffsetPosR = approachObj->fingerPosR;
 						}
 						
-						taskOK = approachObj->goToHandoverPose(0.0, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosR);
+						taskOK = approachObj->goToHandoverPose(0.0, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
-						taskOK = approachObj->goToHandoverPose(-0.75, 0.0, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosL);
+						taskOK = approachObj->goToHandoverPose(-0.75, 0.0, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 					}
 					
 					}// i%t_observe;
