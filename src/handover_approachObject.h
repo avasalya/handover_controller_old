@@ -52,7 +52,7 @@ namespace mc_handover
 
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> lShpMarkersName);
 
-		bool goToHandoverPose(std::string robotHand, double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos);
+		bool goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos);
 
 		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th,  Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName, double obj_rel_robotHand);
 
@@ -84,6 +84,9 @@ namespace mc_handover
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 		Eigen::Matrix3d handoverRot_ = idtMat;
+
+		Eigen::Matrix3d subjLHandRot, subjRHandRot;
+
 		Eigen::Vector3d fingerPosL, fingerPosR;
 		Eigen::Vector3d objectPosL, objectPosC, objectPosR;
 		Eigen::Vector3d obj_to_robotLtHand, obj_to_robotRtHand;
@@ -113,7 +116,7 @@ namespace mc_handover
 		bool goBackInit{true};
 		bool restartHandover{false};
 
-		bool pickaHand{false};
+		bool startNow{false};
 
 	public:
 		std::vector<double> Floadx, Floady, Floadz;

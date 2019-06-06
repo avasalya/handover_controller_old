@@ -100,6 +100,9 @@ namespace mc_handover
 	
 	bool ApproachObject::handoverRun()
 	{
+		Eigen::Vector3d xl, yl, lshp_Xl, lshp_Yl, lshp_Zl;
+		Eigen::Vector3d xr, yr, lshp_Xr, lshp_Yr, lshp_Zr;
+
 		/*check for non zero frame only and store them*/
 		if( checkFrameOfData(Markers) )
 		{
@@ -129,6 +132,33 @@ namespace mc_handover
 			obj_rel_subjLtHand = ( fingerPosL - object[0] ).norm();//lshpLtA - objLeft
 			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight
 
+
+			/*right hand rotation*/
+			yr = markersPos[14].col(i) - markersPos[13].col(i);//vCD=Yr
+			xr = markersPos[13].col(i) - markersPos[11].col(i);//vAC=Xr
+
+			lshp_Xr = xr/xr.norm();
+			lshp_Yr = yr/yr.norm();
+			lshp_Zr = lshp_Xr.cross(lshp_Yr);
+
+			subjRHandRot.col(0) = lshp_Xr;
+			subjRHandRot.col(1) = lshp_Yr;
+			subjRHandRot.col(2) = lshp_Zr/lshp_Zr.norm();
+
+
+			/*left hand rotation*/
+			yl = markersPos[17].col(i) - markersPos[16].col(i);//vCD=Yl
+			xl = markersPos[16].col(i) - markersPos[15].col(i);//vAC=Xl
+
+			lshp_Xl = xl/xl.norm();
+			lshp_Yl = yl/yl.norm();
+			lshp_Zl = lshp_Xl.cross(lshp_Yl);
+
+			subjLHandRot.col(0) = lshp_Xl;
+			subjLHandRot.col(1) = lshp_Yl;
+			subjLHandRot.col(2) = lshp_Zl/lshp_Zl.norm();
+
+
 			return true;
 		}
 		else
@@ -141,7 +171,7 @@ namespace mc_handover
 	{
 		bool ready{false};
 
-		Eigen::Vector3d x, y, z, lshp_X, lshp_Y, lshp_Z;
+		Eigen::Vector3d x, y, lshp_X, lshp_Y, lshp_Z;
 		Eigen::Vector3d initRefPos, curPosLshp, initPosSubj, ithPosSubj, avgVelSubj, predictPos;
 
 		Eigen::MatrixXd curVelSubj, P_M_Subj, wp;
@@ -215,13 +245,13 @@ namespace mc_handover
 
 		ready = true;
 
-		handoverRot_ = subjHandRot; //handoverRot;
+		handoverRot_ = subjHandRot.transpose();
 
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
 
 
-	bool ApproachObject::goToHandoverPose(std::string robotHand, double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
+	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
 	{
 		Eigen::Vector3d wp, handoverPos;
 
@@ -338,7 +368,7 @@ namespace mc_handover
 						gOpen=true;
 						restartHandover=true;
 						takeBackObject=false;
-						pickaHand=false;
+						startNow=false;
 
 						if(goBackInit)
 						{

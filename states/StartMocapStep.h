@@ -70,7 +70,6 @@ namespace mc_handover
 			std::vector<Eigen::MatrixXd> pos;
 			std::string name;
 
-
 			int fps{200};
 			int b_;
 			int dt{1};
@@ -85,7 +84,6 @@ namespace mc_handover
 			Eigen::Vector3d efLAce, efRAce;
 			int g{1};
 
-
 			Eigen::Matrix3d ltRotW, rtRotW;
 
 			Eigen::Matrix3d initRotL, initRotR;
@@ -95,17 +93,18 @@ namespace mc_handover
 			Eigen::Vector3d constPosL, constPosR;
 
 
+			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
+			bool subjHasObject{true};
 
 			std::string SubjHandOnObj;
 
-			Eigen::Vector3d offset, offsetLtEf, offsetRtEf;
+			Eigen::Vector3d offsetLIn, offsetLOut;
+			Eigen::Vector3d offsetRIn, offsetROut;
+			Eigen::Vector3d offsetPosR, offsetPosL;
+			Eigen::Vector3d updateOffsetPosL, updateOffsetPosR;
 
-			sva::PTransformd X_M_subjObjL, X_M_subjObjR;
+			sva::PTransformd P_M_offset, X_R_Pipe0;
 			sva::PTransformd X_R_offsetL, X_R_offsetR;
-
-			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
-
-
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
@@ -150,8 +149,6 @@ namespace mc_handover
 			double del{0};
 
 			bool startCapture{false};
-
-			bool startHandover{false};
 
 			bool taskOK{false};
 
