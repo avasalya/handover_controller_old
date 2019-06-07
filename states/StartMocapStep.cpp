@@ -122,6 +122,7 @@ namespace mc_handover
 			/*handover endEffectorTask*/
 			objEfTask = make_shared<mc_tasks::EndEffectorTask>("base_link", ctl.robots(), 2, 2.0, 1e3);
 			ctl.solver().addTask(objEfTask);
+			objEfTask->set_ef_pose(sva::PTransformd(Eigen::Vector3d(0.5, 0.0, 1.1)));
 
 
 			/*play-pause MOCAP*/
