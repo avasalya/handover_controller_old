@@ -197,6 +197,8 @@ namespace mc_handover
 
 		ready = true;
 
+		handoverRot_ = subjHandRot.transpose();
+
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
 
