@@ -21,11 +21,12 @@ namespace mc_handover
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		objMarkers = {"left", "center", "right"};//8-10
+		// objMarkers = {"left", "center", "right"};//8-10
+		objMarkers = {"left", "center", "right", "centerX", "centerY"};//8-12
 
-		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-14
-		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//15-17
-		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //11-17
+		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//13-16
+		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//17-19
+		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //13-19
 
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
@@ -103,6 +104,8 @@ namespace mc_handover
 		Eigen::Vector3d xl, yl, lshp_Xl, lshp_Yl, lshp_Zl;
 		Eigen::Vector3d xr, yr, lshp_Xr, lshp_Yr, lshp_Zr;
 
+		Eigen::Vector3d xo, yo, lshp_Xo, lshp_Yo, lshp_Zo;
+
 		/*check for non zero frame only and store them*/
 		if( checkFrameOfData(Markers) )
 		{
@@ -118,9 +121,11 @@ namespace mc_handover
 			objectPosL = object[0];
 			objectPosC = object[1];
 			objectPosR = object[2];
+			objectPosCx = markersPos[11].col(i);//centerX
+			objectPosCy = markersPos[12].col(i);//centerY
 
-			fingerPosR = markersPos[11].col(i); //lShapeRtA
-			fingerPosL = markersPos[15].col(i); //lShapeLtA
+			fingerPosR = markersPos[13].col(i); //lShapeRtA
+			fingerPosL = markersPos[17].col(i); //lShapeLtA
 
 			/*move EF when subject approaches object 1st time*/
 			obj_to_robotRtHand = ( markersPos[6].col(i) - object[0] );//gripperRtEfA - objLeft
@@ -133,9 +138,9 @@ namespace mc_handover
 			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight
 
 
-			/*right hand rotation*/
-			yr = markersPos[14].col(i) - markersPos[13].col(i);//vCD=Yr
-			xr = markersPos[13].col(i) - markersPos[11].col(i);//vAC=Xr
+			/*right hand orientation*/
+			yr = markersPos[16].col(i) - markersPos[15].col(i);//vCD=Yr
+			xr = markersPos[15].col(i) - markersPos[13].col(i);//vAC=Xr
 
 			lshp_Xr = xr/xr.norm();
 			lshp_Yr = yr/yr.norm();
@@ -146,9 +151,9 @@ namespace mc_handover
 			subjRHandRot.col(2) = lshp_Zr/lshp_Zr.norm();
 
 
-			/*left hand rotation*/
-			yl = markersPos[17].col(i) - markersPos[16].col(i);//vCD=Yl
-			xl = markersPos[16].col(i) - markersPos[15].col(i);//vAC=Xl
+			/*left hand orientation*/
+			yl = markersPos[19].col(i) - markersPos[18].col(i);//vCD=Yl
+			xl = markersPos[18].col(i) - markersPos[17].col(i);//vAC=Xl
 
 			lshp_Xl = xl/xl.norm();
 			lshp_Yl = yl/yl.norm();
@@ -159,6 +164,19 @@ namespace mc_handover
 			subjLHandRot.col(2) = lshp_Zl/lshp_Zl.norm();
 
 
+			/*object orientation*/
+			yo = objectPosCy - objectPosC;//vCCy=yo
+			xo = objectPosC - objectPosCx;//vCxC=xo
+
+			lshp_Xo = xo/xo.norm();
+			lshp_Yo = yo/yo.norm();
+			lshp_Zo = lshp_Xo.cross(lshp_Yo);
+
+			objRot.col(0) = lshp_Xo;
+			objRot.col(1) = lshp_Yo;
+			objRot.col(2) = lshp_Zo/lshp_Zo.norm();
+
+			LOG_ERROR("use object orientation in the predictionController")
 			return true;
 		}
 		else

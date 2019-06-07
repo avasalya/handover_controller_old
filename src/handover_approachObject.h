@@ -85,10 +85,10 @@ namespace mc_handover
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 		Eigen::Matrix3d handoverRot_ = idtMat;
 
-		Eigen::Matrix3d subjLHandRot, subjRHandRot;
+		Eigen::Matrix3d subjLHandRot, subjRHandRot, objRot;
 
 		Eigen::Vector3d fingerPosL, fingerPosR;
-		Eigen::Vector3d objectPosL, objectPosC, objectPosR;
+		Eigen::Vector3d objectPosL, objectPosC, objectPosR, objectPosCx, objectPosCy;
 		Eigen::Vector3d obj_to_robotLtHand, obj_to_robotRtHand;
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
 
