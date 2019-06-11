@@ -94,17 +94,15 @@ namespace mc_handover
 
 
 			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
-			bool subjHasObject{true};
 
 			std::string SubjHandOnObj;
 
 			Eigen::Vector3d offsetLIn, offsetLOut;
 			Eigen::Vector3d offsetRIn, offsetROut;
-			Eigen::Vector3d localObjOffsetL, localObjOffsetR;
 			Eigen::Vector3d updateOffsetPosL, updateOffsetPosR;
 
-			sva::PTransformd P_M_offset, X_R_Pipe0;
-			sva::PTransformd X_R_offsetL, X_R_offsetR;
+			sva::PTransformd P_M_offset, X_M_Pipe0;
+			sva::PTransformd X_M_offsetL, X_M_offsetR;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;

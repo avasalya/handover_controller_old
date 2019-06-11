@@ -16,12 +16,11 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "7mars_subj_hands"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_obj", "7mars_subj_hands"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		// objMarkers = {"left", "center", "right"};//8-10
 		objMarkers = {"left", "center", "right", "centerX", "centerY"};//8-12
 
 		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//13-16
@@ -176,7 +175,6 @@ namespace mc_handover
 			objRot.col(1) = lshp_Yo;
 			objRot.col(2) = lshp_Zo/lshp_Zo.norm();
 
-			LOG_ERROR("use object orientation in the predictionController")
 			return true;
 		}
 		else
@@ -246,7 +244,8 @@ namespace mc_handover
 		/*predict position in straight line after t_predict time*/
 		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
 
-		X_M_Subj = sva::PTransformd(subjHandRot, predictPos);
+		// X_M_Subj = sva::PTransformd(subjHandRot, predictPos);
+		X_M_Subj = sva::PTransformd(objRot, predictPos);
 
 		X_R_ef = sva::PTransformd(constRotLink6, curPosEf);
 		X_R_M = sva::PTransformd(idtMat, Eigen::Vector3d(0., 0., 0.));
@@ -263,13 +262,11 @@ namespace mc_handover
 
 		ready = true;
 
-		handoverRot_ = subjHandRot.transpose();
-
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
+	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d offsetPos)
 	{
 		Eigen::Vector3d wp, handoverPos;
 
@@ -284,7 +281,7 @@ namespace mc_handover
 		}
 		else
 		{
-			handoverPos = fingerPos;
+			handoverPos = offsetPos;
 		}
 
 		/*robot constraint*/
@@ -300,10 +297,6 @@ namespace mc_handover
 
 			// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
 		}
-
-
-
-
 
 		return true;
 	}

@@ -32,12 +32,11 @@ namespace mc_handover
 			{
 				if(msg.markers.at(d).marker_name== "dummy")
 				{}
-				else if( c < 18)/*used markers count*/
-				{
+				else if( c < approachObj->totalMarkers)/*used markers count*/
+				{					
 					approachObj->Markers[c] <<
 					msg.markers.at(d).translation.x, msg.markers.at(d).translation.y, msg.markers.at(d).translation.z;
 					// LOG_INFO(msg.markers.at(d).marker_name <<" "<<c <<"    "<< approachObj->Markers[c].transpose())
-
 					c+=1;
 				}
 			}
@@ -120,7 +119,7 @@ namespace mc_handover
 
 
 
-			/*EfL ori Task*/
+			/*Ef ori Task*/
 			oriTaskL = make_shared<mc_tasks::OrientationTask>("LARM_LINK6",ctl.robots(), 0, 4.0, 500);
 			ctl.solver().addTask(oriTaskL);
 			initRotL = oriTaskL->orientation(); 
@@ -260,20 +259,6 @@ namespace mc_handover
 					return ctl.robots().robot(2).bodyPosW("base_link");
 				}));
 
-			/*move object using cursor or simData*/
-			// ctl.gui()->addElement({"Handover","cursor_moves_object"},
-			// 	mc_rtc::gui::Transform("Position base", 
-			// 		[this,&ctl](){ return ctl.robots().robot(2).bodyPosW("base_link"); },
-			// 		[this,&ctl] (const sva::PTransformd & pos) { ctl.robots().robot(2).posW(pos); } 
-			// 		));
-
-			/*trajectory trail*/
-			// ctl.gui()->addElement({"Handover", "Trajectories"},
-				// mc_rtc::gui::Trajectory("traj_l_wrist", {{1,0,1}, 0.01, mc_rtc::gui::LineStyle::Dotted},
-				// 	[this,&ctl](){ return ctl.robot().bodyPosW("LARM_LINK7").translation(); })
-				// );
-
-
 			/*com Task*/
 			ctl.gui()->addElement({"Handover", "com"},
 
@@ -290,7 +275,7 @@ namespace mc_handover
 
 
 			/*add handoverpipe/ground contact*/
-			ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround", Eigen::Vector6d::Ones()});
+			// ctl.addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround", Eigen::Vector6d::Ones()});
 
 
 			/*configure MOCAP*/
@@ -383,11 +368,11 @@ namespace mc_handover
 
 
 			/*offsets for robot grippers to grasp object*/
-			offsetLIn  << 0.0, 0.05, 0.0;
-			offsetRIn  << 0.0, -0.05, 0.0;
+			offsetLIn  << 0.0, 0.15, 0.0;
+			offsetRIn  << 0.0, -0.15, 0.0;
 
-			offsetLOut << 0.0, -0.05, 0.0;
-			offsetROut << 0.0, 0.05, 0.0;
+			offsetLOut << 0.0, -0.10, 0.0;
+			offsetROut << 0.0, 0.10, 0.0;
 
 		}// start
 
@@ -584,19 +569,17 @@ namespace mc_handover
 					{
 						if(caseA)
 						{	// Ol < Rr < Oc
-							localObjOffsetL << (Eigen::Vector3d(0.0, -0.3, 0.0) + offsetLIn);
+							P_M_offset = sva::PTransformd(offsetLIn);
 						}
 						else if(caseB)
 						{	// Rr < Ol
-							localObjOffsetL << (Eigen::Vector3d(0.0, -0.3, 0.0) + offsetLOut);
+							P_M_offset = sva::PTransformd(offsetLOut);
 						}
 
-						P_M_offset = sva::PTransformd(localObjOffsetL);
-						X_R_Pipe0 = sva::PTransformd(approachObj->subjLHandRot.transpose(), approachObj->objectPosC);
-						
-						X_R_offsetR = X_R_Pipe0 * P_M_offset;
+						X_M_Pipe0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosL);
+						X_M_offsetR = X_M_Pipe0 * P_M_offset;
 
-						return X_R_offsetR;
+						return X_M_offsetR;
 					};
 
 
@@ -604,19 +587,17 @@ namespace mc_handover
 					{
 						if(caseC)
 						{	// Oc < Rl < Or
-							localObjOffsetR = (Eigen::Vector3d(0.0, 0.3, 0.0) + offsetRIn);
+							P_M_offset = sva::PTransformd(offsetRIn);
 						}
 						else if(caseD)
 						{	// Rl > Or
-							localObjOffsetR = (Eigen::Vector3d(0.0, 0.3, 0.0) + offsetROut);
+							P_M_offset = sva::PTransformd(offsetROut);
 						}
 
-						P_M_offset = sva::PTransformd(localObjOffsetR);
-						X_R_Pipe0 = sva::PTransformd(approachObj->subjRHandRot.transpose(), approachObj->objectPosC);
+						X_M_Pipe0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosR);
+						X_M_offsetL = X_M_Pipe0 * P_M_offset;
 
-						X_R_offsetL = X_R_Pipe0 * P_M_offset;
-
-						return X_R_offsetL;
+						return X_M_offsetL;
 					};
 
 					auto obj_rel_subjHandPos = [&]()
@@ -639,13 +620,14 @@ namespace mc_handover
 						if( (SubjHandOnObj == "both") || (SubjHandOnObj == "right") )
 						{
 							headTask->target(approachObj->fingerPosR);
-							objEfTask->set_ef_pose(sva::PTransformd(approachObj->subjRHandRot.transpose(), approachObj->objectPosC));
 						}
 						else if(SubjHandOnObj == "left")
 						{
 							headTask->target(approachObj->fingerPosL);
-							objEfTask->set_ef_pose(sva::PTransformd(approachObj->subjLHandRot.transpose(), approachObj->objectPosC));
 						}
+
+
+						objEfTask->set_ef_pose(sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC));
 
 						subjLtHandOnObj();
 						subjRtHandOnObj();
@@ -656,13 +638,16 @@ namespace mc_handover
 					/*track only subj right hand when robot carries the object*/
 					auto obj_rel_robot = [&]() -> bool
 					{
-						if(subjHasObject)
+						if(approachObj->subjHasObject)
 						{
 							obj_rel_subjHandPos();
+							approachObj->robotHasObject = false;
 						}
-						else// robothasObject
+						else if(approachObj->robotHasObject)
 						{
+							/*track subject hand*/
 							// obj_rel_robotHandPos();
+							approachObj->subjHasObject = false;
 						}
 
 						approachObj->rHandPredict = approachObj->predictionController(rtPosW, constRotR, approachObj->subjLtMarkers);
@@ -691,30 +676,15 @@ namespace mc_handover
 					/*feed Ef pose*/
 					if( (approachObj->useLeftEf) && (approachObj->useRightEf) )
 					{
-						if(subjHasObject)
+						if(approachObj->subjHasObject)
 						{
-							updateOffsetPosL = X_R_offsetL.translation();
-							updateOffsetPosR = X_R_offsetR.translation();
-
-							// if((updateOffsetPosR(0)>= 0.10) && (updateOffsetPosR(0)<= 0.7) &&
-							// 	(updateOffsetPosR(1)>= -.75)  && (updateOffsetPosR(1)<= 0.0) &&
-							// 	(updateOffsetPosR(2)>= 0.80) && (updateOffsetPosR(2)<= 1.4))
-							// {
-							// 	cout<<updateOffsetPosR.transpose()<<endl;
-							// }
-
-
-							// if((updateOffsetPosL(0)>= 0.10) && (updateOffsetPosL(0)<= 0.7) &&
-							// 	(updateOffsetPosL(1)>= 0.0)  && (updateOffsetPosL(1)<= .75) &&
-							// 	(updateOffsetPosL(2)>= 0.80) && (updateOffsetPosL(2)<= 1.4))
-							// {
-							// 	LOG_INFO(updateOffsetPosL.transpose())
-							// }
+							updateOffsetPosL = X_M_offsetL.translation();
+							updateOffsetPosR = X_M_offsetR.translation();
 						}
-						else
+						else if(approachObj->robotHasObject)
 						{
-							updateOffsetPosL = approachObj->fingerPosL; //add offset here aswell
-							updateOffsetPosR = approachObj->fingerPosR;
+							updateOffsetPosL = approachObj->fingerPosR; //add offset here aswell
+							updateOffsetPosR = approachObj->fingerPosL;
 						}
 						
 						taskOK = approachObj->goToHandoverPose(0.0, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
@@ -744,7 +714,7 @@ namespace mc_handover
 				dt+=1;
 
 				/*remove contacts*/
-				addContact_object_ground();
+				// addContact_object_ground();
 				removeContact_object_Gripper("LeftGripper");
 				removeContact_object_Gripper("RightGripper");
 
