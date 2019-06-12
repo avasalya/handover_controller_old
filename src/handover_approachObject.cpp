@@ -244,8 +244,11 @@ namespace mc_handover
 		/*predict position in straight line after t_predict time*/
 		predictPos = handoverTraj->constVelocityPredictPos(avgVelSubj, ithPosSubj, t_predict);
 
-		// X_M_Subj = sva::PTransformd(subjHandRot, predictPos);
-		X_M_Subj = sva::PTransformd(objRot, predictPos);
+		if(subjHasObject)
+		{ X_M_Subj = sva::PTransformd(objRot, predictPos); }
+		else if(robotHasObject)
+		{ X_M_Subj = sva::PTransformd(subjHandRot, predictPos); }
+
 
 		X_R_ef = sva::PTransformd(constRotLink6, curPosEf);
 		X_R_M = sva::PTransformd(idtMat, Eigen::Vector3d(0., 0., 0.));
@@ -266,7 +269,7 @@ namespace mc_handover
 	}
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d offsetPos)
+	void ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d offsetPos)
 	{
 		Eigen::Vector3d wp, handoverPos;
 
@@ -295,14 +298,12 @@ namespace mc_handover
 			posTask->position(new_pose.translation());
 			oriTask->orientation(new_pose.rotation());
 
-			// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "fingerPos "<< fingerPos.transpose())
+			// LOG_INFO("it "<<it << "\npredictPos wp "<<handoverPos.transpose()<<"\n" << "offsetPos "<< offsetPos.transpose())
 		}
-
-		return true;
 	}
 
 
-	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName, double obj_rel_robotHand)
+	bool ApproachObject::forceController(Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, bool& enableHand, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName, double obj_rel_robotHand)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -351,6 +352,26 @@ namespace mc_handover
 		subj_rel_obj = (objectPosC - fingerPos).norm();
 
 
+		auto addContact_object_ground = [&]()
+		{ ctl->addContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"}); };
+
+
+		auto removeContact_object_ground = [&]()
+		{ ctl->removeContact({"handoverObjects", "ground", "handoverPipeBottom", "AllGround"}); };
+
+
+		auto addContact_object_Gripper = [&](std::string gripperName)
+		{ ctl->addContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
+
+
+		auto removeContact_object_Gripper = [&](std::string gripperName)
+		{ ctl->removeContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
+
+		auto objHasContact = [&](std::string gripperName) -> bool
+		{ ctl->hasContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
+
+
+
 		if( subj_rel_ef < 0.3 )
 		{
 
@@ -376,6 +397,16 @@ namespace mc_handover
 
 					if( (abs(Fpull[idx]) > newTh[idx]) )
 					{
+						if( objHasContact("LeftGripper") && objHasContact("RightGripper") )
+						{
+							removeContact_object_Gripper("LeftGripper");
+							removeContact_object_Gripper("RightGripper");
+							// addEfTask
+							// subjHasObject = true;
+							// robotHasObject = false;
+						}
+
+
 						gOpen=true;
 						restartHandover=true;
 						takeBackObject=false;
@@ -407,7 +438,7 @@ namespace mc_handover
 				if( (!openGripper) )
 				{
 					gOpen = true;
-					LOG_INFO("opening " + gripperName)
+					LOG_INFO("opening grippers")
 				}
 
 				/*stop motion*/
@@ -455,11 +486,13 @@ namespace mc_handover
 			/*comes only if object is grasped*/
 			if( (closeGripper) && (!restartHandover) && (!enableHand) )
 			{
+				/*add contacts*/
+				addContact_object_Gripper("LeftGripper");
+				addContact_object_Gripper("RightGripper");
+
+
 				if( (e%200==0) )//wait xx sec
 				{
-					enableHand = true;
-					takeBackObject = true;
-
 					Fload <<
 					accumulate( Floadx.begin(), Floadx.end(), 0.0)/double(Floadx.size()),
 					accumulate( Floady.begin(), Floady.end(), 0.0)/double(Floady.size()),
@@ -470,10 +503,31 @@ namespace mc_handover
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();
 
-					/*move EF to initial position*/
-					posTask->stiffness(2.0);
-					posTask->position(initPos);
-					oriTask->orientation(initRot);
+
+					if( objHasContact("LeftGripper") && objHasContact("RightGripper") )
+					{
+						/*move EF to rest pose*/
+						// posTask->stiffness(2.0);
+						// posTask->position(initPos);
+						// oriTask->orientation(initRot);
+					}
+
+					if( subjHasObject &&
+						(obj_rel_subjRtHand > obj_rel_robotLtHand) &&
+						(obj_rel_subjLtHand > obj_rel_robotRtHand)
+						)
+					{
+						robotHasObject = true;
+						subjHasObject = false;
+					}
+
+					if(robotHasObject)
+					{
+						// ctl.solver().removeTask(objEfTask); //removeTask
+						enableHand = true;
+						takeBackObject = true;
+					}
+
 				}
 				else /*divide by 9.81 and you will get object mass*/
 				{

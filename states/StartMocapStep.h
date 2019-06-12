@@ -61,8 +61,6 @@ namespace mc_handover
 
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge
 
-			// bool Flag_oneHand{false};//TRUE, otherwise use both hands
-
 
 			/*mocap_simulaton*/
 			double pt;
@@ -76,7 +74,7 @@ namespace mc_handover
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
-			Eigen::Vector3d headVector, headTarget;
+			Eigen::Vector3d headVector, headTarget, fingerPos;
 
 			Eigen::Vector3d ltPosW, rtPosW;
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
@@ -94,12 +92,11 @@ namespace mc_handover
 
 
 			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
-
-			std::string SubjHandOnObj;
+			bool removeTask{true};
 
 			Eigen::Vector3d offsetLIn, offsetLOut;
 			Eigen::Vector3d offsetRIn, offsetROut;
-			Eigen::Vector3d updateOffsetPosL, updateOffsetPosR;
+			Eigen::Vector3d updateOffsetPos, updateOffsetPosL, updateOffsetPosR;
 
 			sva::PTransformd P_M_offset, X_M_Pipe0;
 			sva::PTransformd X_M_offsetL, X_M_offsetR;

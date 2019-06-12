@@ -18,6 +18,8 @@
 #include <Eigen/SVD>
 #include <Eigen/Dense>
 
+#include <mc_control/fsm/Controller.h>
+
 #include <mc_control/mc_controller.h>
 #include <mc_control/mc_global_controller.h>
 
@@ -52,10 +54,12 @@ namespace mc_handover
 
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> lShpMarkersName);
 
-		bool goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d offsetPos);
+		void goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d offsetPos);
 
-		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th,  Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName, double obj_rel_robotHand);
+		bool forceController(Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th,  Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, bool& enableHand, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName, double obj_rel_robotHand);
 
+
+		std::shared_ptr<mc_control::fsm::Controller> ctl;
 
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
 
@@ -102,7 +106,7 @@ namespace mc_handover
 		bool stopRtEf{true};
 
 		bool subjHasObject{true};
-		bool robotHasObject{true};
+		bool robotHasObject{false};
 
 		bool enableLHand{true};
 		bool enableRHand{true};
