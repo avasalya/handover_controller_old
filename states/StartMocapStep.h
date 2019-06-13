@@ -91,13 +91,18 @@ namespace mc_handover
 			Eigen::Vector3d constPosL, constPosR;
 
 
-			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
+			bool caseAs{false}, caseBs{false}, caseCs{false}, caseDs{false};
+			bool caseAr{false}, caseBr{false}, caseCr{false}, caseDr{false};
+
+			bool addTask{true};
+			bool removeTask{true};
 
 			Eigen::Vector3d offsetLIn, offsetLOut;
 			Eigen::Vector3d offsetRIn, offsetROut;
-			Eigen::Vector3d updateOffsetPos, updateOffsetPosL, updateOffsetPosR;
+			Eigen::Vector3d updateOffsetPosL, updateOffsetPosR;
 
-			sva::PTransformd P_M_offset, X_M_Pipe0;
+			Eigen::Vector3d vecOffsetL, vecOffsetR;
+			sva::PTransformd P_M_offset, X_M_Pipe0, X_M_offset;
 			sva::PTransformd X_M_offsetL, X_M_offsetR;
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);

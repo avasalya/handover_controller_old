@@ -126,12 +126,13 @@ namespace mc_handover
 			fingerPosR = markersPos[13].col(i); //lShapeRtA
 			fingerPosL = markersPos[17].col(i); //lShapeLtA
 
-			/*move EF when subject approaches object 1st time*/
-			obj_to_robotRtHand = ( markersPos[6].col(i) - object[0] );//gripperRtEfA - objLeft
-			obj_to_robotLtHand = ( markersPos[2].col(i) - object[2] );//gripperLtEfA - objRight
+			gripperLtEfA = markersPos[2].col(i); //gripperLtEfA
+			gripperRtEfA = markersPos[6].col(i); //gripperRtEfA
 
-			obj_rel_robotRtHand = ( markersPos[6].col(i) - object[0] ).norm();//gripperRtEfA - objLeft
-			obj_rel_robotLtHand = ( markersPos[2].col(i) - object[2] ).norm();//gripperLtEfA - objRight
+
+			/*move EF when subject approaches object 1st time*/
+			obj_rel_robotRtHand = ( gripperRtEfA - object[0] ).norm();//gripperRtEfA - objLeft
+			obj_rel_robotLtHand = ( gripperLtEfA - object[2] ).norm();//gripperLtEfA - objRight
 
 			obj_rel_subjLtHand = ( fingerPosL - object[0] ).norm();//lshpLtA - objLeft
 			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight

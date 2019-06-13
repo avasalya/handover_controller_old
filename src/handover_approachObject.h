@@ -90,9 +90,9 @@ namespace mc_handover
 
 		Eigen::Matrix3d subjLHandRot, subjRHandRot, objRot;
 
+		Eigen::Vector3d gripperLtEfA, gripperRtEfA;
 		Eigen::Vector3d fingerPosL, fingerPosR;
 		Eigen::Vector3d objectPosL, objectPosC, objectPosR, objectPosCx, objectPosCy;
-		Eigen::Vector3d obj_to_robotLtHand, obj_to_robotRtHand;
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
 
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;

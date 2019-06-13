@@ -503,11 +503,17 @@ namespace mc_handover
 				{
 					auto subjLtHandOnObj = [&]() -> sva::PTransformd
 					{
-						if(caseA)
+						caseAs = (approachObj->objectPosC - approachObj->fingerPosL).norm() > 	// Hl < Ol < Oc
+								(approachObj->objectPosC - approachObj->objectPosL).norm();		// Ol < Rr < Oc
+
+						caseBs = (approachObj->objectPosC - approachObj->fingerPosL).norm() < 	// Ol < Hl < Oc
+								(approachObj->objectPosC - approachObj->objectPosL).norm();		// Rr < Ol
+
+						if(caseAs)
 						{	// Ol < Rr < Oc
 							P_M_offset = sva::PTransformd(offsetLIn);
 						}
-						else if(caseB)
+						else if(caseBs)
 						{	// Rr < Ol
 							P_M_offset = sva::PTransformd(offsetLOut);
 						}
@@ -518,20 +524,86 @@ namespace mc_handover
 						return X_M_offsetR;
 					};
 
+					auto robotRtHandOnObj = [&]() -> sva::PTransformd
+					{
+						caseAr = (approachObj->objectPosC - approachObj->gripperRtEfA).norm() < // Ol < Rr < Oc
+								(approachObj->objectPosC - approachObj->objectPosL).norm();		// Hl < Ol < Oc
+
+						caseBr = (approachObj->objectPosC - approachObj->gripperRtEfA).norm() > // Rr < Ol
+								(approachObj->objectPosC - approachObj->objectPosL).norm();		// Ol < Hl < Oc
+
+						// caseAr = true;
+						// caseBr = false;
+
+						if(caseAr)
+						{	// Hl < Ol < Oc
+							P_M_offset = sva::PTransformd(offsetLIn);
+						}
+						else if(caseBr)
+						{	// Ol < Hl < Oc
+							P_M_offset = sva::PTransformd(offsetLOut);
+						}
+
+						X_M_Pipe0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosL);
+						X_M_offset = X_M_Pipe0 * P_M_offset;
+
+						/*using parallogram law of vector addition*/
+						vecOffsetR = X_M_offset.translation() - /*approachObj->objectPosL*/ posTaskR->position();
+						X_M_offsetR =  sva::PTransformd( X_M_offset.rotation() , (fingerPos + vecOffsetR));
+
+						return X_M_offsetR;
+					};
+
 
 					auto subjRtHandOnObj = [&]() ->sva::PTransformd
 					{
-						if(caseC)
+						caseCs = (approachObj->objectPosC - approachObj->fingerPosR).norm() > 	// Hr > Oc > Or
+								(approachObj->objectPosC - approachObj->objectPosR).norm();		// Oc < Rl < Or
+
+						caseDs = (approachObj->objectPosC - approachObj->fingerPosR).norm() < 	// Oc < Hr < Or
+								(approachObj->objectPosC - approachObj->objectPosR).norm();		// Rl > Or
+
+						if(caseCs)
 						{	// Oc < Rl < Or
 							P_M_offset = sva::PTransformd(offsetRIn);
 						}
-						else if(caseD)
+						else if(caseDs)
 						{	// Rl > Or
 							P_M_offset = sva::PTransformd(offsetROut);
 						}
 
 						X_M_Pipe0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosR);
 						X_M_offsetL = X_M_Pipe0 * P_M_offset;
+
+						return X_M_offsetL;
+					};
+
+					auto robotLtHandOnObj = [&]() ->sva::PTransformd
+					{
+						caseCr = (approachObj->objectPosC - approachObj->gripperLtEfA).norm() < // Oc < Rl < Or
+								(approachObj->objectPosC - approachObj->objectPosR).norm();		// Hr > Oc > Or
+
+						caseDr = (approachObj->objectPosC - approachObj->gripperLtEfA).norm() > // Rl > Or
+								(approachObj->objectPosC - approachObj->objectPosR).norm();		// Oc < Hr < Or
+
+						// caseCr = false;
+						// caseDr = true;
+
+						if(caseCr)
+						{	// Hr > Oc > Or
+							P_M_offset = sva::PTransformd(offsetLOut);
+						}
+						else if(caseDr)
+						{	// Oc < Hr < Or
+							P_M_offset = sva::PTransformd(offsetLIn);
+						}
+
+						X_M_Pipe0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosR);
+						X_M_offset = X_M_Pipe0 * P_M_offset;
+
+						/*using parallogram law of vector addition*/
+						vecOffsetL = X_M_offset.translation() - /*approachObj->objectPosR*/ posTaskL->position();
+						X_M_offsetL =  sva::PTransformd( X_M_offset.rotation() , (fingerPos + vecOffsetL));
 
 						return X_M_offsetL;
 					};
@@ -553,26 +625,16 @@ namespace mc_handover
 					};
 
 
-
 					auto obj_rel_subj = [&]()
 					{
-						caseA = (approachObj->objectPosC - approachObj->fingerPosL).norm() > // Hl < Ol < Oc
-								(approachObj->objectPosC - approachObj->objectPosL).norm();  // Ol < Rr < Oc
-
-						caseB = (approachObj->objectPosC - approachObj->fingerPosL).norm() < // Ol < Hl < Oc
-								(approachObj->objectPosC - approachObj->objectPosL).norm();  // Rr < Ol
-
-
-						caseC = (approachObj->objectPosC - approachObj->fingerPosR).norm() > // Hr > Oc > Or
-								(approachObj->objectPosC - approachObj->objectPosR).norm();  // Oc < Rl < Or
-
-						caseD = (approachObj->objectPosC - approachObj->fingerPosR).norm() < // Oc < Hr < Or
-								(approachObj->objectPosC - approachObj->objectPosR).norm();  // Rl > Or
-
-
 						if(approachObj->subjHasObject)
 						{
 							headTask->target(approachObj->objectPosC);
+							if(addTask)
+							{
+								addTask = false;
+								ctl.solver().addTask(objEfTask);
+							}
 							objEfTask->set_ef_pose(sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC));
 
 							subjLtHandOnObj();
@@ -581,16 +643,17 @@ namespace mc_handover
 						else if(approachObj->robotHasObject)
 						{
 							obj_rel_subjHands();
-
 							headTask->target(fingerPos);
 
-							// robotLtHandOnObj();
-							// robotRtHandOnObj();
+							if(removeTask)
+							{
+								removeTask = false;
+								ctl.solver().removeTask(objEfTask);
+							}
 
-							// ctl.solver().removeTask(objEfTask);//do in forceControl
-
+							robotLtHandOnObj();
+							robotRtHandOnObj();
 						}
-
 					};
 
 
@@ -637,7 +700,7 @@ namespace mc_handover
 
 						if( approachObj->startNow )
 							{ obj_rel_robot(); }
-					}// i%t_observe;
+					}
 
 
 
@@ -647,31 +710,29 @@ namespace mc_handover
 						if(approachObj->subjHasObject)
 						{
 							updateOffsetPosL = X_M_offsetL.translation();
-							approachObj->goToHandoverPose(0.0, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
+							approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
 
 							updateOffsetPosR = X_M_offsetR.translation();
-							approachObj->goToHandoverPose(-0.75, 0.0, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
+							approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 						}
 						else if(approachObj->robotHasObject)
 						{
-							// updateOffsetPos = fingerPos;
-
 							if(approachObj->useLeftEf)
 							{
-								updateOffsetPos = posTaskL->position() + 1.5*(fingerPos - posTaskL->position());
-								approachObj->goToHandoverPose(0.0, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPos);
+								updateOffsetPosL = X_M_offsetL.translation();
+								approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
-								if((approachObj->i) % 400 == 0)
-								{LOG_INFO(" left Ef obj RED		" << (updateOffsetPos - fingerPos).transpose())}
+								// if((approachObj->i) % 400 == 0)
+								// {LOG_INFO(" left Ef obj BLUE		" << (posTaskL->position() - fingerPos).transpose())}
 							}
 							else if(approachObj->useRightEf)
 							{
-								updateOffsetPos = posTaskR->position() + 1.5*(fingerPos - posTaskR->position());
-								approachObj->goToHandoverPose(-0.75, 0.0, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPos);
+								updateOffsetPosR = X_M_offsetR.translation();
+								approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 
-								if((approachObj->i) % 400  == 0)
-								{LOG_ERROR(" right Ef obj BLUE		" << (updateOffsetPos - fingerPos).transpose())}
+								// if((approachObj->i) % 400  == 0)
+								// {LOG_ERROR(" right Ef obj RED		" << (posTaskR->position() - fingerPos).transpose())}
 							}
 						}
 
@@ -716,10 +777,18 @@ namespace mc_handover
 				oriTaskL->orientation(initRotL);
 				oriTaskR->orientation(initRotR);
 
-				caseA = false;
-				caseB = false;
-				caseC = false;
-				caseD = false;
+				caseAs = false;
+				caseBs = false;
+				caseCs = false;
+				caseDs = false;
+
+				caseAr = false;
+				caseBr = false;
+				caseCr = false;
+				caseDr = false;
+
+				addTask = true;
+				removeTask = true;
 
 				approachObj->subjHasObject = true;
 				approachObj->robotHasObject = false;
