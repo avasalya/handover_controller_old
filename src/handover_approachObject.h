@@ -38,7 +38,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace mc_handover 
+namespace mc_handover
 {
 	struct ApproachObject
 	{
@@ -61,7 +61,7 @@ namespace mc_handover
 
 		std::shared_ptr<mc_control::fsm::Controller> ctl;
 
-		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
+		bool Flag_withoutRobot{true}; //TRUE, otherwise use ROBOT_Markers
 
 		bool Flag_prediction{false}; //TRUE otherwise, use fingerPos
 
@@ -75,7 +75,7 @@ namespace mc_handover
 
 		int i{1};
 		int e{1};
-		
+
 		int totalMarkers;
 
 		std::vector<Eigen::Vector3d> object;

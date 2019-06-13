@@ -92,7 +92,6 @@ namespace mc_handover
 
 
 			bool caseA{false}, caseB{false}, caseC{false}, caseD{false};
-			bool removeTask{true};
 
 			Eigen::Vector3d offsetLIn, offsetLOut;
 			Eigen::Vector3d offsetRIn, offsetROut;

@@ -57,14 +57,14 @@ namespace mc_handover
 		/*prediction controller parameter*/
 		tuner << 100., 10., 10.;
 		// tuner(2) = tuner(0)/tuner(1);
-	
+
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2);//t_predict/t_observe;
 	}
 
 
-	
+
 	bool ApproachObject::checkFrameOfData(std::vector<Eigen::Vector3d>)
 	{
 		bool checkNonZero{false};
@@ -97,7 +97,7 @@ namespace mc_handover
 	}
 
 
-	
+
 	bool ApproachObject::handoverRun()
 	{
 		Eigen::Vector3d xl, yl, lshp_Xl, lshp_Yl, lshp_Zl;
@@ -116,7 +116,7 @@ namespace mc_handover
 			object[0] = markersPos[8].col(i);//left
 			object[1] = markersPos[9].col(i);//center
 			object[2] = markersPos[10].col(i);//right
-			
+
 			objectPosL = object[0];
 			objectPosC = object[1];
 			objectPosR = object[2];
@@ -322,7 +322,7 @@ namespace mc_handover
 		Eigen::Vector3d fingerPos, gripperEf;
 
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
-		
+
 		/*direction vectors, projections and area*/
 		ef_wA_O  =
 		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - objectPosC;
@@ -401,9 +401,12 @@ namespace mc_handover
 						{
 							removeContact_object_Gripper("LeftGripper");
 							removeContact_object_Gripper("RightGripper");
-							// addEfTask
-							// subjHasObject = true;
+
 							// robotHasObject = false;
+							// subjHasObject = true;
+							if(subjHasObject)
+							{// addEfTask
+							}
 						}
 
 
@@ -523,7 +526,7 @@ namespace mc_handover
 
 					if(robotHasObject)
 					{
-						// ctl.solver().removeTask(objEfTask); //removeTask
+						// ctl->solver().removeTask(objEfTask); //removeTask
 						enableHand = true;
 						takeBackObject = true;
 					}
