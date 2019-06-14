@@ -501,52 +501,6 @@ namespace mc_handover
 
 				if( approachObj->handoverRun() )
 				{
-
-					auto robotRtHandOnObj = [&]()-> sva::PTransformd
-					{
-						caseAr = (approachObj->objectPosC - approachObj->gripperRtEfA).norm() < // Ol < Rr < Oc
-								(approachObj->objectPosC - approachObj->objectPosL).norm();
-
-						caseBr = (approachObj->objectPosC - approachObj->gripperRtEfA).norm() > // Rr < Ol < Oc
-								(approachObj->objectPosC - approachObj->objectPosL).norm();
-
-						caseAr = true;
-						caseBr = false;
-
-						if(caseAr)
-						{
-							X_Obj0_offsetS = sva::PTransformd(offsetLOut); // Hl < Ol < Oc
-						}
-						else if(caseBr)
-						{
-							X_Obj0_offsetS = sva::PTransformd(offsetLIn);  // Ol < Hl < Oc
-						}
-
-						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosL);
-						X_M_offset = X_M_Obj0 * X_Obj0_offsetS;
-
-						/*https://www.mathstopia.net/vectors/parallelogram-law-vector-addition*/
-
-						/*method 1*/
-						// vecOffsetR = fingerPos + posTaskR->position() - X_M_offset.translation();/*approachObj->objectPosL*/
-						// X_M_offsetR = sva::PTransformd(vecOffsetR);
-
-
-						/*method 2*/
-						// X_M_offsetR =
-									// X_M_offset.inv() *
-									// sva::PTransformd(approachObj->objRot.transpose(), fingerPos) *
-									// sva::PTransformd(approachObj->objRot.transpose(), rtPosW).inv();
-
-
-						/*method 3*/
-						X_M_offsetR = X_M_offset;
-
-
-						return X_M_offsetR;
-					};
-
-
 					auto subjLtHandOnObj = [&]()-> sva::PTransformd
 					{
 						caseAs = (approachObj->objectPosC - approachObj->fingerPosL).norm() >// Hl < Ol < Oc
@@ -570,48 +524,32 @@ namespace mc_handover
 						return X_M_offsetR;
 					};
 
-
-					auto robotLtHandOnObj = [&]()-> sva::PTransformd
+					auto robotRtHandOnObj = [&]()-> sva::PTransformd
 					{
-						caseCr = (approachObj->objectPosC - approachObj->gripperLtEfA).norm() < // Oc < Rl < Or
-								(approachObj->objectPosC - approachObj->objectPosR).norm();
+						caseAr = (approachObj->objectPosC - approachObj->gripperRtEfA).norm() < // Ol < Rr < Oc
+								(approachObj->objectPosC - approachObj->objectPosL).norm();
 
-						caseDr = (approachObj->objectPosC - approachObj->gripperLtEfA).norm() > // Rl > Or
-								(approachObj->objectPosC - approachObj->objectPosR).norm();
+						caseBr = (approachObj->objectPosC - approachObj->gripperRtEfA).norm() > // Rr < Ol < Oc
+								(approachObj->objectPosC - approachObj->objectPosL).norm();
 
-						caseCr = false;
-						caseDr = true;
+						// caseAr = true;
+						// caseBr = false;
 
-						if(caseCr)
+						if(caseAr)
 						{
-							X_Obj0_offsetS = sva::PTransformd(offsetROut); // Hr > Oc > Or
+							// X_Obj0_offsetS = sva::PTransformd(offsetLOut); // Hl < Ol < Oc
+							X_Obj0_offsetS = sva::PTransformd(offsetLIn); // Hl < Ol < Oc
 						}
-						else if(caseDr)
+						else if(caseBr)
 						{
-							X_Obj0_offsetS = sva::PTransformd(offsetRIn);  // Oc < Hr < Or
+							// X_Obj0_offsetS = sva::PTransformd(offsetLIn);  // Ol < Hl < Oc
+							X_Obj0_offsetS = sva::PTransformd(offsetLOut);  // Ol < Hl < Oc
 						}
+													/*this should be hand rotation*/
+						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosL);
+						X_M_offsetR = X_M_Obj0 * X_Obj0_offsetS;
 
-						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosR);
-						X_M_offset = X_M_Obj0 * X_Obj0_offsetS;
-
-						/*https://www.mathstopia.net/vectors/parallelogram-law-vector-addition*/
-
-						/*method 1*/
-						// vecOffsetL = fingerPos + posTaskL->position() - X_M_offset.translation();/*approachObj->objectPosR*/
-						// X_M_offsetL =  sva::PTransformd(vecOffsetL);
-
-
-						/*method 2*/
-						// X_M_offsetL =
-						// 			X_M_offset.inv() *
-						// 			sva::PTransformd(approachObj->objRot.transpose(), fingerPos) *
-						// 			sva::PTransformd(approachObj->objRot.transpose(), ltPosW).inv();
-
-
-						/*method 3*/
-						X_M_offsetL = X_M_offset;
-
-						return X_M_offsetL;
+						return X_M_offsetR;
 					};
 
 
@@ -634,6 +572,35 @@ namespace mc_handover
 
 						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosR);
 						X_M_offsetL = X_M_Obj0 * X_Obj0_offsetEf;
+
+						return X_M_offsetL;
+					};
+
+
+					auto robotLtHandOnObj = [&]()-> sva::PTransformd
+					{
+						caseCr = (approachObj->objectPosC - approachObj->gripperLtEfA).norm() < // Oc < Rl < Or
+								(approachObj->objectPosC - approachObj->objectPosR).norm();
+
+						caseDr = (approachObj->objectPosC - approachObj->gripperLtEfA).norm() > // Rl > Or
+								(approachObj->objectPosC - approachObj->objectPosR).norm();
+
+						// caseCr = false;
+						// caseDr = true;
+
+						if(caseCr)
+						{
+							// X_Obj0_offsetS = sva::PTransformd(offsetROut); // Hr > Oc > Or
+							X_Obj0_offsetS = sva::PTransformd(offsetRIn); // Hr > Oc > Or
+						}
+						else if(caseDr)
+						{
+							// X_Obj0_offsetS = sva::PTransformd(offsetRIn);  // Oc < Hr < Or
+							X_Obj0_offsetS = sva::PTransformd(offsetROut);  // Oc < Hr < Or
+						}
+													/*this should be hand rotation*/
+						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosR);
+						X_M_offsetL = X_M_Obj0 * X_Obj0_offsetS;
 
 						return X_M_offsetL;
 					};
@@ -753,18 +720,18 @@ namespace mc_handover
 								updateOffsetPosL = X_M_offsetL.translation();
 								approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
-								if((approachObj->i) % 400 == 0)
+								// if((approachObj->i) % 400 == 0)
+								// {LOG_INFO(" left Ef obj BLUE		" << updateOffsetPosL.transpose())}
 								// {LOG_INFO(" left Ef obj BLUE		" << (posTaskL->position() /*- fingerPos*/).transpose())}
-								{LOG_INFO(" left Ef obj BLUE		" << updateOffsetPosL.transpose())}
 							}
 							else if(approachObj->useRightEf)
 							{
 								updateOffsetPosR = X_M_offsetR.translation();
 								approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 
-								if((approachObj->i) % 400  == 0)
+								// if((approachObj->i) % 400  == 0)
+								// {LOG_ERROR(" right Ef obj RED		" << updateOffsetPosR.transpose())}
 								// {LOG_ERROR(" right Ef obj RED		" << (posTaskR->position() /*- fingerPos*/).transpose())}
-								{LOG_ERROR(" right Ef obj RED		" << updateOffsetPosR.transpose())}
 							}
 						}
 
