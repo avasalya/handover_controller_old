@@ -102,8 +102,10 @@ namespace mc_handover
 			Eigen::Vector3d updateOffsetPosL, updateOffsetPosR;
 
 			Eigen::Vector3d vecOffsetL, vecOffsetR;
-			sva::PTransformd P_M_offset, X_M_Pipe0, X_M_offset;
-			sva::PTransformd X_M_offsetL, X_M_offsetR;
+			sva::PTransformd X_M_offset, X_M_offsetL, X_M_offsetR;
+			sva::PTransformd X_M_Obj0;
+			sva::PTransformd X_Obj0_offsetEf; //when subj has object
+			sva::PTransformd X_Obj0_offsetS; // when robot has object
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;

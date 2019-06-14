@@ -290,7 +290,7 @@ namespace mc_handover
 
 		/*robot constraint*/
 		if(enableHand &&
-			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.7) &&
+			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.8) &&
 			(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
 			(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
 			)
