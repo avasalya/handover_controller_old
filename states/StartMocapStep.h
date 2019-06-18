@@ -71,6 +71,7 @@ namespace mc_handover
 			int fps{200};
 			int b_;
 			int dt{1};
+			int i{0};
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
@@ -85,10 +86,10 @@ namespace mc_handover
 			Eigen::Matrix3d ltRotW, rtRotW;
 
 			Eigen::Matrix3d initRotL, initRotR;
-			Eigen::Matrix3d constRotL, constRotR;
-
 			Eigen::Vector3d initPosL, initPosR;
-			Eigen::Vector3d constPosL, constPosR;
+
+			Eigen::Matrix3d relaxRotL, relaxRotR;
+			Eigen::Vector3d relaxPosL, relaxPosR;
 
 
 			bool caseAs{false}, caseBs{false}, caseCs{false}, caseDs{false};
@@ -108,8 +109,8 @@ namespace mc_handover
 			sva::PTransformd X_Obj0_offsetS; // when robot has object
 
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
-			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
+			Eigen::Vector3d leftForceLo, rightForceLo;
 
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
 			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
@@ -150,8 +151,6 @@ namespace mc_handover
 			double del{0};
 
 			bool startCapture{false};
-
-			bool taskOK{false};
 
 			bool restartEverything{false};
 

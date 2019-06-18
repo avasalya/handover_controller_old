@@ -17,9 +17,9 @@
 
 #include <Eigen/Core>
 
-#include <mc_tasks/CoMTask.h>
 #include <mc_tasks/MetaTask.h>
-#include <mc_tasks/RelativeEndEffectorTask.h>
+#include <mc_tasks/CoMTask.h>
+#include <mc_tasks/EndEffectorTask.h>
 #include <mc_tasks/OrientationTask.h>
 #include <mc_tasks/ComplianceTask.h>
 #include <mc_tasks/PostureTask.h>
@@ -32,6 +32,7 @@
 #include <mc_rbdyn/Robot.h>
 #include <mc_rbdyn/RobotLoader.h>
 #include <mc_rbdyn/RobotModule.h>
+#include <mc_rbdyn/rpy_utils.h>
 #include <mc_rbdyn/Contact.h>
 
 
@@ -69,16 +70,16 @@ namespace mc_handover
 
 
 		std::map<std::string, sva::ForceVecd> wrenches;
-		
+
 		bool getHostInfo();
 		bool Flag_ROBOT{false};
-		
+
 
 
 	private:
 
 		double openG{0.5};
 		double closeG{0.2};
-		
+
 	};
 } // namespace mc_control
