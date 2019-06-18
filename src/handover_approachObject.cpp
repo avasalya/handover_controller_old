@@ -460,15 +460,14 @@ namespace mc_handover
 
 					FcloseL = leftForce;
 					FcloseR = rightForce;
-					LOG_INFO("closing with Fclose L & R Norms "<<FcloseL.norm()<<" & "<<FcloseR.norm()<< ",	is object inside gripper?")
+					LOG_INFO("closing with Fclose L & R Norms "<<FcloseL.norm()<<" & "<<FcloseR.norm()<< ",	is object inside grippers?")
 				}
 
 				/*closed WITHOUT object*/
 				else if(
 						(!restartHandover) && (!graspObject)  &&
-						( (obj_rel_robotRtHand < 0.2) || (obj_rel_robotLtHand < 0.2) ) &&
-						( (obj_rel_robotRtHand > 0.15) || (obj_rel_robotLtHand > 0.15) )
-						)
+						(obj_rel_robotRtHand > 0.15) && (obj_rel_robotRtHand < 0.2) &&
+						(obj_rel_robotLtHand > 0.15) && (obj_rel_robotLtHand < 0.2) )
 				{
 					if( (FcloseL.norm() < 2.0) || (FcloseR.norm() < 2.0) )
 					{
@@ -477,7 +476,7 @@ namespace mc_handover
 						graspObject = true;
 
 						gOpen = true;
-						LOG_ERROR("false close, try with object again")
+						LOG_ERROR("false close, Fclose L & R Norms, try with object again"<<FcloseL.norm()<<" & "<<FcloseR.norm())
 					}
 					else
 					{
@@ -490,7 +489,7 @@ namespace mc_handover
 
 
 		/*restart handover*/
-		if( (finR_rel_efL > 1.0) && (finL_rel_efR > 1.0) )
+		if( (finR_rel_efL > 0.8) && (finL_rel_efR > 0.8) )
 		{
 			/*come only if object is grasped*/
 			if( (closeGripper) && (!restartHandover) && (!enableHand) )
