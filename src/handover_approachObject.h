@@ -83,7 +83,6 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask>& oriTaskR,
 			std::shared_ptr<mc_tasks::EndEffectorTask>& objEfTask);
 
-		std::shared_ptr<mc_control::fsm::Controller> ctl;
 
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
 
@@ -108,7 +107,8 @@ namespace mc_handover
 
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
-		std::vector<std::string> robotLtMarkers, robotRtMarkers, objMarkers, subjRtMarkers, subjLtMarkers, subjMarkers;
+		std::vector<std::string> robotLtMarkers, robotRtMarkers;
+		std::vector<std::string> objMarkers, subjRtMarkers, subjLtMarkers, subjMarkers;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 
@@ -125,6 +125,10 @@ namespace mc_handover
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> lHandPredict, rHandPredict;
+
+		bool addContacts{false};
+		bool removeContacts{false};
+		bool objHasContacts{false};
 
 		bool useLeftEf{true};
 		bool useRightEf{true};

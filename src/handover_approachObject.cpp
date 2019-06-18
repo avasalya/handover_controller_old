@@ -27,15 +27,12 @@ namespace mc_handover
 		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//17-19
 		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //13-19
 
-
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), objMarkers.begin(), objMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), subjMarkers.begin(), subjMarkers.end());
 
-
 		totalMarkers = strMarkersName.size();
-
 
 		for(unsigned int k=0; k<totalMarkers; k++)
 			markers_name_index[strMarkersName[k]] = k;
@@ -46,7 +43,6 @@ namespace mc_handover
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
 			{ markersPos[m] = Eigen::MatrixXd::Zero(3,600000); }
-
 
 		if(Flag_withoutRobot)
 		{	LOG_ERROR("robot markers are not considered") }
@@ -340,16 +336,6 @@ namespace mc_handover
 		std::shared_ptr<mc_tasks::EndEffectorTask>& objEfTask
 	)
 	{
-		auto addContact_object_Gripper = [&](std::string gripperName)
-		{ ctl->addContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
-
-		auto removeContact_object_Gripper = [&](std::string gripperName)
-		{ ctl->removeContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
-
-		auto objHasContact = [&](std::string gripperName) -> bool
-		{ ctl->hasContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
-
-
 		double finR_rel_efL, finL_rel_efR;
 		Eigen::Vector3d leftTh, rightTh;
 
@@ -385,23 +371,17 @@ namespace mc_handover
 				{
 					if(enableHand)
 					{
-						enableHand=false;
+						enableHand = false;
 						LOG_WARNING("2nd cycle, motion stopped, trying to pull object")
 					}
 
 					if( (abs(FpullL[idx]) > newThL[idx]) || (abs(FpullR[idx]) > newThR[idx]) )
 					{
-						if( objHasContact("LeftGripper") && objHasContact("RightGripper") )
+						if(objHasContacts)
 						{
-							removeContact_object_Gripper("LeftGripper");
-							removeContact_object_Gripper("RightGripper");
-
+							removeContacts = true;
 							robotHasObject = false;
 							subjHasObject = true;
-							if(subjHasObject)
-							{
-								ctl->solver().addTask(objEfTask);
-							}
 
 							gOpen=true;
 							restartHandover=true;
@@ -495,8 +475,8 @@ namespace mc_handover
 			if( (closeGripper) && (!restartHandover) && (!enableHand) )
 			{
 				/*add contacts*/
-				addContact_object_Gripper("LeftGripper");
-				addContact_object_Gripper("RightGripper");
+				if(e == 2)
+				{ addContacts = true; }
 
 
 				if( (e%200==0) )//wait xx sec
@@ -512,7 +492,7 @@ namespace mc_handover
 					accumulate( FloadRz.begin(), FloadRz.end(), 0.0)/double(FloadRz.size());
 
 
-					if( objHasContact("LeftGripper") && objHasContact("RightGripper") )
+					if(objHasContacts)
 					{
 						/*move right EF to relax pose*/
 						posTaskR->stiffness(2.0);
@@ -527,13 +507,12 @@ namespace mc_handover
 						(obj_rel_subjLtHand > obj_rel_robotRtHand)
 						)
 					{
-						robotHasObject = true;
 						subjHasObject = false;
+						robotHasObject = true;
 					}
 
 					if(robotHasObject)
 					{
-						ctl->solver().removeTask(objEfTask);
 						enableHand = true;
 						takeBackObject = true;
 					}
@@ -590,6 +569,9 @@ namespace mc_handover
 					useRightEf=true;
 					startNow=false;
 
+					addContacts = false;
+					removeContacts = false;
+
 					LOG_INFO("object returned to subject, motion enabled, restarting handover\n")
 				}
 			}
@@ -599,40 +581,3 @@ namespace mc_handover
 	}
 
 }//namespace mc_handover
-
-
-// auto compareLogic = [&](const char * axis_name, int idx)
-// {
-// 	if(fabs(leftForce[idx]) > leftTh[idx+3])
-// 	{
-// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
-// 		{
-// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on both hands")
-// 		}
-// 		else
-// 		{
-// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on left hand only")
-// 		}
-// 		open_grippers();
-// 		return true;
-// 	}
-// 	else
-// 	{
-// 		if(fabs(rightForce[idx]) > rightTh[idx+3])
-// 		{
-// 			LOG_INFO("Opening grippers, threshold on " << axis_name << " reached on right hand only")
-// 			open_grippers();
-// 			return true;
-// 		}
-// 		return false;
-// 	}
-// };
-
-// if(ctl.runOnce)
-// {
-// 	return compareLogic("x-axis", 0) || compareLogic("y-axis", 1) || compareLogic("z-axis", 2);
-// }
-// else
-// {
-// 	return true;
-// }

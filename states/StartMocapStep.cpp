@@ -6,6 +6,11 @@ namespace mc_handover
 	namespace states
 	{
 
+		void StartMocapStep::ros_spinner()
+		{ ros::spin(); }
+
+
+
 		void MyErrorMsgHandler(int iLevel, const char *szMsg)
 		{
 			const char *szLevel = NULL;
@@ -16,11 +21,6 @@ namespace mc_handover
 			else if (iLevel == VL_Error) { szLevel = "Error"; }
 			printf("  %s: %s\n", szLevel, szMsg);
 		}
-
-
-
-		void StartMocapStep::ros_spinner()
-		{ ros::spin(); }
 
 
 
@@ -358,7 +358,6 @@ namespace mc_handover
 
 			// oriTaskL->orientation(relaxRotL);
 			// oriTaskR->orientation(relaxRotR);
-
 		}// start
 
 
@@ -379,17 +378,42 @@ namespace mc_handover
 			leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 			rightForce = ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 
-
 			leftForceLo = ctl.robot().surfaceWrench("InternLeftHand").force();
 			rightForceLo = ctl.robot().surfaceWrench("InternRightHand").force();
 
 
-			// i+=1;
-			// if( i% 400 == 0 )
-			// {	i=1;
-			// 	LOG_ERROR(   (leftForceLo-  Eigen::Vector3d(.268158,  9.99566, -1.29043)).transpose() )
-			// 	LOG_WARNING( (rightForceLo- Eigen::Vector3d(-0.412189,-11.3563, 0.20421)).transpose() )
-			// }
+			/*robot object contacts*/
+			auto addContact_object_Gripper = [&](std::string gripperName)
+			{ ctl.addContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
+
+			auto removeContact_object_Gripper = [&](std::string gripperName)
+			{ ctl.removeContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
+
+			auto objHasContact = [&](std::string gripperName) -> bool
+			{
+				auto b = ctl.hasContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"});
+				return b;
+			};
+
+
+			if(approachObj->addContacts)
+			{
+				approachObj->addContacts = false;
+				addContact_object_Gripper("LeftGripper");
+				addContact_object_Gripper("RightGripper");
+			}
+
+
+			if(approachObj->removeContacts)
+			{
+				approachObj->removeContacts = false;
+				removeContact_object_Gripper("LeftGripper");
+				removeContact_object_Gripper("RightGripper");
+				ctl.solver().addTask(objEfTask);
+			}
+
+			approachObj->objHasContacts = objHasContact("LeftGripper") && objHasContact("RightGripper");
+
 
 			/*set com pose*/
 			target = initialCom + move;
@@ -724,7 +748,6 @@ namespace mc_handover
 					}
 
 
-
 					/*feed Ef pose*/
 					if( (approachObj->useLeftEf) || (approachObj->useRightEf) )
 					{
@@ -796,6 +819,7 @@ namespace mc_handover
 				dt+=1;
 
 				/*remove contacts*/
+
 				ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
 				ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 				ctl.solver().addTask(objEfTask);
@@ -827,6 +851,9 @@ namespace mc_handover
 
 				addTask = true;
 				removeTask = true;
+
+				approachObj->addContacts = false;
+				approachObj->removeContacts = false;
 
 				approachObj->subjHasObject = true;
 				approachObj->robotHasObject = false;
