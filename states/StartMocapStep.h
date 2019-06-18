@@ -52,9 +52,9 @@ namespace mc_handover
 			void ros_spinner();
 			void cortexCallback(const cortex_ros_bridge_msgs::Markers & msg);
 
-			double pi = 3.14;
-			double DegToRad = pi/180;
-			double RadToDeg = 180/pi;
+			double pi{3.14};
+			double DegToRad{pi/180};
+			double RadToDeg{180/pi};
 			double closeGrippers{0.13};
 			double openGrippers{0.5};
 

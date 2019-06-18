@@ -383,13 +383,13 @@ namespace mc_handover
 							robotHasObject = false;
 							subjHasObject = true;
 
-							gOpen=true;
-							restartHandover=true;
-							takeBackObject=false;
+							gOpen = true;
+							restartHandover = true;
+							takeBackObject = false;
 
 							if(goBackInit)
 							{
-								goBackInit=false;
+								goBackInit = false;
 								LOG_SUCCESS("object pulled and has mass(kg) = " << objMass)
 							}
 						}
@@ -565,9 +565,9 @@ namespace mc_handover
 					posTaskR->stiffness(4.0);
 					restartHandover = false;
 
-					useLeftEf=true;
-					useRightEf=true;
-					startNow=false;
+					useLeftEf = true;
+					useRightEf = true;
+					startNow = false;
 
 					addContacts = false;
 					removeContacts = false;
