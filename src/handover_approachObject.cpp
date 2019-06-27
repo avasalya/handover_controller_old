@@ -305,9 +305,9 @@ namespace mc_handover
 
 		/*robot constraint*/
 		if(enableHand &&
-			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.8) &&
-			(handoverPos(1)>= min)  && (handoverPos(1)<= max) &&
-			(handoverPos(2)>= 0.80) && (handoverPos(2)<= 1.4)
+			(handoverPos(0)>= 0.10) && (handoverPos(0)<= 0.8)
+			&& (handoverPos(1)>= min)  && (handoverPos(1)<= max)
+			&& (handoverPos(2)>= 0.80) /*&& (handoverPos(2)<= 1.4)*/
 			)
 		{
 			sva::PTransformd new_pose(get<3>(handPredict), handoverPos);
@@ -367,12 +367,12 @@ namespace mc_handover
 				newThL = FloadL + leftTh;
 				newThR = FloadR + rightTh;
 
-				if( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) )
+				if( (finR_rel_efL < 0.20) || (finL_rel_efR < 0.20) )
 				{
 					if(enableHand)
 					{
 						enableHand = false;
-						LOG_WARNING("2nd cycle, motion stopped, trying to pull object")
+						LOG_WARNING("trying to pull object, motion stopped")
 					}
 
 					if( (abs(FpullL[idx]) > newThL[idx]) || (abs(FpullR[idx]) > newThR[idx]) )
@@ -401,8 +401,6 @@ namespace mc_handover
 			/*check if object is being pulled*/
 			if(takeBackObject)
 			{
-				posTaskL->stiffness(4.0);
-				posTaskR->stiffness(4.0);
 				return checkForce("x-axis", 0) || checkForce("y-axis", 1) || checkForce("z-axis", 2);
 			}
 			else
@@ -411,7 +409,7 @@ namespace mc_handover
 				if( (!openGripper) )
 				{
 					gOpen = true;
-					LOG_INFO("opening grippers")
+					LOG_INFO("1st cycle, opening grippers")
 				}
 
 				/*stop motion*/
@@ -440,7 +438,7 @@ namespace mc_handover
 
 					FcloseL = leftForce;
 					FcloseR = rightForce;
-					LOG_INFO("closing with Fclose L & R Norms "<<FcloseL.norm()<<" & "<<FcloseR.norm()<< ",	is object inside grippers?")
+					LOG_WARNING("closing with Fclose L & R Norms "<<FcloseL.norm()<<" & "<<FcloseR.norm())
 				}
 
 				/*closed WITHOUT object*/
@@ -471,7 +469,7 @@ namespace mc_handover
 		/*restart handover*/
 		if( (finR_rel_efL > 0.8) && (finL_rel_efR > 0.8) )
 		{
-			/*come only if object is grasped*/
+			/*come only once after object is grasped*/
 			if( (closeGripper) && (!restartHandover) && (!enableHand) )
 			{
 				/*add contacts*/
@@ -499,7 +497,7 @@ namespace mc_handover
 						posTaskR->position(relaxPos);
 						oriTaskR->orientation(relaxRot);
 
-						LOG_SUCCESS("1st cycle, robot has object, motion enabled, FloadL & FloadR are "<< FloadL.transpose() <<"  "<< FloadR.transpose() << ", EF(s) returning to relax pose" )
+						LOG_SUCCESS("Robot has object, Ef(s) returning to relax pose, FloadL & FloadR are "<< FloadL.transpose() <<" :: "<< FloadR.transpose())
 					}
 
 					if( subjHasObject &&
@@ -507,6 +505,7 @@ namespace mc_handover
 						(obj_rel_subjLtHand > obj_rel_robotRtHand)
 						)
 					{
+
 						subjHasObject = false;
 						robotHasObject = true;
 					}
@@ -576,6 +575,18 @@ namespace mc_handover
 				}
 			}
 		}
+
+
+		// /*return robot to relax pose, if human is too far*/
+		// if( (robotHasObject) &&
+		// 	(fingerPosL(0)>1.5) &&
+		// 	(fingerPosR(0)>1.5) )
+		// {
+		// 	posTaskR->position(relaxPos);
+		// 	oriTaskR->orientation(relaxRot);
+		// 	enableHand = true;
+		// 	cout<<i<<" relax\n";
+		// }
 
 		return false;
 	}

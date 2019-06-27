@@ -76,8 +76,8 @@ namespace mc_handover
 			-0.0267631, -0.0358778,  -0.998998,
 			 -0.982935,  -0.181001,  0.0328332;
 
-			relaxPosL << 0.3, 0.35, 1;
-			relaxPosR << 0.3, -0.35, 1;
+			relaxPosL << 0.15, 0.35, 0.8;
+			relaxPosR << 0.15, -0.35, 0.8;
 
 
 			/*initial force/torque threshold*/
@@ -694,6 +694,9 @@ namespace mc_handover
 							{
 								removeTask = false;
 								ctl.solver().removeTask(objEfTask);
+								posTaskL->stiffness(4.0);
+								posTaskR->stiffness(4.0);
+								LOG_SUCCESS("begin 2nd cycle, motion enabled")
 							}
 
 							robotLtHandOnObj();
@@ -765,7 +768,7 @@ namespace mc_handover
 							if(approachObj->useLeftEf)
 							{
 								updateOffsetPosL = X_M_offsetL.translation();
-								approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
+								approachObj->goToHandoverPose(-0.15, 0.95, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
 								// if((approachObj->i) % 400 == 0)
 								// {LOG_INFO(" left Ef obj BLUE		" << updateOffsetPosL.transpose())}
@@ -774,14 +777,13 @@ namespace mc_handover
 							else if(approachObj->useRightEf)
 							{
 								updateOffsetPosR = X_M_offsetR.translation();
-								approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
+								approachObj->goToHandoverPose(-0.95, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 
 								// if((approachObj->i) % 400  == 0)
 								// {LOG_ERROR(" right Ef obj RED		" << updateOffsetPosR.transpose())}
 								// {LOG_ERROR(" right Ef obj RED		" << (posTaskR->position() /*- fingerPos*/).transpose())}
 							}
 						}
-
 
 						/*check both gripper forces together*/
 						approachObj->forceController(approachObj->enableHand, initPosR, initRotR, initPosL, initRotL, relaxPosR, relaxRotR, thresh, leftForce, rightForce, leftForceLo, rightForceLo, efLAce, efRAce, posTaskL, oriTaskL, posTaskR, oriTaskR, objEfTask);

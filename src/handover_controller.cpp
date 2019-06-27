@@ -12,7 +12,7 @@ namespace mc_handover
 	//
 	//////////////
 	HandoverController::HandoverController(std::shared_ptr<mc_rbdyn::RobotModule> robot_module,
-		double dt, const mc_rtc::Configuration & config) 
+		double dt, const mc_rtc::Configuration & config)
 	:mc_control::fsm::Controller(robot_module, dt, config)
 	{
 
@@ -22,7 +22,7 @@ namespace mc_handover
 
 		// qpsolver->addConstraintSet(kinematicsConstraint);
 		qpsolver->addConstraintSet(selfCollisionConstraint);
-		
+
 		selfCollisionConstraint.reset();
 		selfCollisionConstraint.addCollisions(solver(), {
 			mc_rbdyn::Collision("LARM_LINK3", "BODY", 0.1, 0.05, 0.),
@@ -78,31 +78,36 @@ namespace mc_handover
 				/* gripper control */
 		gui()->addElement({"Handover", "Grippers"},
 
-				mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg); 
-							std::cout << "at right gripper opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
-				}),
-				
-				mc_rtc::gui::Button("close_Right_Gripper",[this]() { std::string msg = "closeGripperR"; read_msg(msg); 
-							std::cout << "at right gripper closing: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
-				}),
-				
-				mc_rtc::gui::Button("open_Left_Gripper",[this]() { std::string msg = "openGripperL"; read_msg(msg); 
-					std::cout << "at left gripper opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
-				}),
-				
-				mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg); 
-					std::cout << "at left gripper closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
-				}),
-				
-				mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; 
-					read_msg(msg); 
-							std::cout << "at grippers opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
-							std::cout << "at grippers opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg);
+					cout<<"opening right gripper via GUI\n";
+							// std::cout << "at right gripper opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
 				}),
 
-				mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg); 
-							std::cout << "at grippers closing: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
-							std::cout << "at grippers closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				mc_rtc::gui::Button("close_Right_Gripper",[this]() { std::string msg = "closeGripperR"; read_msg(msg);
+					cout<<"closing right gripper via GUI\n";
+							// std::cout << "at right gripper closing: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
+				}),
+
+				mc_rtc::gui::Button("open_Left_Gripper",[this]() { std::string msg = "openGripperL"; read_msg(msg);
+					cout<<"opening left gripper via GUI\n";
+					// std::cout << "at left gripper opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+
+				mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg);
+					cout<<"closing left gripper via GUI\n";
+					// std::cout << "at left gripper closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+
+				mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; read_msg(msg);
+					cout<<"opening both grippers via GUI\n";
+							// std::cout << "at grippers opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
+							// std::cout << "at grippers opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+
+				mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg);
+					cout<<"closing both grippers via GUI\n";
+							// std::cout << "at grippers closing: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
+							// std::cout << "at grippers closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
 				})
 			);
 	}
@@ -150,10 +155,10 @@ namespace mc_handover
 		if (result)
 			{	perror("gethostname");	return EXIT_FAILURE;	}
 
-		result = getlogin_r(username, LOGIN_NAME_MAX);		
+		result = getlogin_r(username, LOGIN_NAME_MAX);
 		if (result)
 			{	perror("getlogin_r");	return EXIT_FAILURE;	}
-		
+
 		if( strcmp(username, "hrp2user")==0 && strcmp(hostname, "hrp2012c")==0 )
 			{	Flag_ROBOT = true;	}
 		else if ( strcmp(username, "avasalya")==0 && strcmp(hostname, "vasalya-xps15")==0 )
@@ -162,7 +167,7 @@ namespace mc_handover
 		result = printf("Hello %s, you are logged in to %s.\n", username, hostname);
 		if (result < 0)
 			{	perror("printf");	return EXIT_FAILURE;	}
-		
+
 		return EXIT_SUCCESS;
 	}
 
@@ -196,15 +201,15 @@ namespace mc_handover
 		// 	initPosL <<  0.30, 0.35, 0.3;
 		// 	relEfTaskL->set_ef_pose(sva::PTransformd(sva::RotY(-(M_PI/180)*90)*sva::RotX(-(M_PI/180)*90)*BodyW.rotation(), initPosL));
 		// 	solver().addTask(relEfTaskL);
-			
+
 		// 	return true;
 		// }
 
 
 
 		// if(token == "step2")
-		// { 
-		// 	//set ef pose 
+		// {
+		// 	//set ef pose
 		// 	Eigen::Vector3d tL( 0.7, 0.35, .3 );
 		// 	Eigen::Matrix3d getCurRotL =  relEfTaskL->get_ef_pose().rotation();
 		// 	sva::PTransformd dtrL(getCurRotL, tL);
@@ -222,7 +227,7 @@ namespace mc_handover
 
 
 		// if(token == "robots")
-		// { 
+		// {
 		// 	std::string robotName =  this->robot().name();
 
 		// 	cout << robotName <<  endl;
@@ -233,7 +238,7 @@ namespace mc_handover
 
 
 		// if(token == "surfaces")
-		// { 
+		// {
 		// 	surf =  this->robot().surfaces();
 
 		// 	for(auto elem : surf)
@@ -249,7 +254,7 @@ namespace mc_handover
 		{
 			auto gripper = grippers["r_gripper"].get();
 			gripper->setTargetQ({openG});
-			
+
 			return true;
 		}
 		if(token == "closeGripperR")
@@ -293,7 +298,7 @@ namespace mc_handover
 			return true;
 		}
 
-		
+
 		// get LARM JOINTs //
 		std::vector<double>  get_LArm_Joints(8);
 		if(token == "getRtPose")
@@ -321,7 +326,7 @@ namespace mc_handover
 			std::cout<<std::endl;
 			return true;
 		}
-		
+
 		LOG_WARNING("Cannot handle " << msg)
 		return mc_control::fsm::Controller::read_msg(msg);
 	}
