@@ -783,27 +783,8 @@ namespace mc_handover
 						}
 
 
-
 						/*check both gripper forces together*/
-						approachObj->forceController(
-							approachObj->enableHand,
-
-							initPosR, initRotR,
-							initPosL, initRotL,
-
-							relaxPosR, relaxRotR,
-
-							thresh,
-							leftForce, rightForce,
-							leftForceLo, rightForceLo,
-							efLAce, efRAce,
-
-							posTaskL, oriTaskL,
-							posTaskR, oriTaskR,
-
-							objEfTask
-							);
-
+						approachObj->forceController(approachObj->enableHand, initPosR, initRotR, initPosL, initRotL, relaxPosR, relaxRotR, thresh, leftForce, rightForce, leftForceLo, rightForceLo, efLAce, efRAce, posTaskL, oriTaskL, posTaskR, oriTaskR, objEfTask);
 
 						gripperControl();
 					}

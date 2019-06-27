@@ -430,7 +430,7 @@ namespace mc_handover
 
 				/*closed WITH object*/
 				else if( (!enableHand) &&
-						(graspObject) &&
+						(graspObject) && /*along localY direction*/
 						( abs( (leftForceLo - local_FzeroL)(2) ) >2.0 ) &&
 						( abs( (rightForceLo - local_FzeroL)(2) ) > 2.0 ) )
 				{
