@@ -352,8 +352,8 @@ namespace mc_handover
 			{
 				objMass = ( FloadL.norm() + FloadR.norm() )/9.81;
 
-				FinertL = objMass * efLAce;
-				FinertR = objMass * efRAce;
+				FinertL = (objMass/2) * efLAce;
+				FinertR = (objMass/2) * efRAce;
 
 				FpullL[0] = abs(leftForce[0]) - abs(FinertL[0]) - abs(FzeroL[0]);
 				FpullL[1] = abs(leftForce[1]) - abs(FinertL[1]) - abs(FzeroL[1]);
@@ -392,6 +392,10 @@ namespace mc_handover
 								goBackInit = false;
 								LOG_SUCCESS("object pulled and has mass(kg) = " << objMass)
 							}
+						}
+						else
+						{
+							LOG_ERROR("robot doesn't have contacts with the object")
 						}
 					}
 				}

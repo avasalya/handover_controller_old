@@ -596,7 +596,7 @@ namespace mc_handover
 							X_Obj0_offsetS = sva::PTransformd(offsetLOut);  // Ol < Hl < Oc
 						}
 						X_M_Obj0 = sva::PTransformd(approachObj->subjLHandRot.transpose(), approachObj->fingerPosL);
-						X_M_offsetR = X_M_Obj0 * X_Obj0_offsetS;
+						X_M_offsetR = X_M_Obj0 /** X_Obj0_offsetS*/;
 
 						return X_M_offsetR;
 					};
@@ -648,7 +648,7 @@ namespace mc_handover
 							X_Obj0_offsetS = sva::PTransformd(offsetROut);  // Oc < Hr < Or
 						}
 						X_M_Obj0 = sva::PTransformd(approachObj->subjRHandRot.transpose(), approachObj->fingerPosR);
-						X_M_offsetL = X_M_Obj0 * X_Obj0_offsetS;
+						X_M_offsetL = X_M_Obj0 /** X_Obj0_offsetS*/;
 
 						return X_M_offsetL;
 					};
