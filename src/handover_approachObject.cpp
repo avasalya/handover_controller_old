@@ -575,22 +575,10 @@ namespace mc_handover
 					addContacts = false;
 					removeContacts = false;
 
-					LOG_INFO("object returned to subject, motion enabled, restarting handover\n")
+					LOG_SUCCESS("object returned to subject, motion enabled, restarting handover\n")
 				}
 			}
 		}
-
-
-		// /*return robot to relax pose, if human is too far*/
-		// if( (robotHasObject) &&
-		// 	(fingerPosL(0)>1.5) &&
-		// 	(fingerPosR(0)>1.5) )
-		// {
-		// 	posTaskR->position(relaxPos);
-		// 	oriTaskR->orientation(relaxRot);
-		// 	enableHand = true;
-		// 	cout<<i<<" relax\n";
-		// }
 
 		return false;
 	}

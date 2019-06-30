@@ -93,7 +93,6 @@ namespace mc_handover
 			headTask->selectActiveJoints(ctl.solver(), activeJointsName);
 
 
-
 			/*chest pos task*/
 			chestPosTask.reset(new mc_tasks::PositionTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestPosTask);
@@ -105,6 +104,11 @@ namespace mc_handover
 			chestOriTask->orientation(Eigen::Matrix3d::Identity());
 
 
+			/*body ori task*/
+			bodyOriTask.reset(new mc_tasks::OrientationTask("BODY", ctl.robots(), 0, 3.0, 1e2));
+			ctl.solver().addTask(bodyOriTask);
+			bodyOriTask->orientation(Eigen::Matrix3d::Identity());
+
 
 			/*Ef pos Tasks*/
 			posTaskL = make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
@@ -114,7 +118,6 @@ namespace mc_handover
 			posTaskR = make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
 			ctl.solver().addTask(posTaskR);
 			initPosR = posTaskR->position();
-
 
 
 			/*Ef ori Task*/
@@ -801,8 +804,14 @@ namespace mc_handover
 			{
 				dt+=1;
 
-				/*remove contacts*/
+				/*reset moap markers*/
+				for(unsigned int d=0; d<approachObj->totalMarkers; d++)
+				{
+					approachObj->Markers[d] << Eigen::Vector3d(0, 0, 0);
+					// markersPos
+				}
 
+				/*remove contacts*/
 				ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
 				ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 				ctl.solver().addTask(objEfTask);

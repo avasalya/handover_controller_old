@@ -118,6 +118,8 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
+			std::shared_ptr<mc_tasks::OrientationTask> bodyOriTask;
+
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
 
