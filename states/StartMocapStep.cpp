@@ -103,7 +103,6 @@ namespace mc_handover
 			ctl.solver().addTask(chestOriTask);
 			chestOriTask->orientation(Eigen::Matrix3d::Identity());
 
-
 			/*body ori task*/
 			bodyOriTask.reset(new mc_tasks::OrientationTask("BODY", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(bodyOriTask);
@@ -128,7 +127,6 @@ namespace mc_handover
 			oriTaskR = make_shared<mc_tasks::OrientationTask>("RARM_LINK6",ctl.robots(), 0, 4.0, 500);
 			ctl.solver().addTask(oriTaskR);
 			initRotR = oriTaskR->orientation();
-
 
 
 			/*handover endEffectorTask*/
@@ -383,6 +381,12 @@ namespace mc_handover
 
 			leftForceLo = ctl.robot().surfaceWrench("InternLeftHand").force();
 			rightForceLo = ctl.robot().surfaceWrench("InternRightHand").force();
+
+
+			/*chest pos and chest/body joint ori*/
+			chestPosTask->position({0.032, 0.0, 1.12});
+			chestOriTask->orientation(Eigen::Matrix3d::Identity());
+			bodyOriTask->orientation(Eigen::Matrix3d::Identity());
 
 
 			/*robot object contacts*/
@@ -789,7 +793,19 @@ namespace mc_handover
 						}
 
 						/*check both gripper forces together*/
-						approachObj->forceController(approachObj->enableHand, initPosR, initRotR, initPosL, initRotL, relaxPosR, relaxRotR, thresh, leftForce, rightForce, leftForceLo, rightForceLo, efLAce, efRAce, posTaskL, oriTaskL, posTaskR, oriTaskR, objEfTask);
+						approachObj->forceController(
+							approachObj->enableHand,
+							initPosR, initRotR,
+							initPosL, initRotL,
+							relaxPosR, relaxRotR,
+							relaxPosL, relaxRotL,
+							thresh,
+							leftForce, rightForce,
+							leftForceLo, rightForceLo,
+							efLAce, efRAce,
+							posTaskL, oriTaskL,
+							posTaskR, oriTaskR,
+							objEfTask);
 
 						gripperControl();
 					}
@@ -823,13 +839,12 @@ namespace mc_handover
 				gripperR->setTargetQ({openGrippers});
 
 				posTaskL->stiffness(2.0);
-				posTaskL->position(initPosL);
+				posTaskL->position(relaxPosL);
+				oriTaskL->orientation(relaxRotL);
 
 				posTaskR->stiffness(2.0);
-				posTaskR->position(initPosR);
-
-				oriTaskL->orientation(initRotL);
-				oriTaskR->orientation(initRotR);
+				posTaskR->position(relaxPosR);
+				oriTaskR->orientation(relaxRotR);
 
 				caseAs = false;
 				caseBs = false;
@@ -886,9 +901,16 @@ namespace mc_handover
 				approachObj->FpullR = Eigen::Vector3d::Zero();
 
 
-				if( (dt%800) == 0 )
+				if( (dt%800) == 0 ) // 4 seconds
 				{
 					dt = 1;
+
+					posTaskL->position(initPosL);
+					oriTaskL->orientation(initRotL);
+
+					posTaskR->position(initPosR);
+					oriTaskR->orientation(initRotR);
+
 					posTaskL->stiffness(4.0);
 					posTaskR->stiffness(4.0);
 

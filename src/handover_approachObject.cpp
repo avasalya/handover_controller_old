@@ -324,7 +324,8 @@ namespace mc_handover
 
 		Eigen::Vector3d initPosR, Eigen::Matrix3d initRotR,
 		Eigen::Vector3d initPosL, Eigen::Matrix3d initRotL,
-		Eigen::Vector3d relaxPos, Eigen::Matrix3d relaxRot,
+		Eigen::Vector3d relaxPosR, Eigen::Matrix3d relaxRotR,
+		Eigen::Vector3d relaxPosL, Eigen::Matrix3d relaxRotL,
 		Eigen::VectorXd thresh,
 		Eigen::Vector3d leftForce, Eigen::Vector3d rightForce,
 		Eigen::Vector3d leftForceLo, Eigen::Vector3d rightForceLo,
@@ -346,7 +347,7 @@ namespace mc_handover
 		rightTh = thresh.segment(9,3);
 
 
-		if( (finR_rel_efL < 0.35) && (finL_rel_efR < 0.35) )
+		if( (finR_rel_efL < 0.35) || (finL_rel_efR < 0.35) )
 		{
 			auto checkForce = [&](const char *axis_name, int idx)
 			{
@@ -498,8 +499,12 @@ namespace mc_handover
 					{
 						/*move right EF to relax pose*/
 						posTaskR->stiffness(2.0);
-						posTaskR->position(relaxPos);
-						oriTaskR->orientation(relaxRot);
+						posTaskR->position(relaxPosR);
+						oriTaskR->orientation(relaxRotR);
+
+						posTaskL->stiffness(2.0);
+						posTaskL->position(relaxPosL);
+						oriTaskL->orientation(relaxRotL);
 
 						LOG_SUCCESS("Robot has object, Ef(s) returning to relax pose, FloadL & FloadR are "<< FloadL.transpose() <<" :: "<< FloadR.transpose())
 					}
@@ -544,12 +549,12 @@ namespace mc_handover
 				if(!goBackInit)
 				{
 					posTaskL->stiffness(2.0);
-					posTaskL->position(initPosL);
-					oriTaskL->orientation(initRotL);
+					posTaskL->position(relaxPosL);
+					oriTaskL->orientation(relaxRotL);
 
 					posTaskR->stiffness(2.0);
-					posTaskR->position(initPosR);
-					oriTaskR->orientation(initRotR);
+					posTaskR->position(relaxPosR);
+					oriTaskR->orientation(relaxRotR);
 
 					gClose = true;
 				}
@@ -562,8 +567,17 @@ namespace mc_handover
 				enableHand = true;
 				e = 1;
 
-				if( restartHandover && (posTaskL->eval().norm()) <0.1 && (posTaskR->eval().norm() <0.1) )
+				if( restartHandover && (posTaskL->eval().norm()) <0.05 && (posTaskR->eval().norm() <0.05) )
+
+					// >speed().norm() < 1e-4
 				{
+
+					posTaskL->position(initPosL);
+					oriTaskL->orientation(initRotL);
+
+					posTaskR->position(initPosR);
+					oriTaskR->orientation(initRotR);
+
 					posTaskL->stiffness(4.0);
 					posTaskR->stiffness(4.0);
 					restartHandover = false;

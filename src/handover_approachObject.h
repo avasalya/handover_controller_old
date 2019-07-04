@@ -72,7 +72,8 @@ namespace mc_handover
 
 			Eigen::Vector3d initPosR, Eigen::Matrix3d initRotR,
 			Eigen::Vector3d initPosL, Eigen::Matrix3d initRotL,
-			Eigen::Vector3d relaxPos, Eigen::Matrix3d relaxRot,
+			Eigen::Vector3d relaxPosR, Eigen::Matrix3d relaxRotR,
+			Eigen::Vector3d relaxPosL, Eigen::Matrix3d relaxRotL,
 			Eigen::VectorXd thresh,
 			Eigen::Vector3d leftForce, Eigen::Vector3d rightForce,
 			Eigen::Vector3d leftForceLo, Eigen::Vector3d rightForceLo,
