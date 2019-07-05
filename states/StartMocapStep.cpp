@@ -32,6 +32,8 @@ namespace mc_handover
 			{
 				if(msg.markers.at(d).marker_name== "dummy")
 				{}
+				else if(msg.markers.at(d).marker_name== "dummyObj")
+				{}
 				else if( c < approachObj->totalMarkers)/*used markers count*/
 				{
 					approachObj->Markers[c] <<
@@ -705,9 +707,6 @@ namespace mc_handover
 								posTaskR->stiffness(4.0);
 								LOG_SUCCESS("begin 2nd cycle, motion enabled")
 							}
-
-							robotLtHandOnObj();
-							robotRtHandOnObj();
 						}
 					};
 
@@ -774,6 +773,7 @@ namespace mc_handover
 						{
 							if(approachObj->useLeftEf)
 							{
+								robotLtHandOnObj();
 								updateOffsetPosL = X_M_offsetL.translation();
 								approachObj->goToHandoverPose(-0.15, 0.95, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
@@ -783,6 +783,7 @@ namespace mc_handover
 							}
 							else if(approachObj->useRightEf)
 							{
+								robotRtHandOnObj();
 								updateOffsetPosR = X_M_offsetR.translation();
 								approachObj->goToHandoverPose(-0.95, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 

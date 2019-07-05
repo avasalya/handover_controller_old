@@ -22,7 +22,7 @@ namespace mc_handover
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
 		// objMarkers = {"left", "center", "right", "centerX", "centerY"};//8-12
-		objMarkers = {"center", "centerX", "centerY"}; //8-10
+		objMarkers = {"center", "centerX", "centerY"}; //8-10 + dummyObj
 
 
 		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-14
@@ -111,8 +111,8 @@ namespace mc_handover
 				{ markersPos[m].col(i) << Markers[m]; }
 
 			/*for GUI*/
-			objectPosCx = markersPos[9].col(i);//centerX
 			objectPosC = markersPos[8].col(i);//center
+			objectPosCx = markersPos[9].col(i);//centerX
 			objectPosCy = markersPos[10].col(i);//centerY
 
 			fingerPosR = markersPos[11].col(i); //lShapeRtA
@@ -425,7 +425,7 @@ namespace mc_handover
 
 				/*stop motion*/
 				else if( (openGripper) && (!closeGripper) && (!restartHandover) &&
-						(enableHand) && (finR_rel_efL < 0.12) && (finL_rel_efR < 0.12) )
+						(enableHand) && (finR_rel_efL < 0.15) && (finL_rel_efR < 0.15) )
 				{
 					FzeroL = leftForce;
 					FzeroR = rightForce;
