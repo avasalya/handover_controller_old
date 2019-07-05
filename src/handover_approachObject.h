@@ -55,7 +55,7 @@ namespace mc_handover
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> predictionController(
 			const Eigen::Vector3d& curPosEf,
 			const Eigen::Matrix3d & constRotLink6,
-			std::vector<std::string> lShpMarkersName);
+			std::vector<std::string> subjMarkersName);
 
 		void goToHandoverPose(
 			double min,
@@ -102,7 +102,6 @@ namespace mc_handover
 
 		int totalMarkers;
 
-		std::vector<Eigen::Vector3d> object;
 		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;
 
@@ -120,8 +119,11 @@ namespace mc_handover
 		Eigen::Vector3d gripperLtEfB, gripperRtEfB;
 
 		Eigen::Vector3d fingerPosL, fingerPosR;
-		Eigen::Vector3d objectPosL, objectPosC, objectPosR, objectPosCx, objectPosCy;
+		Eigen::Vector3d objectPosC, objectPosCx, objectPosCy;
+		sva::PTransformd virObjLeft, virObjRight;
+
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
+		double virObj_rel_subjLtHand, virObj_rel_subjRtHand, virObj_rel_robotLtHand, virObj_rel_robotRtHand;
 
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
 

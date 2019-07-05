@@ -91,6 +91,18 @@ namespace mc_handover
 				/* gripper control */
 		gui()->addElement({"Handover", "Grippers"},
 
+				mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; read_msg(msg);
+					cout<<"opening both grippers via GUI\n";
+							// std::cout << "at grippers opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
+							// std::cout << "at grippers opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+
+				mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg);
+					cout<<"closing both grippers via GUI\n";
+							// std::cout << "at grippers closing: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
+							// std::cout << "at grippers closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
+				}),
+
 				mc_rtc::gui::Button("open_Right_Gripper",[this]() { std::string msg = "openGripperR"; read_msg(msg);
 					cout<<"opening right gripper via GUI\n";
 							// std::cout << "at right gripper opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
@@ -109,18 +121,6 @@ namespace mc_handover
 				mc_rtc::gui::Button("close_Left_Gripper",[this]() { std::string msg = "closeGripperL"; read_msg(msg);
 					cout<<"closing left gripper via GUI\n";
 					// std::cout << "at left gripper closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
-				}),
-
-				mc_rtc::gui::Button("open_Grippers", [this]() { std::string msg = "openGrippers"; read_msg(msg);
-					cout<<"opening both grippers via GUI\n";
-							// std::cout << "at grippers opening: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
-							// std::cout << "at grippers opening: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
-				}),
-
-				mc_rtc::gui::Button("close_Grippers",[this]() { std::string msg = "closeGrippers"; read_msg(msg);
-					cout<<"closing both grippers via GUI\n";
-							// std::cout << "at grippers closing: right hand Forces " << wrenches.at("RightHandForceSensor").force().transpose() << endl;
-							// std::cout << "at grippers closing: left hand Forces " << wrenches.at("LeftHandForceSensor").force().transpose() << endl;
 				})
 			);
 	}

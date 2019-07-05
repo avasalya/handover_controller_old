@@ -16,16 +16,18 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "5mars_obj", "7mars_subj_hands"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "7mars_subj_hands"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		objMarkers = {"left", "center", "right", "centerX", "centerY"};//8-12
+		// objMarkers = {"left", "center", "right", "centerX", "centerY"};//8-12
+		objMarkers = {"center", "centerX", "centerY"}; //8-10
 
-		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//13-16
-		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//17-19
-		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //13-19
+
+		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-14
+		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//15-17
+		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //11-17
 
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
@@ -38,7 +40,7 @@ namespace mc_handover
 			markers_name_index[strMarkersName[k]] = k;
 
 		Markers.resize(totalMarkers);
-		object.resize(objMarkers.size());
+		// object.resize(objMarkers.size());
 
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
@@ -109,18 +111,12 @@ namespace mc_handover
 				{ markersPos[m].col(i) << Markers[m]; }
 
 			/*for GUI*/
-			object[0] = markersPos[8].col(i);//left
-			object[1] = markersPos[9].col(i);//center
-			object[2] = markersPos[10].col(i);//right
+			objectPosCx = markersPos[9].col(i);//centerX
+			objectPosC = markersPos[8].col(i);//center
+			objectPosCy = markersPos[10].col(i);//centerY
 
-			objectPosL = object[0];
-			objectPosC = object[1];
-			objectPosR = object[2];
-			objectPosCx = markersPos[11].col(i);//centerX
-			objectPosCy = markersPos[12].col(i);//centerY
-
-			fingerPosR = markersPos[13].col(i); //lShapeRtA
-			fingerPosL = markersPos[17].col(i); //lShapeLtA
+			fingerPosR = markersPos[11].col(i); //lShapeRtA
+			fingerPosL = markersPos[15].col(i); //lShapeLtA
 
 			gripperLtEfA = markersPos[2].col(i); //gripperLtEfA
 			gripperLtEfB = markersPos[3].col(i); //gripperLtEfB
@@ -131,16 +127,9 @@ namespace mc_handover
 			gripperEfL = 0.5*( gripperLtEfA + gripperLtEfB );
 			gripperEfR = 0.5*( gripperRtEfA + gripperRtEfB );
 
-			/*move EF when subject approaches object 1st time*/
-			obj_rel_robotRtHand = ( gripperEfR - object[0] ).norm();//gripperRtEfA - objLeft
-			obj_rel_robotLtHand = ( gripperEfL - object[2] ).norm();//gripperLtEfA - objRight
-
-			obj_rel_subjLtHand = ( fingerPosL - object[0] ).norm();//lshpLtA - objLeft
-			obj_rel_subjRtHand = ( fingerPosR - object[2] ).norm();//lshpRtA - objRight
-
 			/*right hand orientation*/
-			yr = markersPos[16].col(i) - markersPos[15].col(i);//vCD=Yr
-			xr = markersPos[15].col(i) - markersPos[13].col(i);//vAC=Xr
+			yr = markersPos[14].col(i) - markersPos[13].col(i);//vCD=Yr
+			xr = markersPos[13].col(i) - markersPos[11].col(i);//vAC=Xr
 
 			lshp_Xr = xr/xr.norm();
 			lshp_Yr = yr/yr.norm();
@@ -152,8 +141,8 @@ namespace mc_handover
 
 
 			/*left hand orientation*/
-			yl = markersPos[19].col(i) - markersPos[18].col(i);//vCD=Yl
-			xl = markersPos[18].col(i) - markersPos[17].col(i);//vAC=Xl
+			yl = markersPos[17].col(i) - markersPos[16].col(i);//vCD=Yl
+			xl = markersPos[16].col(i) - markersPos[15].col(i);//vAC=Xl
 
 			lshp_Xl = xl/xl.norm();
 			lshp_Yl = yl/yl.norm();
@@ -175,6 +164,23 @@ namespace mc_handover
 			objRot.col(0) = lshp_Xo;
 			objRot.col(1) = lshp_Yo;
 			objRot.col(2) = lshp_Zo/lshp_Zo.norm();
+
+			/*move EF when subject approaches object 1st time*/
+			obj_rel_robotRtHand = ( gripperEfR - objectPosC ).norm();//gripperRtEfA - objLeft
+			obj_rel_robotLtHand = ( gripperEfL - objectPosC ).norm();//gripperLtEfA - objRight
+
+			obj_rel_subjLtHand = ( fingerPosL - objectPosC ).norm();//lshpLtA - objLeft
+			obj_rel_subjRtHand = ( fingerPosR - objectPosC ).norm();//lshpRtA - objRight
+
+			/*virtual markers and their relative position*/
+			virObjLeft = sva::PTransformd(Eigen::Vector3d(0,-0.3, 0)) * sva::PTransformd(objRot, objectPosC);
+			virObjRight = sva::PTransformd(Eigen::Vector3d(0,0.3, 0)) * sva::PTransformd(objRot, objectPosC);
+
+			virObj_rel_robotRtHand = ( gripperEfR - virObjLeft.translation() ).norm();//gripperRtEfA - virObjLeft
+			virObj_rel_robotLtHand = ( gripperEfL - virObjRight.translation() ).norm();//gripperLtEfA - virObjRight
+
+			virObj_rel_subjLtHand = ( fingerPosL - virObjLeft.translation() ).norm();//lshpLtA - virObjLeft
+			virObj_rel_subjRtHand = ( fingerPosR - virObjRight.translation() ).norm();//lshpRtA - virObjRight
 
 			return true;
 		}
@@ -419,7 +425,7 @@ namespace mc_handover
 
 				/*stop motion*/
 				else if( (openGripper) && (!closeGripper) && (!restartHandover) &&
-						(enableHand) && (obj_rel_robotRtHand < 0.12) && (obj_rel_robotLtHand < 0.12) )
+						(enableHand) && (finR_rel_efL < 0.12) && (finL_rel_efR < 0.12) )
 				{
 					FzeroL = leftForce;
 					FzeroR = rightForce;
@@ -449,8 +455,11 @@ namespace mc_handover
 				/*closed WITHOUT object*/
 				else if(
 						(!restartHandover) && (!graspObject)  &&
-						(obj_rel_robotRtHand > 0.15) && (obj_rel_robotRtHand < 0.2) &&
-						(obj_rel_robotLtHand > 0.15) && (obj_rel_robotLtHand < 0.2) )
+						(obj_rel_subjRtHand < obj_rel_robotLtHand) &&
+						(obj_rel_subjLtHand < obj_rel_robotRtHand) &&
+						(finR_rel_efL > 0.5) &&
+						(finL_rel_efR > 0.5) )
+
 				{
 					if( (FcloseL.norm() < 2.0) || (FcloseR.norm() < 2.0) )
 					{
@@ -514,7 +523,6 @@ namespace mc_handover
 						(obj_rel_subjLtHand > obj_rel_robotRtHand)
 						)
 					{
-
 						subjHasObject = false;
 						robotHasObject = true;
 					}
