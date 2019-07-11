@@ -358,6 +358,7 @@ namespace mc_handover
 			auto checkForce = [&](const char *axis_name, int idx)
 			{
 				objMass = ( FloadL.norm() + FloadR.norm() )/9.81;
+				// objMass = ( (FloadL + FloadR).norm() )/9.81;
 
 				FinertL = (objMass/2) * efLAce;
 				FinertR = (objMass/2) * efRAce;
@@ -425,7 +426,10 @@ namespace mc_handover
 
 				/*stop motion*/
 				else if( (openGripper) && (!closeGripper) && (!restartHandover) &&
-						(enableHand) && (finR_rel_efL < 0.15) && (finL_rel_efR < 0.15) )
+						(enableHand)
+						// && (finR_rel_efL < 0.15) && (finL_rel_efR < 0.15)
+						&& (virObj_rel_robotRtHand < 0.12) && (virObj_rel_robotLtHand < 0.12)
+						)
 				{
 					FzeroL = leftForce;
 					FzeroR = rightForce;
@@ -558,11 +562,11 @@ namespace mc_handover
 				{
 					posTaskL->stiffness(2.0);
 					posTaskL->position(relaxPosL);
-					oriTaskL->orientation(relaxRotL);
+					oriTaskL->orientation(initRotL);
 
 					posTaskR->stiffness(2.0);
 					posTaskR->position(relaxPosR);
-					oriTaskR->orientation(relaxRotR);
+					oriTaskR->orientation(initRotR);
 
 					gClose = true;
 				}
@@ -579,12 +583,9 @@ namespace mc_handover
 
 					// >speed().norm() < 1e-4
 				{
-
 					posTaskL->position(initPosL);
-					oriTaskL->orientation(initRotL);
-
 					posTaskR->position(initPosR);
-					oriTaskR->orientation(initRotR);
+
 
 					posTaskL->stiffness(4.0);
 					posTaskR->stiffness(4.0);
