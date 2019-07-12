@@ -427,8 +427,8 @@ namespace mc_handover
 				/*stop motion*/
 				else if( (openGripper) && (!closeGripper) && (!restartHandover) &&
 						(enableHand)
-						// && (finR_rel_efL < 0.15) && (finL_rel_efR < 0.15)
-						&& (virObj_rel_robotRtHand < 0.12) && (virObj_rel_robotLtHand < 0.12)
+						&& (finR_rel_efL < 0.15) && (finL_rel_efR < 0.15)
+						// && (virObj_rel_robotRtHand < 0.12) && (virObj_rel_robotLtHand < 0.12)
 						)
 				{
 					FzeroL = leftForce;

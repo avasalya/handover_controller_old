@@ -688,8 +688,8 @@ namespace mc_handover
 
 					auto obj_rel_subjHands = [&]() -> std::vector<string>
 					{
-						// if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
-						if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
+						if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
+						// if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
 						{
 							subjMarkersName = approachObj->subjRtMarkers;
 							fingerPos = approachObj->fingerPosR;
