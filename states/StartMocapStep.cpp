@@ -584,15 +584,15 @@ namespace mc_handover
 						{
 							if(al>=bl)
 							{
-								offsetLt << 0.0, -al/2, 0.0;
+								offsetLt << 0.0, -al, 0.0;
 							}
 							else
 							{
-								offsetLt << 0.0, bl/2, 0.0;
+								offsetLt << 0.0, bl, 0.0;
 							}
 
 							X_Obj0_offsetS = sva::PTransformd(offsetLt);
-							X_M_Obj0 = sva::PTransformd(approachObj->subjLHandRot/*.transpose()*/, approachObj->fingerPosL);
+							X_M_Obj0 = sva::PTransformd(approachObj->subjLHandRot.transpose(), approachObj->fingerPosL);
 							X_M_offsetR = X_Obj0_offsetS * X_M_Obj0;
 							return X_M_offsetR;
 						}
@@ -618,7 +618,7 @@ namespace mc_handover
 							}
 
 							X_Obj0_offsetS = sva::PTransformd(offsetRt);
-							X_M_Obj0 = sva::PTransformd(approachObj->subjRHandRot/*.transpose()*/, approachObj->fingerPosR);
+							X_M_Obj0 = sva::PTransformd(approachObj->subjRHandRot.transpose(), approachObj->fingerPosR);
 							X_M_offsetL = X_Obj0_offsetS * X_M_Obj0;
 							return X_M_offsetL;
 						}
@@ -635,21 +635,22 @@ namespace mc_handover
 						{
 							if(al>=bl)
 							{
-								offsetLt << 0.0, al/2, 0.0;
+								offsetLt << 0.0, 2*al/3, 0.0;
 							}
 							else
 							{
-								offsetLt << 0.0, -bl/2, 0.0;
+								offsetLt << 0.0, -2*bl/3, 0.0;
 							}
+							X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->fingerPosL);
 						}
 						else
 						{
 							//move to center pos of objLenLt/2
-							offsetLt << 0.0, objLenLt/2, 0.0;
+							offsetLt << 0.0, -objLenLt/2, 0.0;
+							X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC);
 						}
 
 						X_Obj0_offsetEf = sva::PTransformd(offsetLt);
-						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->fingerPosL);
 						X_M_offsetR = X_Obj0_offsetEf * X_M_Obj0;
 						return X_M_offsetR;
 					};
@@ -663,21 +664,22 @@ namespace mc_handover
 						{
 							if(ar>=br)
 							{
-								offsetRt << 0.0, -ar/2, 0.0;
+								offsetRt << 0.0, -2*ar/3, 0.0;
 							}
 							else
 							{
-								offsetRt << 0.0, br/2, 0.0;
+								offsetRt << 0.0, 2*br/3, 0.0;
 							}
+							X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->fingerPosR);
 						}
 						else
 						{
 							//move to center pos of objLenRt/2
-							offsetRt << 0.0, -objLenRt/2, 0.0;
+							offsetRt << 0.0, objLenRt/2, 0.0;
+							X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC);
 						}
 
 						X_Obj0_offsetEf = sva::PTransformd(offsetRt);
-						X_M_Obj0 = sva::PTransformd(approachObj->objRot.transpose(), approachObj->fingerPosR);
 						X_M_offsetL = X_Obj0_offsetEf * X_M_Obj0;
 						return X_M_offsetL;
 					};
