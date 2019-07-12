@@ -91,8 +91,8 @@ namespace mc_handover
 			Eigen::Matrix3d relaxRotL, relaxRotR;
 			Eigen::Vector3d relaxPosL, relaxPosR;
 
-			bool addTask{true};
-			bool removeTask{true};
+			bool addTasks{true};
+			bool removeTasks{true};
 
 			/*offsets for robot grippers to grasp object*/
 			double objLen;

@@ -84,7 +84,6 @@ namespace mc_handover
 			/*initial force/torque threshold*/
 			thresh << 10, 10, 10, 6, 6, 6, 10, 10, 10, 6, 6, 6;
 
-
 			/*HeadTask*/
 			headVector<<1., 0., 0.;
 			headTarget<<1., 0., 0.;
@@ -133,7 +132,7 @@ namespace mc_handover
 			/*handover endEffectorTask*/
 			objEfTask = make_shared<mc_tasks::EndEffectorTask>("base_link", ctl.robots(), 2, 2.0, 1e3);
 			ctl.solver().addTask(objEfTask);
-			objEfTask->set_ef_pose(Eigen::Vector3d(0.36, 0.0, 1.023));
+			objEfTask->set_ef_pose(Eigen::Vector3d(0.23, 0.0, 0.845));
 
 
 
@@ -159,7 +158,11 @@ namespace mc_handover
 				{
 					approachObj->robotHasObject = true;
 					approachObj->subjHasObject = false;
+
 					ctl.solver().removeTask(objEfTask);
+					ctl.solver().removeTask(posTaskR);
+					ctl.solver().removeTask(oriTaskR);
+
 					ctl.addContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 					ctl.addContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
 				}),
@@ -168,7 +171,11 @@ namespace mc_handover
 				{
 					approachObj->subjHasObject = true;
 					approachObj->robotHasObject = false;
+
 					ctl.solver().addTask(objEfTask);
+					ctl.solver().addTask(posTaskR);
+					ctl.solver().addTask(oriTaskR);
+
 					ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 					ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
 				})
@@ -348,16 +355,15 @@ namespace mc_handover
 			ctl.logger().addLogEntry("FpullR",[this]() -> Eigen::Vector3d { return approachObj->FpullR; });
 
 
+			ctl.logger().addLogEntry("updateOffsetPosL",[this]() -> Eigen::Vector3d { return updateOffsetPosL; });
+			ctl.logger().addLogEntry("updateOffsetPosR",[this]() -> Eigen::Vector3d { return updateOffsetPosR; });
+
+
+
 			/*object geometric properties*/
 			objLen = 0.9;
 			objLenLt = objLen/2;
 			objLenRt = objLenLt - (approachObj->objectPosC - approachObj->objectPosCy).norm();
-
-			// posTaskL->position(relaxPosL);
-			// posTaskR->position(relaxPosR);
-
-			// oriTaskL->orientation(relaxRotL);
-			// oriTaskR->orientation(relaxRotR);
 		}// start
 
 
@@ -415,7 +421,14 @@ namespace mc_handover
 				approachObj->removeContacts = false;
 				removeContact_object_Gripper("LeftGripper");
 				removeContact_object_Gripper("RightGripper");
+
 				ctl.solver().addTask(objEfTask);
+
+				ctl.solver().addTask(posTaskL);
+				ctl.solver().addTask(oriTaskL);
+
+				ctl.solver().addTask(posTaskR);
+				ctl.solver().addTask(oriTaskR);
 			}
 
 			approachObj->objHasContacts = objHasContact("LeftGripper") && objHasContact("RightGripper");
@@ -678,11 +691,23 @@ namespace mc_handover
 						{
 							subjMarkersName = approachObj->subjRtMarkers;
 							fingerPos = approachObj->fingerPosR;
+
+							ctl.solver().addTask(posTaskL);
+							ctl.solver().addTask(oriTaskL);
+
+							ctl.solver().removeTask(posTaskR);
+							ctl.solver().removeTask(oriTaskR);
 						}
 						else
 						{
 							subjMarkersName = approachObj->subjLtMarkers;
 							fingerPos = approachObj->fingerPosL;
+
+							ctl.solver().addTask(posTaskR);
+							ctl.solver().addTask(oriTaskR);
+
+							ctl.solver().removeTask(posTaskL);
+							ctl.solver().removeTask(oriTaskL);
 						}
 						return subjMarkersName;
 					};
@@ -692,10 +717,10 @@ namespace mc_handover
 					{
 						if(approachObj->subjHasObject)
 						{
-							if(addTask)
+							if(addTasks)
 							{
-								addTask = false;
-								removeTask  = true;
+								addTasks = false;
+								removeTasks  = true;
 								ctl.solver().addTask(objEfTask);
 							}
 
@@ -706,13 +731,14 @@ namespace mc_handover
 						}
 						else if(approachObj->robotHasObject)
 						{
-							if(removeTask)
+							if(removeTasks)
 							{
-								removeTask = false;
-								addTask = true;
+								removeTasks = false;
+								addTasks = true;
 								ctl.solver().removeTask(objEfTask);
+								ctl.solver().removeTask(posTaskR);
+								ctl.solver().removeTask(oriTaskR);
 								posTaskL->stiffness(4.0);
-								posTaskR->stiffness(4.0);
 								LOG_SUCCESS("begin 2nd cycle, motion enabled")
 							}
 
@@ -784,9 +810,12 @@ namespace mc_handover
 						{
 							if(approachObj->useLeftEf)
 							{
-								robotLtHandOnObj();
-								updateOffsetPosL = X_M_offsetL.translation();
-								approachObj->goToHandoverPose(-0.15, 0.95, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
+								// robotLtHandOnObj();
+								// updateOffsetPosL = X_M_offsetL.translation();
+
+								updateOffsetPosL = approachObj->fingerPosR;
+
+								approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
 								// if((approachObj->i) % 400 == 0)
 									// {LOG_INFO(" left Ef obj BLUE		" << updateOffsetPosL.transpose())};
@@ -794,9 +823,12 @@ namespace mc_handover
 							}
 							else if(approachObj->useRightEf)
 							{
-								robotRtHandOnObj();
-								updateOffsetPosR = X_M_offsetR.translation();
-								approachObj->goToHandoverPose(-0.95, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
+								// robotRtHandOnObj();
+								// updateOffsetPosR = X_M_offsetR.translation();
+
+								updateOffsetPosR = approachObj->fingerPosL;
+
+								approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 
 								// if((approachObj->i) % 400  == 0)
 									// {LOG_ERROR(" right Ef obj RED		" << updateOffsetPosR.transpose())};
@@ -841,7 +873,14 @@ namespace mc_handover
 				/*remove contacts*/
 				ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
 				ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
+
 				ctl.solver().addTask(objEfTask);
+
+				ctl.solver().addTask(posTaskL);
+				ctl.solver().addTask(oriTaskL);
+
+				ctl.solver().addTask(posTaskR);
+				ctl.solver().addTask(oriTaskR);
 
 				auto  gripperL = ctl.grippers["l_gripper"].get();
 				auto  gripperR = ctl.grippers["r_gripper"].get();
@@ -858,8 +897,8 @@ namespace mc_handover
 				oriTaskR->orientation(initRotR);
 
 
-				addTask = true;
-				removeTask = true;
+				addTasks = true;
+				removeTasks = true;
 
 				approachObj->addContacts = false;
 				approachObj->removeContacts = false;

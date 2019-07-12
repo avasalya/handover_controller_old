@@ -375,7 +375,7 @@ namespace mc_handover
 				newThL = FloadL + leftTh;
 				newThR = FloadR + rightTh;
 
-				if( (finR_rel_efL < 0.20) || (finL_rel_efR < 0.20) )
+				if( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) )
 				{
 					if(enableHand)
 					{
@@ -383,13 +383,13 @@ namespace mc_handover
 						LOG_WARNING("trying to pull object, motion stopped")
 					}
 
-					if( (abs(FpullL[idx]) > newThL[idx]) || (abs(FpullR[idx]) > newThR[idx]) )
+					if( (abs(FpullL[idx]) > newThL[idx]) && (abs(FpullR[idx]) > newThR[idx]) )
 					{
 						if(objHasContacts)
 						{
 							removeContacts = true;
 							robotHasObject = false;
-							subjHasObject = true;
+							// subjHasObject = true;
 
 							gOpen = true;
 							restartHandover = true;
@@ -511,10 +511,6 @@ namespace mc_handover
 					if(objHasContacts)
 					{
 						/*move right EF to relax pose*/
-						posTaskR->stiffness(2.0);
-						posTaskR->position(relaxPosR);
-						oriTaskR->orientation(relaxRotR);
-
 						posTaskL->stiffness(2.0);
 						posTaskL->position(relaxPosL);
 						oriTaskL->orientation(relaxRotL);
@@ -580,12 +576,10 @@ namespace mc_handover
 				e = 1;
 
 				if( restartHandover && (posTaskL->eval().norm()) <0.05 && (posTaskR->eval().norm() <0.05) )
-
 					// >speed().norm() < 1e-4
 				{
 					posTaskL->position(initPosL);
 					posTaskR->position(initPosR);
-
 
 					posTaskL->stiffness(4.0);
 					posTaskR->stiffness(4.0);
@@ -594,6 +588,8 @@ namespace mc_handover
 					useLeftEf = true;
 					useRightEf = true;
 					startNow = false;
+
+					subjHasObject = true;
 
 					addContacts = false;
 					removeContacts = false;

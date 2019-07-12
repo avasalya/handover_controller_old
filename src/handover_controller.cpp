@@ -15,14 +15,6 @@ namespace mc_handover
 		double dt, const mc_rtc::Configuration & config)
 	:mc_control::fsm::Controller(robot_module, dt, config)
 	{
-
-		// std::array<double, 3> damper = {{0.01, 0.001, 0.01}};
-		// // KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent)
-		// kinematicsConstraint = mc_solver::KinematicsConstraint(robots(), 0, timeStep, damper, 1.0);
-
-		// qpsolver->addConstraintSet(kinematicsConstraint);
-		qpsolver->addConstraintSet(selfCollisionConstraint);
-
 		selfCollisionConstraint.reset();
 		selfCollisionConstraint.addCollisions(solver(), {
 			mc_rbdyn::Collision("LARM_LINK2", "BODY", 0.15, 0.10, 0.),
@@ -67,6 +59,17 @@ namespace mc_handover
 			mc_rbdyn::Collision("LARM_LINK6", "RARM_LINK7", 0.05,0.01, 0.),
 			mc_rbdyn::Collision("LARM_LINK7", "RARM_LINK7", 0.05,0.01, 0.),
 		});
+		qpsolver->addConstraintSet(selfCollisionConstraint);
+
+
+		// contactConstraint = mc_solver::ContactConstraint(timeStep, mc_solver::ContactConstraint::Position);
+		// qpsolver->addConstraintSet(contactConstraint);
+
+		// std::array<double, 3> damper = {{0.01, 0.001, 0.01}};
+		// // KinematicsConstraint(robots, robotIndex, timeStep, damper, velocityPercent)
+		// kinematicsConstraint = mc_solver::KinematicsConstraint(robots(), 0, timeStep, damper, 1.0);
+		// qpsolver->addConstraintSet(kinematicsConstraint);
+
 
 		LOG_SUCCESS("mc_handover_controller init done")
 	}
