@@ -339,8 +339,7 @@ namespace mc_handover
 		std::shared_ptr<mc_tasks::PositionTask>& posTaskL,
 		std::shared_ptr<mc_tasks::OrientationTask>& oriTaskL,
 		std::shared_ptr<mc_tasks::PositionTask>& posTaskR,
-		std::shared_ptr<mc_tasks::OrientationTask>& oriTaskR,
-		std::shared_ptr<mc_tasks::EndEffectorTask>& objEfTask
+		std::shared_ptr<mc_tasks::OrientationTask>& oriTaskR
 	)
 	{
 		double finR_rel_efL, finL_rel_efR;
@@ -375,7 +374,7 @@ namespace mc_handover
 				newThL = FloadL + leftTh;
 				newThR = FloadR + rightTh;
 
-				if( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) )
+				if( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) ) // not effective n efficient
 				{
 					if(enableHand)
 					{
@@ -383,7 +382,7 @@ namespace mc_handover
 						LOG_WARNING("trying to pull object, motion stopped")
 					}
 
-					if( (abs(FpullL[idx]) > newThL[idx]) && (abs(FpullR[idx]) > newThR[idx]) )
+					if( (abs(FpullL[idx]) > newThL[idx]) || (abs(FpullR[idx]) > newThR[idx]) )
 					{
 						if(objHasContacts)
 						{
@@ -510,8 +509,8 @@ namespace mc_handover
 
 					if(objHasContacts)
 					{
-						/*move right EF to relax pose*/
-						posTaskL->stiffness(2.0);
+						/*move EF in-solver to relax pose*/
+						// posTaskL->stiffness(2.0);
 						posTaskL->position(relaxPosL);
 						oriTaskL->orientation(relaxRotL);
 
@@ -531,6 +530,7 @@ namespace mc_handover
 					{
 						enableHand = true;
 						takeBackObject = true;
+						LOG_SUCCESS("begin 2nd cycle, motion enabled")
 					}
 
 					/*clear vector memories*/
@@ -556,11 +556,11 @@ namespace mc_handover
 				/*move EF to initial position*/
 				if(!goBackInit)
 				{
-					posTaskL->stiffness(2.0);
+					// posTaskL->stiffness(2.0);
 					posTaskL->position(relaxPosL);
 					oriTaskL->orientation(initRotL);
 
-					posTaskR->stiffness(2.0);
+					// posTaskR->stiffness(2.0);
 					posTaskR->position(relaxPosR);
 					oriTaskR->orientation(initRotR);
 
@@ -581,8 +581,8 @@ namespace mc_handover
 					posTaskL->position(initPosL);
 					posTaskR->position(initPosR);
 
-					posTaskL->stiffness(4.0);
-					posTaskR->stiffness(4.0);
+					// posTaskL->stiffness(4.0);
+					// posTaskR->stiffness(4.0);
 					restartHandover = false;
 
 					useLeftEf = true;
@@ -593,6 +593,7 @@ namespace mc_handover
 
 					addContacts = false;
 					removeContacts = false;
+					objHasContacts = false;
 
 					LOG_SUCCESS("object returned to subject, motion enabled, restarting handover\n")
 				}

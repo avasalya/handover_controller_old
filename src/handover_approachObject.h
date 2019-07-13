@@ -81,8 +81,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::PositionTask>& posTaskL,
 			std::shared_ptr<mc_tasks::OrientationTask>& oriTaskL,
 			std::shared_ptr<mc_tasks::PositionTask>& posTaskR,
-			std::shared_ptr<mc_tasks::OrientationTask>& oriTaskR,
-			std::shared_ptr<mc_tasks::EndEffectorTask>& objEfTask);
+			std::shared_ptr<mc_tasks::OrientationTask>& oriTaskR);
 
 
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers

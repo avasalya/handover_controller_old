@@ -364,6 +364,10 @@ namespace mc_handover
 			objLen = 0.9;
 			objLenLt = objLen/2;
 			objLenRt = objLenLt - (approachObj->objectPosC - approachObj->objectPosCy).norm();
+
+
+			// posTaskR->position(approachObj->virObjLeft);
+			// posTaskL->position(approachObj->virObjRight);
 		}// start
 
 
@@ -413,6 +417,11 @@ namespace mc_handover
 				approachObj->addContacts = false;
 				addContact_object_Gripper("LeftGripper");
 				addContact_object_Gripper("RightGripper");
+
+				ctl.solver().removeTask(objEfTask);
+
+				ctl.solver().removeTask(posTaskR);
+				ctl.solver().removeTask(oriTaskR);
 			}
 
 
@@ -577,18 +586,15 @@ namespace mc_handover
 						al = (approachObj->objectPosC - approachObj->gripperEfR).norm();
 						bl = abs(objLenLt - al);
 
-						// al = .44;
-						// bl = .25;
-
 						if(al <= objLenLt)
 						{
 							if(al>=bl)
 							{
-								offsetLt << 0.0, -al, 0.0;
+								offsetLt << 0.0, -al/2, 0.0;
 							}
 							else
 							{
-								offsetLt << 0.0, bl, 0.0;
+								offsetLt << 0.0, bl/2, 0.0;
 							}
 
 							X_Obj0_offsetS = sva::PTransformd(offsetLt);
@@ -602,9 +608,6 @@ namespace mc_handover
 					{
 						ar = (approachObj->objectPosCy - approachObj->gripperEfL).norm();
 						br = abs(objLenRt - ar);
-
-						// ar = .44;
-						// br= .25;
 
 						if(ar <= objLenRt)
 						{
@@ -692,7 +695,7 @@ namespace mc_handover
 						// if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
 						{
 							subjMarkersName = approachObj->subjRtMarkers;
-							fingerPos = approachObj->fingerPosR;
+							// fingerPos = approachObj->fingerPosR;
 
 							ctl.solver().addTask(posTaskL);
 							ctl.solver().addTask(oriTaskL);
@@ -703,7 +706,7 @@ namespace mc_handover
 						else
 						{
 							subjMarkersName = approachObj->subjLtMarkers;
-							fingerPos = approachObj->fingerPosL;
+							// fingerPos = approachObj->fingerPosL;
 
 							ctl.solver().addTask(posTaskR);
 							ctl.solver().addTask(oriTaskR);
@@ -719,34 +722,34 @@ namespace mc_handover
 					{
 						if(approachObj->subjHasObject)
 						{
-							if(addTasks)
-							{
-								addTasks = false;
-								removeTasks  = true;
-								ctl.solver().addTask(objEfTask);
-							}
+							// if(addTasks)
+							// {
+							// 	addTasks = false;
+							// 	removeTasks  = true;
+							// 	ctl.solver().addTask(objEfTask);
+							// }
 
-							headTask->target(approachObj->objectPosC);
 							objEfTask->set_ef_pose(sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC));
+
 							subjLtHandOnObj();
 							subjRtHandOnObj();
 						}
-						else if(approachObj->robotHasObject)
+						else if(approachObj->robotHasObject && followAHand)
 						{
-							if(removeTasks)
-							{
-								removeTasks = false;
-								addTasks = true;
-								ctl.solver().removeTask(objEfTask);
-								ctl.solver().removeTask(posTaskR);
-								ctl.solver().removeTask(oriTaskR);
-								posTaskL->stiffness(4.0);
-								LOG_SUCCESS("begin 2nd cycle, motion enabled")
-							}
+							// if(removeTasks)
+							// {
+								// removeTasks = false;
+								// addTasks = true;
 
-							headTask->target(fingerPos);
-							obj_rel_subjHands();
+
+								// LOG_SUCCESS("begin 2nd cycle, motion enabled")
+							// }
+
+								followAHand = false;
+								obj_rel_subjHands();
 						}
+
+						headTask->target(approachObj->objectPosC);
 					};
 
 
@@ -780,20 +783,6 @@ namespace mc_handover
 						}
 						return false;
 					};
-
-
-					/*observe subject motion for t_observe period*/
-					if( (approachObj->i)%(approachObj->t_observe) == 0 )
-					{
-						/* start only if object is within robot constraint space*/
-						if( (approachObj->objectPosC(0) > 1.1) && (approachObj->objectPosC(0) < 2.0) &&
-							(approachObj->fingerPosL(0) > 1.1) && (approachObj->fingerPosL(0) < 2.0) &&
-							(approachObj->fingerPosR(0) > 1.1) && (approachObj->fingerPosR(0) < 2.0) )
-						{ approachObj->startNow = true; }
-
-						if( approachObj->startNow )
-							{ obj_rel_robot(); }
-					}
 
 
 					/*feed Ef pose*/
@@ -851,10 +840,24 @@ namespace mc_handover
 							leftForceLo, rightForceLo,
 							efLAce, efRAce,
 							posTaskL, oriTaskL,
-							posTaskR, oriTaskR,
-							objEfTask);
+							posTaskR, oriTaskR);
 
 						gripperControl();
+					}
+
+
+					/*START HANDOVER ROUTINE*/
+					if( (approachObj->i)%(approachObj->t_observe) == 0 )
+					{
+						/*observe subject motion for t_observe period*/
+						/* start only if object is within robot constraint space*/
+						if( (approachObj->objectPosC(0) > 1.1) && (approachObj->objectPosC(0) < 2.0) &&
+							(approachObj->fingerPosL(0) > 1.1) && (approachObj->fingerPosL(0) < 2.0) &&
+							(approachObj->fingerPosR(0) > 1.1) && (approachObj->fingerPosR(0) < 2.0) )
+						{ approachObj->startNow = true; }
+
+						if( approachObj->startNow )
+							{ obj_rel_robot(); }
 					}
 
 				}// handoverRun
@@ -890,20 +893,22 @@ namespace mc_handover
 				gripperL->setTargetQ({openGrippers});
 				gripperR->setTargetQ({openGrippers});
 
-				posTaskL->stiffness(2.0);
+				// posTaskL->stiffness(2.0);
 				posTaskL->position(relaxPosL);
 				oriTaskL->orientation(initRotL);
 
-				posTaskR->stiffness(2.0);
+				// posTaskR->stiffness(2.0);
 				posTaskR->position(relaxPosR);
 				oriTaskR->orientation(initRotR);
 
 
-				addTasks = true;
-				removeTasks = true;
+				// addTasks = true;
+				// removeTasks = true;
+				followAHand = true;
 
 				approachObj->addContacts = false;
 				approachObj->removeContacts = false;
+				approachObj->objHasContacts = false;
 
 				approachObj->subjHasObject = true;
 				approachObj->robotHasObject = false;
@@ -951,8 +956,8 @@ namespace mc_handover
 					posTaskL->position(initPosL);
 					posTaskR->position(initPosR);
 
-					posTaskL->stiffness(4.0);
-					posTaskR->stiffness(4.0);
+					// posTaskL->stiffness(4.0);
+					// posTaskR->stiffness(4.0);
 
 					approachObj->enableHand = true;
 
