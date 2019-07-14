@@ -121,6 +121,7 @@ namespace mc_handover
 		Eigen::Vector3d objectPosC, objectPosCx, objectPosCy;
 		sva::PTransformd virObjLeft, virObjRight;
 
+		double finR_rel_efL, finL_rel_efR;
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
 		double virObj_rel_subjLtHand, virObj_rel_subjRtHand, virObj_rel_robotLtHand, virObj_rel_robotRtHand;
 
@@ -139,6 +140,8 @@ namespace mc_handover
 		bool robotHasObject{false};
 
 		bool enableHand{true};
+
+		bool pickNearestHand{true};
 
 		bool gOpen{false};
 		bool gClose{false};

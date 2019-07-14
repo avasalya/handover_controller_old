@@ -165,6 +165,9 @@ namespace mc_handover
 			objRot.col(1) = lshp_Yo;
 			objRot.col(2) = lshp_Zo/lshp_Zo.norm();
 
+			finR_rel_efL = (gripperEfL - fingerPosR).norm();
+			finL_rel_efR = (gripperEfR - fingerPosL).norm();
+
 			/*move EF when subject approaches object 1st time*/
 			obj_rel_robotRtHand = ( gripperEfR - objectPosC ).norm();//gripperRtEfA - objLeft
 			obj_rel_robotLtHand = ( gripperEfL - objectPosC ).norm();//gripperLtEfA - objRight
@@ -342,11 +345,7 @@ namespace mc_handover
 		std::shared_ptr<mc_tasks::OrientationTask>& oriTaskR
 	)
 	{
-		double finR_rel_efL, finL_rel_efR;
 		Eigen::Vector3d leftTh, rightTh;
-
-		finR_rel_efL = (gripperEfL - fingerPosR).norm();
-		finL_rel_efR = (gripperEfR - fingerPosL).norm();
 
 		leftTh = thresh.segment(3,3);
 		rightTh = thresh.segment(9,3);
@@ -594,6 +593,8 @@ namespace mc_handover
 					addContacts = false;
 					removeContacts = false;
 					objHasContacts = false;
+
+					pickNearestHand = true;
 
 					LOG_SUCCESS("object returned to subject, motion enabled, restarting handover\n")
 				}

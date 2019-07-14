@@ -734,7 +734,8 @@ namespace mc_handover
 							subjLtHandOnObj();
 							subjRtHandOnObj();
 						}
-						else if(approachObj->robotHasObject && followAHand)
+						else if( approachObj->robotHasObject && approachObj->pickNearestHand &&
+							( (approachObj->finR_rel_efL < 0.6) || (approachObj->finL_rel_efR < 0.6) ) )
 						{
 							// if(removeTasks)
 							// {
@@ -745,8 +746,8 @@ namespace mc_handover
 								// LOG_SUCCESS("begin 2nd cycle, motion enabled")
 							// }
 
-								followAHand = false;
 								obj_rel_subjHands();
+								approachObj->pickNearestHand = false;
 						}
 
 						headTask->target(approachObj->objectPosC);
@@ -904,7 +905,7 @@ namespace mc_handover
 
 				// addTasks = true;
 				// removeTasks = true;
-				followAHand = true;
+				approachObj->pickNearestHand = true;
 
 				approachObj->addContacts = false;
 				approachObj->removeContacts = false;

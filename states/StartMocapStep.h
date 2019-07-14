@@ -94,7 +94,6 @@ namespace mc_handover
 
 			// bool addTasks{true};
 			// bool removeTasks{true};
-			bool followAHand{true};
 
 			/*offsets for robot grippers to grasp object*/
 			double objLen;
