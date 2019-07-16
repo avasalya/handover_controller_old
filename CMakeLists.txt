@@ -23,8 +23,7 @@ endif()
 
 # Use jrl-cmakemoduels to get mc_rtc depency
 set(PKG_CONFIG_ADDITIONAL_VARIABLES "${PKG_CONFIG_ADDITIONAL_VARIABLES} libdir")
-add_required_dependency(mc_rtc)
-
+find_package(mc_rtc REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(states)
