@@ -396,7 +396,6 @@ namespace mc_handover
 						{
 							removeContacts = true;
 							robotHasObject = false;
-							// subjHasObject = true;
 
 							gOpen = true;
 							restartHandover = true;
@@ -520,7 +519,6 @@ namespace mc_handover
 					if(objHasContacts)
 					{
 						/*move EF in-solver to relax pose*/
-						// posTaskL->stiffness(2.0);
 						posTaskL->position(relaxPosL);
 						oriTaskL->orientation(relaxRotL);
 
@@ -566,11 +564,9 @@ namespace mc_handover
 				/*move EF to initial position*/
 				if(!goBackInit)
 				{
-					// posTaskL->stiffness(2.0);
 					posTaskL->position(relaxPosL);
 					oriTaskL->orientation(initRotL);
 
-					// posTaskR->stiffness(2.0);
 					posTaskR->position(relaxPosR);
 					oriTaskR->orientation(initRotR);
 
@@ -586,13 +582,9 @@ namespace mc_handover
 				e = 1;
 
 				if( restartHandover && (posTaskL->eval().norm()) <0.05 && (posTaskR->eval().norm() <0.05) )
-					// >speed().norm() < 1e-4
 				{
 					posTaskL->position(initPosL);
 					posTaskR->position(initPosR);
-
-					// posTaskL->stiffness(4.0);
-					// posTaskR->stiffness(4.0);
 					restartHandover = false;
 
 					useLeftEf = true;

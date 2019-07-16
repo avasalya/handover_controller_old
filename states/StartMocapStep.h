@@ -76,7 +76,6 @@ namespace mc_handover
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
 			Eigen::Vector3d headVector, headTarget;
-			// Eigen::Vector3d fingerPos;
 
 			Eigen::Vector3d ltPosW, rtPosW;
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
@@ -91,9 +90,6 @@ namespace mc_handover
 
 			Eigen::Matrix3d relaxRotL, relaxRotR;
 			Eigen::Vector3d relaxPosL, relaxPosR;
-
-			// bool addTasks{true};
-			// bool removeTasks{true};
 
 			/*offsets for robot grippers to grasp object*/
 			double objLen;

@@ -82,7 +82,7 @@ namespace mc_handover
 
 
 			/*initial force/torque threshold*/
-			thresh << 10, 10, 10, 6, 6, 6, 10, 10, 10, 6, 6, 6;
+			thresh << 10, 10, 10, 8, 8, 8, 10, 10, 10, 8, 8, 8;
 
 			/*HeadTask*/
 			headVector<<1., 0., 0.;
@@ -700,7 +700,6 @@ namespace mc_handover
 						if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
 						{
 							subjMarkersName = approachObj->subjRtMarkers;
-							// fingerPos = approachObj->fingerPosR;
 
 							ctl.solver().addTask(posTaskL);
 							ctl.solver().addTask(oriTaskL);
@@ -711,7 +710,6 @@ namespace mc_handover
 						else
 						{
 							subjMarkersName = approachObj->subjLtMarkers;
-							// fingerPos = approachObj->fingerPosL;
 
 							ctl.solver().addTask(posTaskR);
 							ctl.solver().addTask(oriTaskR);
@@ -727,13 +725,6 @@ namespace mc_handover
 					{
 						if(approachObj->subjHasObject)
 						{
-							// if(addTasks)
-							// {
-							// 	addTasks = false;
-							// 	removeTasks  = true;
-							// 	ctl.solver().addTask(objEfTask);
-							// }
-
 							objEfTask->set_ef_pose(sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC));
 
 							subjLtHandOnObj();
@@ -742,18 +733,9 @@ namespace mc_handover
 						else if( approachObj->robotHasObject && approachObj->pickNearestHand &&
 							( (approachObj->finR_rel_efL < 0.6) || (approachObj->finL_rel_efR < 0.6) ) )
 						{
-							// if(removeTasks)
-							// {
-								// removeTasks = false;
-								// addTasks = true;
-
-
-								// LOG_SUCCESS("begin 2nd cycle, motion enabled")
-							// }
-
-								subjMarkersName = approachObj->subjRtMarkers;
-								obj_rel_subjHands();
-								approachObj->pickNearestHand = false;
+							subjMarkersName = approachObj->subjRtMarkers;
+							// obj_rel_subjHands();
+							approachObj->pickNearestHand = false;
 						}
 
 						headTask->target(approachObj->objectPosC);
@@ -900,17 +882,12 @@ namespace mc_handover
 				gripperL->setTargetQ({openGrippers});
 				gripperR->setTargetQ({openGrippers});
 
-				// posTaskL->stiffness(2.0);
 				posTaskL->position(relaxPosL);
 				oriTaskL->orientation(initRotL);
 
-				// posTaskR->stiffness(2.0);
 				posTaskR->position(relaxPosR);
 				oriTaskR->orientation(initRotR);
 
-
-				// addTasks = true;
-				// removeTasks = true;
 				approachObj->pickNearestHand = true;
 
 				approachObj->addContacts = false;
@@ -962,9 +939,6 @@ namespace mc_handover
 
 					posTaskL->position(initPosL);
 					posTaskR->position(initPosR);
-
-					// posTaskL->stiffness(4.0);
-					// posTaskR->stiffness(4.0);
 
 					approachObj->enableHand = true;
 
