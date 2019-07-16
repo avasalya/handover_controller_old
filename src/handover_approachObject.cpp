@@ -34,7 +34,7 @@ namespace mc_handover
 
 		for(unsigned int k=0; k<totalMarkers; k++)
 			markers_name_index[strMarkersName[k]] = k;
-		
+
 		Markers.resize(totalMarkers);
 
 		markersPos.resize(totalMarkers);
@@ -89,7 +89,7 @@ namespace mc_handover
 	}
 
 
-	
+
 	bool ApproachObject::handoverRun()
 	{
 		/*check for non zero frame only and store them*/
@@ -107,7 +107,7 @@ namespace mc_handover
 			/*move EF when subject approaches object 1st time*/
 			obj_rel_subjRtHand = ( fingerPosR - objectPos ).norm();//lshpRtA - obj
 			obj_rel_subjLtHand = ( fingerPosL - objectPos ).norm();//lshpLtA - obj
-			
+
 			obj_rel_robotLtHand = ( markersPos[2].col(i) - objectPos ).norm();//gripperLtEfA - obj
 			obj_rel_robotRtHand = ( markersPos[6].col(i) - objectPos ).norm();//gripperRtEfA - obj
 
@@ -118,7 +118,7 @@ namespace mc_handover
 	}
 
 
-	
+
 	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> subjMarkersName)
 	{
 		bool ready{false};
@@ -197,7 +197,7 @@ namespace mc_handover
 
 		ready = true;
 
-		handoverRot_ = subjHandRot.transpose();
+		handRot = subjHandRot.transpose();
 
 		return std::make_tuple(ready, wp, initRefPos, handoverRot);
 	}
@@ -260,7 +260,7 @@ namespace mc_handover
 		Eigen::Vector3d fingerPos, gripperEf;
 
 		fingerPos = markersPos[markers_name_index[subjMarkersName[0]]].col(i);
-		
+
 		/*direction vectors, projections and area*/
 		ef_wA_O  =
 		markersPos[markers_name_index[robotMarkersName[0]]].col(i) - objectPos;

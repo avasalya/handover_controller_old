@@ -36,7 +36,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace mc_handover 
+namespace mc_handover
 {
 	struct ApproachObject
 	{
@@ -59,7 +59,7 @@ namespace mc_handover
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
 
 		bool Flag_prediction{false}; //TRUE otherwise, use fingerPos
-		
+
 		Eigen::Vector3d tuner;
 
 		int fps{200};
@@ -69,9 +69,9 @@ namespace mc_handover
 
 		int i{0};
 		int e{1};
-		
+
 		int totalMarkers;
-		
+
 		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;
 
@@ -81,17 +81,17 @@ namespace mc_handover
 
 		Eigen::Vector3d objectPos, fingerPosL, fingerPosR;
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
-		Eigen::Matrix3d handoverRot_= idtMat;
+		Eigen::Matrix3d handRot= idtMat;
 
 		double obj_rel_subjLtHand, obj_rel_subjRtHand, obj_rel_robotLtHand, obj_rel_robotRtHand;
 
 		std::shared_ptr<mc_handover::HandoverTrajectory> handoverTraj;
-		
+
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> lHandPredict, rHandPredict;
 
 		bool useLeftEf{true};
 		bool stopLtEf{true};
-		
+
 		bool useRightEf{true};
 		bool stopRtEf{true};
 
