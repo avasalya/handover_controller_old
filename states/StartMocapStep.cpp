@@ -694,31 +694,31 @@ namespace mc_handover
 
 
 
-					auto obj_rel_subjHands = [&]() -> std::vector<string>
-					{
-						// if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
-						if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
-						{
-							subjMarkersName = approachObj->subjRtMarkers;
+					// auto obj_rel_subjHands = [&]() -> std::vector<string>
+					// {
+					// 	// if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
+					// 	if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
+					// 	{
+					// 		subjMarkersName = approachObj->subjRtMarkers;
 
-							ctl.solver().addTask(posTaskL);
-							ctl.solver().addTask(oriTaskL);
+					// 		ctl.solver().addTask(posTaskL);
+					// 		ctl.solver().addTask(oriTaskL);
 
-							ctl.solver().removeTask(posTaskR);
-							ctl.solver().removeTask(oriTaskR);
-						}
-						else
-						{
-							subjMarkersName = approachObj->subjLtMarkers;
+					// 		ctl.solver().removeTask(posTaskR);
+					// 		ctl.solver().removeTask(oriTaskR);
+					// 	}
+					// 	else
+					// 	{
+					// 		subjMarkersName = approachObj->subjLtMarkers;
 
-							ctl.solver().addTask(posTaskR);
-							ctl.solver().addTask(oriTaskR);
+					// 		ctl.solver().addTask(posTaskR);
+					// 		ctl.solver().addTask(oriTaskR);
 
-							ctl.solver().removeTask(posTaskL);
-							ctl.solver().removeTask(oriTaskL);
-						}
-						return subjMarkersName;
-					};
+					// 		ctl.solver().removeTask(posTaskL);
+					// 		ctl.solver().removeTask(oriTaskL);
+					// 	}
+					// 	return subjMarkersName;
+					// };
 
 
 					auto obj_rel_subj = [&]()
@@ -737,8 +737,6 @@ namespace mc_handover
 							// obj_rel_subjHands();
 							approachObj->pickNearestHand = false;
 						}
-
-						headTask->target(approachObj->objectPosC);
 					};
 
 
@@ -774,11 +772,19 @@ namespace mc_handover
 					};
 
 
+					if( (approachObj->startNow)  &&
+						approachObj->objectPosC(0)<=1.0 &&
+						approachObj->objectPosC(0)>0.1 )
+					{ obj_rel_robot(); }
+
+
 					/*feed Ef pose*/
 					if( (approachObj->useLeftEf) || (approachObj->useRightEf) )
 					{
 						if(approachObj->subjHasObject)
 						{
+							headTask->target(approachObj->objectPosC);
+
 							updateOffsetPosL = X_M_offsetL.translation();
 							approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
@@ -788,6 +794,8 @@ namespace mc_handover
 						}
 						else if( approachObj->robotHasObject && (!approachObj->pickNearestHand) )
 						{
+							headTask->target(approachObj->fingerPosR);
+
 							if(approachObj->useLeftEf)
 							{
 								// robotLtHandOnObj();
@@ -796,10 +804,6 @@ namespace mc_handover
 								updateOffsetPosL = approachObj->fingerPosR;
 
 								approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
-
-								// if((approachObj->i) % 400 == 0)
-									// {LOG_INFO(" left Ef obj BLUE		" << updateOffsetPosL.transpose())};
-								// {LOG_INFO(" left Ef obj BLUE		" << (posTaskL->position() /*- fingerPos*/).transpose())}
 							}
 							else if(approachObj->useRightEf)
 							{
@@ -809,10 +813,6 @@ namespace mc_handover
 								updateOffsetPosR = approachObj->fingerPosL;
 
 								approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
-
-								// if((approachObj->i) % 400  == 0)
-									// {LOG_ERROR(" right Ef obj RED		" << updateOffsetPosR.transpose())};
-								// {LOG_ERROR(" right Ef obj RED		" << (posTaskR->position() /*- fingerPos*/).transpose())}
 							}
 						}
 
@@ -840,13 +840,14 @@ namespace mc_handover
 					{
 						/*observe subject motion for t_observe period*/
 						/* start only if object is within robot constraint space*/
-						if( (approachObj->objectPosC(0) > 1.1) && (approachObj->objectPosC(0) < 2.0) &&
-							(approachObj->fingerPosL(0) > 1.1) && (approachObj->fingerPosL(0) < 2.0) &&
-							(approachObj->fingerPosR(0) > 1.1) && (approachObj->fingerPosR(0) < 2.0) )
+						if( (!approachObj->startNow) &&
+							(approachObj->objectPosC(0) > 1.2) && (approachObj->objectPosC(0) < 2.0) &&
+							(approachObj->fingerPosL(0) > 1.2) && (approachObj->fingerPosL(0) < 2.0) &&
+							(approachObj->fingerPosR(0) > 1.2) && (approachObj->fingerPosR(0) < 2.0) )
 						{ approachObj->startNow = true; }
 
-						if( approachObj->startNow )
-							{ obj_rel_robot(); }
+						// if( approachObj->startNow )
+						// 	{ obj_rel_robot(); }
 					}
 
 				}// handoverRun
@@ -892,7 +893,6 @@ namespace mc_handover
 
 				approachObj->addContacts = false;
 				approachObj->removeContacts = false;
-				approachObj->objHasContacts = false;
 
 				approachObj->subjHasObject = true;
 				approachObj->robotHasObject = false;
@@ -911,8 +911,8 @@ namespace mc_handover
 				approachObj->takeBackObject = false;
 				approachObj->restartHandover = false;
 
-				approachObj->useLeftEf = true;
-				approachObj->useRightEf = true;
+				approachObj->useLeftEf = false;
+				approachObj->useRightEf = false;
 
 
 				approachObj->local_FzeroL = Eigen::Vector3d::Zero();

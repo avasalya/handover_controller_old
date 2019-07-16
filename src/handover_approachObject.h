@@ -133,8 +133,8 @@ namespace mc_handover
 		bool removeContacts{false};
 		bool objHasContacts{false};
 
-		bool useLeftEf{true};
-		bool useRightEf{true};
+		bool useLeftEf{false};
+		bool useRightEf{false};
 
 		bool subjHasObject{true};
 		bool robotHasObject{false};

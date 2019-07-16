@@ -587,15 +587,15 @@ namespace mc_handover
 					posTaskR->position(initPosR);
 					restartHandover = false;
 
-					useLeftEf = true;
-					useRightEf = true;
+					useLeftEf = false;
+					useRightEf = false;
+
 					startNow = false;
 
 					subjHasObject = true;
 
 					addContacts = false;
 					removeContacts = false;
-					objHasContacts = false;
 
 					pickNearestHand = true;
 
