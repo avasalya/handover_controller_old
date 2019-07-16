@@ -176,14 +176,21 @@ namespace mc_handover
 			obj_rel_subjRtHand = ( fingerPosR - objectPosC ).norm();//lshpRtA - objRight
 
 			/*virtual markers and their relative position*/
-			virObjLeft = sva::PTransformd(Eigen::Vector3d(0,-0.3, 0)) * sva::PTransformd(objRot, objectPosC);
-			virObjRight = sva::PTransformd(Eigen::Vector3d(0,0.3, 0)) * sva::PTransformd(objRot, objectPosC);
+			virObjLeft = sva::PTransformd(Eigen::Vector3d(0,-0.3, 0)) * sva::PTransformd(objRot.transpose(), objectPosC);
+			virObjRight = sva::PTransformd(Eigen::Vector3d(0,0.3, 0)) * sva::PTransformd(objRot.transpose(), objectPosC);
 
 			virObj_rel_robotRtHand = ( gripperEfR - virObjLeft.translation() ).norm();//gripperRtEfA - virObjLeft
 			virObj_rel_robotLtHand = ( gripperEfL - virObjRight.translation() ).norm();//gripperLtEfA - virObjRight
 
 			virObj_rel_subjLtHand = ( fingerPosL - virObjLeft.translation() ).norm();//lshpLtA - virObjLeft
 			virObj_rel_subjRtHand = ( fingerPosR - virObjRight.translation() ).norm();//lshpRtA - virObjRight
+
+
+			// if(i%400 == 0)
+			// {
+			// 	LOG_ERROR("virObj_rel_robotLtHand "<< virObj_rel_robotLtHand)
+			// 	LOG_WARNING("virObj_rel_robotRtHand "<< virObj_rel_robotRtHand)
+			// }
 
 			return true;
 		}
@@ -423,10 +430,12 @@ namespace mc_handover
 				}
 
 				/*stop motion*/
-				else if( (openGripper) && (!closeGripper) && (!restartHandover) &&
-						(enableHand)
-						&& (finR_rel_efL < 0.15) && (finL_rel_efR < 0.15)
-						// && (virObj_rel_robotRtHand < 0.12) && (virObj_rel_robotLtHand < 0.12)
+				else if( (openGripper)
+						&& (!closeGripper)
+						&& (!restartHandover)
+						&& (enableHand)
+						// && ( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) )
+						&& ( (virObj_rel_robotRtHand < 0.20) || (virObj_rel_robotLtHand < 0.20) )
 						)
 				{
 					FzeroL = leftForce;

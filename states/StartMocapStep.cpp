@@ -365,9 +365,6 @@ namespace mc_handover
 			objLenLt = objLen/2;
 			objLenRt = objLenLt - (approachObj->objectPosC - approachObj->objectPosCy).norm();
 
-
-			// posTaskR->position(approachObj->virObjLeft);
-			// posTaskL->position(approachObj->virObjRight);
 		}// start
 
 
@@ -581,6 +578,14 @@ namespace mc_handover
 				if( approachObj->handoverRun() )
 				{
 
+					// posTaskR->position(approachObj->virObjLeft.translation());
+					// posTaskL->position(approachObj->virObjRight.translation());
+					// oriTaskR->orientation(relaxRotR);
+					// oriTaskL->orientation(relaxRotL);
+
+					// objEfTask->set_ef_pose(sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC));
+
+
 					auto robotRtHandOnObj = [&]()-> sva::PTransformd
 					{
 						al = (approachObj->objectPosC - approachObj->gripperEfR).norm();
@@ -691,8 +696,8 @@ namespace mc_handover
 
 					auto obj_rel_subjHands = [&]() -> std::vector<string>
 					{
-						if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
-						// if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
+						// if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
+						if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
 						{
 							subjMarkersName = approachObj->subjRtMarkers;
 							// fingerPos = approachObj->fingerPosR;
