@@ -168,12 +168,6 @@ namespace mc_handover
 			finR_rel_efL = (gripperEfL - fingerPosR).norm();
 			finL_rel_efR = (gripperEfR - fingerPosL).norm();
 
-			/*move EF when subject approaches object 1st time*/
-			obj_rel_robotRtHand = ( gripperEfR - objectPosC ).norm();//gripperRtEfA - objLeft
-			obj_rel_robotLtHand = ( gripperEfL - objectPosC ).norm();//gripperLtEfA - objRight
-
-			obj_rel_subjLtHand = ( fingerPosL - objectPosC ).norm();//lshpLtA - objLeft
-			obj_rel_subjRtHand = ( fingerPosR - objectPosC ).norm();//lshpRtA - objRight
 
 			/*virtual markers and their relative position*/
 			virObjLeft = sva::PTransformd(Eigen::Vector3d(0,-0.3, 0)) * sva::PTransformd(objRot.transpose(), objectPosC);
@@ -184,6 +178,14 @@ namespace mc_handover
 
 			virObj_rel_subjLtHand = ( fingerPosL - virObjLeft.translation() ).norm();//lshpLtA - virObjLeft
 			virObj_rel_subjRtHand = ( fingerPosR - virObjRight.translation() ).norm();//lshpRtA - virObjRight
+
+
+			/*move EF when subject approaches object 1st time*/
+			obj_rel_robotRtHand = ( gripperEfR - virObjLeft.translation() ).norm();//gripperRtEfA - objLeft
+			obj_rel_robotLtHand = ( gripperEfL - virObjRight.translation() ).norm();//gripperLtEfA - objRight
+
+			obj_rel_subjLtHand = ( fingerPosL - virObjLeft.translation() ).norm();//lshpLtA - objLeft
+			obj_rel_subjRtHand = ( fingerPosR - virObjRight.translation() ).norm();//lshpRtA - objRight
 
 
 			// if(i%400 == 0)
@@ -451,8 +453,8 @@ namespace mc_handover
 				/*closed WITH object*/
 				else if( (!enableHand) &&
 						(graspObject) && /*along localY direction*/
-						( abs( (leftForceLo - local_FzeroL)(2) ) >2.0 ) &&
-						( abs( (rightForceLo - local_FzeroL)(2) ) > 2.0 ) )
+						( abs( (leftForceLo - local_FzeroL)(2) ) >4.0 ) &&
+						( abs( (rightForceLo - local_FzeroL)(2) ) > 4.0 ) )
 				{
 					gClose = true;
 					closeGripper = true;
@@ -468,8 +470,8 @@ namespace mc_handover
 						(!restartHandover) && (!graspObject)  &&
 						(obj_rel_subjRtHand < obj_rel_robotLtHand) &&
 						(obj_rel_subjLtHand < obj_rel_robotRtHand) &&
-						(finR_rel_efL > 0.5) &&
-						(finL_rel_efR > 0.5) )
+						(finR_rel_efL > 0.3) &&
+						(finL_rel_efR > 0.3) )
 
 				{
 					if( (FcloseL.norm() < 2.0) || (FcloseR.norm() < 2.0) )
@@ -526,7 +528,7 @@ namespace mc_handover
 					}
 
 					if( subjHasObject &&
-						(obj_rel_subjRtHand > obj_rel_robotLtHand) &&
+						(obj_rel_subjRtHand > obj_rel_robotLtHand) && /* less conservative with "||" */
 						(obj_rel_subjLtHand > obj_rel_robotRtHand)
 						)
 					{

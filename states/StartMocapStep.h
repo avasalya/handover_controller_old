@@ -56,7 +56,7 @@ namespace mc_handover
 			double DegToRad{pi/180};
 			double RadToDeg{180/pi};
 			double closeGrippers{0.13};
-			double openGrippers{0.5};
+			double openGrippers{0.6};
 
 
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge

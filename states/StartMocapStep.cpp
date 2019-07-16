@@ -751,6 +751,7 @@ namespace mc_handover
 								// LOG_SUCCESS("begin 2nd cycle, motion enabled")
 							// }
 
+								subjMarkersName = approachObj->subjRtMarkers;
 								obj_rel_subjHands();
 								approachObj->pickNearestHand = false;
 						}
@@ -772,7 +773,7 @@ namespace mc_handover
 							approachObj->lHandPredict = approachObj->predictionController(ltPosW, relaxRotL, approachObj->subjRtMarkers);
 							approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
 						}
-						else if(approachObj->robotHasObject)
+						else if( approachObj->robotHasObject && (!approachObj->pickNearestHand) )
 						{
 							if( subjMarkersName[0] == "lShapeRtA" )
 							{
@@ -803,7 +804,7 @@ namespace mc_handover
 							updateOffsetPosR = X_M_offsetR.translation();
 							approachObj->goToHandoverPose(-0.75, 0.15, approachObj->enableHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, updateOffsetPosR);
 						}
-						else if(approachObj->robotHasObject)
+						else if( approachObj->robotHasObject && (!approachObj->pickNearestHand) )
 						{
 							if(approachObj->useLeftEf)
 							{
