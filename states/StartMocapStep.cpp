@@ -314,12 +314,18 @@ namespace mc_handover
 			ctl.logger().addLogEntry("efR Ace",[this]() -> Eigen::Vector3d { return efRAce; });
 			ctl.logger().addLogEntry("Finert",[this]() -> Eigen::Vector3d { return approachObj->Finert; });
 			ctl.logger().addLogEntry("Fload",[this]() -> Eigen::Vector3d { return approachObj->Fload; });
+
 			ctl.logger().addLogEntry("new thresh",[this]() -> Eigen::Vector3d { return approachObj->newTh; });
+			ctl.logger().addLogEntry("right Thresh",[this]() -> Eigen::Vector3d { return rightTh; });
+			ctl.logger().addLogEntry("left Thresh",[this]() -> Eigen::Vector3d { return leftTh; });
 			ctl.logger().addLogEntry("Fpull",[this]() -> Eigen::Vector3d { return approachObj->Fpull; });
 
 			ctl.logger().addLogEntry("obj mass",[this]() -> double { return approachObj->objMass; });
 			ctl.logger().addLogEntry("bool enableLHand",[this]() -> double { return approachObj->enableLHand; });
 			ctl.logger().addLogEntry("bool enableRHand",[this]() -> double { return approachObj->enableRHand; });
+
+			ctl.logger().addLogEntry("bool grippper open",[this]() -> double { return approachObj->gOpen; });
+			ctl.logger().addLogEntry("bool grippper close",[this]() -> double { return approachObj->gClose; });
 
 			// posTaskL->position(Eigen::Vector3d(0.3, 0.3, 1.0));
 			// oriTaskL->orientation(constRotL);
