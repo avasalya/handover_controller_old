@@ -74,7 +74,7 @@ namespace mc_handover
 
 
 			/*initial force/torque threshold*/
-			thresh << 10, 10, 10, 6, 6, 6, 10, 10, 10, 6, 6, 6;
+			thresh << 10, 10, 10, 4, 4, 4, 10, 10, 10, 4, 4, 4;
 			leftTh = thresh.segment(3,3);
 			rightTh = thresh.segment(9,3);
 
