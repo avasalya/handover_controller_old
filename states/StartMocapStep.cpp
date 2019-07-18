@@ -82,7 +82,6 @@ namespace mc_handover
 			/*HeadTask*/
 			headVector<<1., 0., 0.;
 			headTarget<<1., 0., 0.;
-			std::vector<std::string> activeJointsName = {"HEAD_JOINT0", "HEAD_JOINT1"};
 			headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK1", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.));
 			ctl.solver().addTask(headTask);
 			headTask->selectActiveJoints(ctl.solver(), activeJointsName);
@@ -326,10 +325,6 @@ namespace mc_handover
 
 			ctl.logger().addLogEntry("bool grippper open",[this]() -> double { return approachObj->gOpen; });
 			ctl.logger().addLogEntry("bool grippper close",[this]() -> double { return approachObj->gClose; });
-
-			// posTaskL->position(Eigen::Vector3d(0.3, 0.3, 1.0));
-			// oriTaskL->orientation(constRotL);
-
 		}// start
 
 
@@ -680,6 +675,13 @@ namespace mc_handover
 
 				if( (posTaskL->eval().norm() <0.1)  && (posTaskR->eval().norm() <0.1) )
 				{
+
+					/*reset head*/
+					ctl.solver().removeTask(headTask);
+					headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK1", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.));
+					ctl.solver().addTask(headTask);
+					headTask->selectActiveJoints(ctl.solver(), activeJointsName);
+
 					posTaskL->stiffness(4.0);
 					posTaskR->stiffness(4.0);
 

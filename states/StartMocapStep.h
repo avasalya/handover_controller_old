@@ -59,6 +59,8 @@ namespace mc_handover
 			double openGrippers{0.5};
 
 
+			std::vector<std::string> activeJointsName = {"HEAD_JOINT0", "HEAD_JOINT1"};
+
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge
 
 			bool Flag_oneHand{false};//TRUE, otherwise use both hands
@@ -86,7 +88,7 @@ namespace mc_handover
 			Eigen::Vector3d efLAce, efRAce;
 			int g{1};
 
-			
+
 			Eigen::Vector3d initPosL, initPosR, fingerPos;
 			Eigen::Matrix3d constRotL, constRotR;
 
