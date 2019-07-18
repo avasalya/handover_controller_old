@@ -58,6 +58,7 @@ namespace mc_handover
 			double closeGrippers{0.13};
 			double openGrippers{0.6};
 
+			std::vector<std::string> activeJointsName = {"HEAD_JOINT0", "HEAD_JOINT1"};
 
 			bool Flag_CORTEX{false};//TRUE, otherwise use Cortex_ROS_bridge
 
