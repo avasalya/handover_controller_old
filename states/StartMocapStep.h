@@ -74,6 +74,13 @@ namespace mc_handover
 			int dt{1};
 			int i{0};
 
+			double leftForce_Xabs{0.0};
+			double leftForce_Yabs{0.0};
+			double leftForce_Zabs{0.0};
+			double rightForce_Xabs{0.0};
+			double rightForce_Yabs{0.0};
+			double rightForce_Zabs{0.0};
+
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
 			Eigen::Vector3d headVector, headTarget;

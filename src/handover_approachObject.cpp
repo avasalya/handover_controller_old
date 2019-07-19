@@ -59,6 +59,9 @@ namespace mc_handover
 		t_predict = (int)tuner(0);
 		t_observe = (int)tuner(1);
 		it = (int)tuner(2);//t_predict/t_observe;
+
+		/*timing of handover phases*/
+		start = time(0);
 	}
 
 
@@ -364,31 +367,27 @@ namespace mc_handover
 		{
 			auto checkForce = [&](const char *axis_name, int idx)
 			{
-				objMass = ( FloadL.norm() + FloadR.norm() )/9.81;
-				// objMass = ( (FloadL + FloadR).norm() )/9.81;
-
-				FinertL = (objMass/2) * efLAce;
-				FinertR = (objMass/2) * efRAce;
-
-				FpullL[0] = abs(leftForce[0]) - abs(FinertL[0]) - abs(FzeroL[0]);
-				FpullL[1] = abs(leftForce[1]) - abs(FinertL[1]) - abs(FzeroL[1]);
-				FpullL[2] = abs(leftForce[2]) - abs(FinertL[2]) - abs(FzeroL[2]);
-
-				FpullR[0] = abs(rightForce[0]) - abs(FinertR[0]) - abs(FzeroR[0]);
-				FpullR[1] = abs(rightForce[1]) - abs(FinertR[1]) - abs(FzeroR[1]);
-				FpullR[2] = abs(rightForce[2]) - abs(FinertR[2]) - abs(FzeroR[2]);
-
-				/*new threshold*/
-				newThL = FloadL + leftTh;
-				newThR = FloadR + rightTh;
-
 				if( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) ) // not effective n efficient
 				{
 					if(enableHand)
 					{
 						enableHand = false;
+						t7 = difftime( time(0), start);
 						LOG_WARNING("trying to pull object, motion stopped")
 					}
+
+					FinertL = (objMass/2) * efLAce;
+					FinertR = (objMass/2) * efRAce;
+
+					FpullL[0] = abs(leftForce[0]) - abs(FinertL[0]) - abs(FzeroL[0]);
+					FpullL[1] = abs(leftForce[1]) - abs(FinertL[1]) - abs(FzeroL[1]);
+					FpullL[2] = abs(leftForce[2]) - abs(FinertL[2]) - abs(FzeroL[2]);
+
+					FpullR[0] = abs(rightForce[0]) - abs(FinertR[0]) - abs(FzeroR[0]);
+					FpullR[1] = abs(rightForce[1]) - abs(FinertR[1]) - abs(FzeroR[1]);
+					FpullR[2] = abs(rightForce[2]) - abs(FinertR[2]) - abs(FzeroR[2]);
+
+					/*to avoid slip-- try to check if (Fpull > Th) for cont. over 1 sec or more*/
 
 					if( (abs(FpullL[idx]) > newThL[idx]) || (abs(FpullR[idx]) > newThR[idx]) )
 					{
@@ -403,12 +402,16 @@ namespace mc_handover
 
 							if(goBackInit)
 							{
+								t8 = difftime( time(0), start);
+								count_rh_success++;
+
 								goBackInit = false;
 								LOG_SUCCESS("object pulled and has mass(kg) = " << objMass)
 							}
 						}
 						else
 						{
+							count_rh_fail++;
 							LOG_ERROR("robot doesn't have contacts with the object")
 						}
 					}
@@ -427,6 +430,7 @@ namespace mc_handover
 				if( (!openGripper) )
 				{
 					gOpen = true;
+					t2 = difftime( time(0), start);
 					LOG_INFO("1st cycle, opening grippers")
 				}
 
@@ -435,7 +439,6 @@ namespace mc_handover
 						&& (!closeGripper)
 						&& (!restartHandover)
 						&& (enableHand)
-						// && ( (finR_rel_efL < 0.15) || (finL_rel_efR < 0.15) )
 						&& ( (virObj_rel_robotRtHand < 0.20) || (virObj_rel_robotLtHand < 0.20) )
 						)
 				{
@@ -446,6 +449,7 @@ namespace mc_handover
 					local_FzeroR = rightForceLo;
 
 					enableHand = false;
+					t3 = difftime( time(0), start);
 					LOG_WARNING("motion stopped with Fzero L & R Norms "<<FzeroL.norm()<<" & "<< FzeroR.norm())
 				}
 
@@ -461,6 +465,7 @@ namespace mc_handover
 
 					FcloseL = leftForce;
 					FcloseR = rightForce;
+					t4 = difftime( time(0), start);
 					LOG_WARNING("closing with Fclose L & R Norms "<<FcloseL.norm()<<" & "<<FcloseR.norm())
 				}
 
@@ -480,6 +485,11 @@ namespace mc_handover
 						graspObject = true;
 
 						gOpen = true;
+
+						count_hr_fail++;
+
+						t_falseClose = difftime( time(0), start);
+
 						LOG_ERROR("false close, Fclose L & R Norms, try with object again"<<FcloseL.norm()<<" & "<<FcloseR.norm())
 					}
 					else
@@ -500,7 +510,13 @@ namespace mc_handover
 			{
 				/*add contacts*/
 				if(e == 2)
-				{ addContacts = true; }
+				{
+					addContacts = true;
+
+					t5 = difftime( time(0), start);
+
+					count_hr_success++;
+				}
 
 
 				if( (e%200==0) )//wait xx sec
@@ -515,6 +531,14 @@ namespace mc_handover
 					accumulate( FloadRy.begin(), FloadRy.end(), 0.0)/double(FloadRy.size()),
 					accumulate( FloadRz.begin(), FloadRz.end(), 0.0)/double(FloadRz.size());
 
+
+					/*try "worldWrench" with gravity*/
+					// objMass = ( FloadL.norm() + FloadR.norm() )/9.81;
+					objMass = ( (FloadL + FloadR).norm() )/9.81;
+
+					/*new threshold*/
+					newThL = FloadL + leftTh;
+					newThR = FloadR + rightTh;
 
 					if(objHasContacts)
 					{
@@ -570,6 +594,10 @@ namespace mc_handover
 					posTaskR->position(relaxPosR);
 					oriTaskR->orientation(initRotR);
 
+					if(!gClose)
+					{
+						t9 = difftime( time(0), start);
+					}
 					gClose = true;
 				}
 
@@ -598,6 +626,20 @@ namespace mc_handover
 					removeContacts = false;
 
 					pickNearestHand = true;
+
+					t1 = 0.0;
+					t2 = 0.0;
+					t3 = 0.0;
+					t4 = 0.0;
+					t5 = 0.0;
+					t6 = 0.0;
+					t7 = 0.0;
+					t8 = 0.0;
+					t9 = 0.0;
+					t_falseClose = 0.0;
+
+					bool_t1 = true;
+					bool_t6 = true;
 
 					LOG_SUCCESS("object returned to subject, motion enabled, restarting handover\n")
 				}

@@ -77,12 +77,12 @@ namespace mc_handover
 			-0.0267631, -0.0358778,  -0.998998,
 			 -0.982935,  -0.181001,  0.0328332;
 
-			relaxPosL << 0.15, 0.35, 0.8;
-			relaxPosR << 0.15, -0.35, 0.8;
+			relaxPosL << 0.20, 0.35, 0.8;
+			relaxPosR << 0.20, -0.35, 0.8;
 
 
 			/*initial force/torque threshold*/
-			thresh << 10, 10, 10, 8, 8, 8, 10, 10, 10, 8, 8, 8;
+			thresh << 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10;
 
 			/*HeadTask*/
 			headVector<<1., 0., 0.;
@@ -109,11 +109,11 @@ namespace mc_handover
 
 
 			/*Ef pos Tasks*/
-			posTaskL = make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
+			posTaskL = make_shared<mc_tasks::PositionTask>("LARM_LINK7", Eigen::Vector3d(0.0, 0.0, -0.09), ctl.robots(), 0, 4.0, 1e3);
 			ctl.solver().addTask(posTaskL);
 			initPosL = posTaskL->position();
 
-			posTaskR = make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
+			posTaskR = make_shared<mc_tasks::PositionTask>("RARM_LINK7", Eigen::Vector3d(0.0, 0.0, -0.09), ctl.robots(), 0, 4.0, 1e3);
 			ctl.solver().addTask(posTaskR);
 			initPosR = posTaskR->position();
 
@@ -131,7 +131,7 @@ namespace mc_handover
 			/*handover endEffectorTask*/
 			objEfTask = make_shared<mc_tasks::EndEffectorTask>("base_link", ctl.robots(), 2, 2.0, 1e3);
 			ctl.solver().addTask(objEfTask);
-			objEfTask->set_ef_pose(Eigen::Vector3d(0.23, 0.0, 0.845));
+			objEfTask->set_ef_pose(Eigen::Vector3d(0.18, 0.0, 0.845));
 
 
 
@@ -325,38 +325,66 @@ namespace mc_handover
 
 
 			/*specific logs*/
-			ctl.logger().addLogEntry("posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
-			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
+			ctl.logger().addLogEntry("logs-HANDOVER_posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
+			ctl.logger().addLogEntry("logs-HANDOVER_posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
 
-			ctl.logger().addLogEntry("obj mass",[this]() -> double { return approachObj->objMass; });
-			ctl.logger().addLogEntry("bool enableHand",[this]() -> double { return approachObj->enableHand; });
+			ctl.logger().addLogEntry("logs-HANDOVER_obj mass",[this]() -> double { return approachObj->objMass; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bool enableHand",[this]() -> double { return approachObj->enableHand; });
 
-			ctl.logger().addLogEntry("objectPosC",[this]()-> Eigen::Vector3d { return approachObj->objectPosC; });
-			ctl.logger().addLogEntry("subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
-			ctl.logger().addLogEntry("subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
-
-
-			ctl.logger().addLogEntry("efL Ace",[this]() -> Eigen::Vector3d { return efLAce; });
-			ctl.logger().addLogEntry("FzeroL",[this]() -> Eigen::Vector3d { return approachObj->FzeroL; });
-			ctl.logger().addLogEntry("FcloseL",[this]() -> Eigen::Vector3d { return approachObj->FcloseL; });
-			ctl.logger().addLogEntry("FinertL",[this]() -> Eigen::Vector3d { return approachObj->FinertL; });
-			ctl.logger().addLogEntry("FloadL",[this]() -> Eigen::Vector3d { return approachObj->FloadL; });
-			ctl.logger().addLogEntry("new threshL",[this]() -> Eigen::Vector3d { return approachObj->newThL; });
-			ctl.logger().addLogEntry("FpullL",[this]() -> Eigen::Vector3d { return approachObj->FpullL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_objectPosC",[this]()-> Eigen::Vector3d { return approachObj->objectPosC; });
+			ctl.logger().addLogEntry("logs-HANDOVER_subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
 
 
-			ctl.logger().addLogEntry("efR Ace",[this]() -> Eigen::Vector3d { return efRAce; });
-			ctl.logger().addLogEntry("FzeroR",[this]() -> Eigen::Vector3d { return approachObj->FzeroR; });
-			ctl.logger().addLogEntry("FcloseR",[this]() -> Eigen::Vector3d { return approachObj->FcloseR; });
-			ctl.logger().addLogEntry("FinertR",[this]() -> Eigen::Vector3d { return approachObj->FinertR; });
-			ctl.logger().addLogEntry("FloadR",[this]() -> Eigen::Vector3d { return approachObj->FloadR; });
-			ctl.logger().addLogEntry("new threshR",[this]() -> Eigen::Vector3d { return approachObj->newThR; });
-			ctl.logger().addLogEntry("FpullR",[this]() -> Eigen::Vector3d { return approachObj->FpullR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_efL Ace",[this]() -> Eigen::Vector3d { return efLAce; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FzeroL",[this]() -> Eigen::Vector3d { return approachObj->FzeroL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FcloseL",[this]() -> Eigen::Vector3d { return approachObj->FcloseL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FinertL",[this]() -> Eigen::Vector3d { return approachObj->FinertL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FloadL",[this]() -> Eigen::Vector3d { return approachObj->FloadL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_new threshL",[this]() -> Eigen::Vector3d { return approachObj->newThL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FpullL",[this]() -> Eigen::Vector3d { return approachObj->FpullL; });
 
 
-			ctl.logger().addLogEntry("updateOffsetPosL",[this]() -> Eigen::Vector3d { return updateOffsetPosL; });
-			ctl.logger().addLogEntry("updateOffsetPosR",[this]() -> Eigen::Vector3d { return updateOffsetPosR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_efR Ace",[this]() -> Eigen::Vector3d { return efRAce; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FzeroR",[this]() -> Eigen::Vector3d { return approachObj->FzeroR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FcloseR",[this]() -> Eigen::Vector3d { return approachObj->FcloseR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FinertR",[this]() -> Eigen::Vector3d { return approachObj->FinertR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FloadR",[this]() -> Eigen::Vector3d { return approachObj->FloadR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_new threshR",[this]() -> Eigen::Vector3d { return approachObj->newThR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_FpullR",[this]() -> Eigen::Vector3d { return approachObj->FpullR; });
 
+
+			ctl.logger().addLogEntry("logs-HANDOVER_updateOffsetPosL",[this]() -> Eigen::Vector3d { return updateOffsetPosL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_updateOffsetPosR",[this]() -> Eigen::Vector3d { return updateOffsetPosR; });
+
+
+			ctl.logger().addLogEntry("logs-HANDOVER_leftHandForce-ABS_X",[this]() -> double { return leftForce_Xabs; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rightHandForce-ABS_X",[this]() -> double { return rightForce_Xabs; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_leftHandForce-ABS_Y",[this]() -> double { return leftForce_Yabs; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rightHandForce-ABS_Y",[this]() -> double { return rightForce_Yabs; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_leftHandForce-ABS_Z",[this]() -> double { return leftForce_Zabs; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rightHandForce-ABS_Z",[this]() -> double { return rightForce_Zabs; });
+
+
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t1",[this]() -> double { return approachObj->t1; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t2",[this]() -> double { return approachObj->t2; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t3",[this]() -> double { return approachObj->t3; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t4",[this]() -> double { return approachObj->t4; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t5",[this]() -> double { return approachObj->t5; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t6",[this]() -> double { return approachObj->t6; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t7",[this]() -> double { return approachObj->t7; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t8",[this]() -> double { return approachObj->t8; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t9",[this]() -> double { return approachObj->t9; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_hr-successTrials",[this]() -> double { return approachObj->count_hr_success; });
+			ctl.logger().addLogEntry("logs-HANDOVER_hr-failTrials",[this]() -> double { return approachObj->count_hr_fail; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_rh-successTrials",[this]() -> double { return approachObj->count_rh_success; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rh-failTrials",[this]() -> double { return approachObj->count_rh_fail; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_resetTrials",[this]() -> double { return approachObj->count_reset; });
 
 
 			/*object geometric properties*/
@@ -383,6 +411,17 @@ namespace mc_handover
 			/*Force sensor*/
 			leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
 			rightForce = ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+
+
+			leftForce_Xabs = abs(leftForce(0));
+			leftForce_Yabs = abs(leftForce(1));
+			leftForce_Zabs = abs(leftForce(2));
+
+
+			rightForce_Xabs = abs(rightForce(0));
+			rightForce_Yabs = abs(rightForce(1));
+			rightForce_Zabs = abs(rightForce(2));
+
 
 			leftForceLo = ctl.robot().surfaceWrench("InternLeftHand").force();
 			rightForceLo = ctl.robot().surfaceWrench("InternRightHand").force();
@@ -692,48 +731,30 @@ namespace mc_handover
 					};
 
 
-
-					// auto obj_rel_subjHands = [&]() -> std::vector<string>
-					// {
-					// 	// if(approachObj->obj_rel_subjRtHand < approachObj->obj_rel_subjLtHand)
-					// 	if(approachObj->virObj_rel_subjRtHand < approachObj->virObj_rel_subjLtHand)
-					// 	{
-					// 		subjMarkersName = approachObj->subjRtMarkers;
-
-					// 		ctl.solver().addTask(posTaskL);
-					// 		ctl.solver().addTask(oriTaskL);
-
-					// 		ctl.solver().removeTask(posTaskR);
-					// 		ctl.solver().removeTask(oriTaskR);
-					// 	}
-					// 	else
-					// 	{
-					// 		subjMarkersName = approachObj->subjLtMarkers;
-
-					// 		ctl.solver().addTask(posTaskR);
-					// 		ctl.solver().addTask(oriTaskR);
-
-					// 		ctl.solver().removeTask(posTaskL);
-					// 		ctl.solver().removeTask(oriTaskL);
-					// 	}
-					// 	return subjMarkersName;
-					// };
-
-
 					auto obj_rel_subj = [&]()
 					{
 						if(approachObj->subjHasObject)
 						{
+							if(approachObj->bool_t1)
+							{
+								approachObj->bool_t1 = false;
+								approachObj->t1 = difftime( time(0), approachObj->start);
+							}
+
 							objEfTask->set_ef_pose(sva::PTransformd(approachObj->objRot.transpose(), approachObj->objectPosC));
 
 							subjLtHandOnObj();
 							subjRtHandOnObj();
 						}
 						else if( approachObj->robotHasObject && approachObj->pickNearestHand &&
-							( (approachObj->finR_rel_efL < 0.6) || (approachObj->finL_rel_efR < 0.6) ) )
+							( (approachObj->finR_rel_efL < 0.9) || (approachObj->finL_rel_efR < 0.9) ) )
 						{
+							if(approachObj->bool_t6)
+							{
+								approachObj->bool_t6 = false;
+								approachObj->t6 = difftime( time(0), approachObj->start);
+							}
 							subjMarkersName = approachObj->subjRtMarkers;
-							// obj_rel_subjHands();
 							approachObj->pickNearestHand = false;
 						}
 					};
@@ -782,8 +803,6 @@ namespace mc_handover
 					{
 						if(approachObj->subjHasObject)
 						{
-							headTask->target(approachObj->objectPosC);
-
 							updateOffsetPosL = X_M_offsetL.translation();
 							approachObj->goToHandoverPose(-0.15, 0.75, approachObj->enableHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, updateOffsetPosL);
 
@@ -793,8 +812,6 @@ namespace mc_handover
 						}
 						else if( approachObj->robotHasObject && (!approachObj->pickNearestHand) )
 						{
-							headTask->target(approachObj->fingerPosR);
-
 							if(approachObj->useLeftEf)
 							{
 								// robotLtHandOnObj();
@@ -834,19 +851,26 @@ namespace mc_handover
 					}
 
 
+					/*head visual tracking*/
+					if(approachObj->subjHasObject)
+					{
+						headTask->target(approachObj->objectPosC);
+					}
+					else
+					{
+						headTask->target(approachObj->fingerPosR);
+					}
+
+
 					/*START HANDOVER ROUTINE*/
 					if( (approachObj->i)%(approachObj->t_observe) == 0 )
 					{
-						/*observe subject motion for t_observe period*/
 						/* start only if object is within robot constraint space*/
 						if( (!approachObj->startNow) &&
 							(approachObj->objectPosC(0) > 1.2) && (approachObj->objectPosC(0) < 2.0) &&
 							(approachObj->fingerPosL(0) > 1.2) && (approachObj->fingerPosL(0) < 2.0) &&
 							(approachObj->fingerPosR(0) > 1.2) && (approachObj->fingerPosR(0) < 2.0) )
 						{ approachObj->startNow = true; }
-
-						// if( approachObj->startNow )
-						// 	{ obj_rel_robot(); }
 					}
 
 				}// handoverRun
@@ -914,24 +938,6 @@ namespace mc_handover
 				approachObj->useRightEf = false;
 
 
-				approachObj->local_FzeroL = Eigen::Vector3d::Zero();
-				approachObj->newThL = Eigen::Vector3d::Zero();
-				approachObj->FinertL = Eigen::Vector3d::Zero();
-				approachObj->FzeroL = Eigen::Vector3d::Zero();
-				approachObj->FcloseL = Eigen::Vector3d::Zero();
-				approachObj->FloadL = Eigen::Vector3d::Zero();
-				approachObj->FpullL = Eigen::Vector3d::Zero();
-
-
-				approachObj->local_FzeroR = Eigen::Vector3d::Zero();
-				approachObj->newThR = Eigen::Vector3d::Zero();
-				approachObj->FinertR = Eigen::Vector3d::Zero();
-				approachObj->FzeroR = Eigen::Vector3d::Zero();
-				approachObj->FcloseR = Eigen::Vector3d::Zero();
-				approachObj->FloadR = Eigen::Vector3d::Zero();
-				approachObj->FpullR = Eigen::Vector3d::Zero();
-
-
 				if( (dt%800) == 0 ) // 4 seconds
 				{
 					dt = 1;
@@ -952,6 +958,47 @@ namespace mc_handover
 					gripperR->setTargetQ({closeGrippers});
 
 					restartEverything = false;
+
+					double leftForce_Xabs = 0.0;
+					double leftForce_Yabs = 0.0;
+					double leftForce_Zabs = 0.0;
+					double rightForce_Xabs = 0.0;
+					double rightForce_Yabs = 0.0;
+					double rightForce_Zabs = 0.0;
+
+					approachObj->t1 = 0.0;
+					approachObj->t2 = 0.0;
+					approachObj->t3 = 0.0;
+					approachObj->t4 = 0.0;
+					approachObj->t5 = 0.0;
+					approachObj->t6 = 0.0;
+					approachObj->t7 = 0.0;
+					approachObj->t8 = 0.0;
+					approachObj->t9 = 0.0;
+					approachObj->t_falseClose = 0.0;
+
+					approachObj->bool_t1 = true;
+					approachObj->bool_t6 = true;
+
+					approachObj->local_FzeroL = Eigen::Vector3d::Zero();
+					approachObj->newThL = Eigen::Vector3d::Zero();
+					approachObj->FinertL = Eigen::Vector3d::Zero();
+					approachObj->FzeroL = Eigen::Vector3d::Zero();
+					approachObj->FcloseL = Eigen::Vector3d::Zero();
+					approachObj->FloadL = Eigen::Vector3d::Zero();
+					approachObj->FpullL = Eigen::Vector3d::Zero();
+
+
+					approachObj->local_FzeroR = Eigen::Vector3d::Zero();
+					approachObj->newThR = Eigen::Vector3d::Zero();
+					approachObj->FinertR = Eigen::Vector3d::Zero();
+					approachObj->FzeroR = Eigen::Vector3d::Zero();
+					approachObj->FcloseR = Eigen::Vector3d::Zero();
+					approachObj->FloadR = Eigen::Vector3d::Zero();
+					approachObj->FpullR = Eigen::Vector3d::Zero();
+
+
+					approachObj->count_reset++;
 
 					cout<<"\033[1;33m***handover fresh start***\033[0m\n";
 				}

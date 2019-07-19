@@ -13,6 +13,7 @@
 #include <tuple>
 #include <queue>
 #include <utility>
+#include <time.h>
 
 #include <Eigen/Core>
 #include <Eigen/SVD>
@@ -33,6 +34,7 @@
 
 #include "handover_controller.h"
 #include "handover_trajectories.h"
+
 
 
 using namespace std;
@@ -100,6 +102,28 @@ namespace mc_handover
 		int e{1};
 
 		int totalMarkers;
+
+		int count_hr_success{0};
+		int count_rh_success{0};
+		int count_hr_fail{0};
+		int count_rh_fail{0};
+		int count_reset{0};
+
+		time_t start;
+
+		double t1{0.0};
+		double t2{0.0};
+		double t3{0.0};
+		double t4{0.0};
+		double t5{0.0};
+		double t6{0.0};
+		double t7{0.0};
+		double t8{0.0};
+		double t9{0.0};
+		double t_falseClose{0.0};
+
+		bool bool_t1{true};
+		bool bool_t6{true};
 
 		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;
