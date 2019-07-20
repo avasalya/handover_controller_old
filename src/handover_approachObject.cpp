@@ -51,6 +51,7 @@ namespace mc_handover
 		else
 		{	LOG_WARNING("robot markers are considered")	}
 
+		LOG_SUCCESS("******** Both hands together scenario *********")
 
 		/*prediction controller parameter*/
 		tuner << 100., 10., 10.;
