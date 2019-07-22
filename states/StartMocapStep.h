@@ -99,6 +99,9 @@ namespace mc_handover
 			Eigen::Matrix3d relaxRotL, relaxRotR;
 			Eigen::Vector3d relaxPosL, relaxPosR;
 
+			Eigen::Vector3d bodyPosR, bodyPosS;
+			double bodiesDiffX{0.0};
+
 			/*offsets for robot grippers to grasp object*/
 			double objLen;
 			double objLenLt;
@@ -128,6 +131,7 @@ namespace mc_handover
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
 			std::shared_ptr<mc_tasks::OrientationTask> bodyOriTask;
+			std::shared_ptr<mc_tasks::PositionTask> bodyPosTask;
 
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;

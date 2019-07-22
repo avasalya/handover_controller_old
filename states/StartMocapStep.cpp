@@ -34,6 +34,8 @@ namespace mc_handover
 				{}
 				else if(msg.markers.at(d).marker_name== "dummyObj")
 				{}
+				else if(msg.markers.at(d).marker_name== "dummyHead")
+				{}
 				else if( c < approachObj->totalMarkers)/*used markers count*/
 				{
 					approachObj->Markers[c] <<
@@ -102,10 +104,16 @@ namespace mc_handover
 			ctl.solver().addTask(chestOriTask);
 			chestOriTask->orientation(Eigen::Matrix3d::Identity());
 
+
 			/*body ori task*/
 			bodyOriTask.reset(new mc_tasks::OrientationTask("BODY", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(bodyOriTask);
 			bodyOriTask->orientation(Eigen::Matrix3d::Identity());
+
+
+			/*body pos task*/
+			bodyPosTask.reset(new mc_tasks::PositionTask("BODY", ctl.robots(), 0, 3.0, 1e2));
+			ctl.solver().addTask(bodyPosTask);
 
 
 			/*Ef pos Tasks*/
@@ -174,6 +182,12 @@ namespace mc_handover
 					ctl.solver().addTask(objEfTask);
 					ctl.solver().addTask(posTaskR);
 					ctl.solver().addTask(oriTaskR);
+
+					oriTaskL->reset();
+					posTaskL->reset();
+
+					oriTaskR->reset();
+					posTaskR->reset();
 
 					ctl.removeContact({"hrp2_drc", "handoverObjects", "LeftGripper", "handoverPipe"});
 					ctl.removeContact({"hrp2_drc", "handoverObjects", "RightGripper", "handoverPipe"});
@@ -378,19 +392,27 @@ namespace mc_handover
 			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t8",[this]() -> double { return approachObj->t8; });
 			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t9",[this]() -> double { return approachObj->t9; });
 
-			ctl.logger().addLogEntry("logs-HANDOVER_hr-successTrials",[this]() -> double { return approachObj->count_hr_success; });
-			ctl.logger().addLogEntry("logs-HANDOVER_hr-failTrials",[this]() -> double { return approachObj->count_hr_fail; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_hr-success",[this]() -> double { return approachObj->count_hr_success; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_hr-fail",[this]() -> double { return approachObj->count_hr_fail; });
 
-			ctl.logger().addLogEntry("logs-HANDOVER_rh-successTrials",[this]() -> double { return approachObj->count_rh_success; });
-			ctl.logger().addLogEntry("logs-HANDOVER_rh-failTrials",[this]() -> double { return approachObj->count_rh_fail; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_rh-success",[this]() -> double { return approachObj->count_rh_success; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_rh-fail",[this]() -> double { return approachObj->count_rh_fail; });
 
-			ctl.logger().addLogEntry("logs-HANDOVER_resetTrials",[this]() -> double { return approachObj->count_reset; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_reset",[this]() -> double { return approachObj->count_reset; });
+
+
+			ctl.logger().addLogEntry("logs-HANDOVER_bodyPosRobot",[this]() -> Eigen::Vector3d { return bodyPosR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bodyPosSubj",[this]() -> Eigen::Vector3d { return bodyPosS; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bodies-distX",[this]() -> double { return bodiesDiffX; });
 
 
 			/*object geometric properties*/
 			objLen = 0.9;
 			objLenLt = objLen/2;
 			objLenRt = objLenLt - (approachObj->objectPosC - approachObj->objectPosCy).norm();
+
+
+			LOG_SUCCESS("******** Both hands TOGETHER scenario *********")
 
 		}// start
 
@@ -433,6 +455,16 @@ namespace mc_handover
 			bodyOriTask->orientation(Eigen::Matrix3d::Identity());
 
 
+			/*human robot body distance*/
+			if(approachObj->i>1)
+			{
+				bodyPosR = bodyPosTask->position();
+				bodyPosS = approachObj->headPos;
+
+				bodiesDiffX = bodyPosS(0)-bodyPosR(0);
+			}
+
+
 			/*robot object contacts*/
 			auto addContact_object_Gripper = [&](std::string gripperName)
 			{ ctl.addContact({"hrp2_drc", "handoverObjects", gripperName, "handoverPipe"}); };
@@ -473,6 +505,12 @@ namespace mc_handover
 
 				ctl.solver().addTask(posTaskR);
 				ctl.solver().addTask(oriTaskR);
+
+				posTaskL->reset();
+				posTaskR->reset();
+
+				oriTaskL->reset();
+				oriTaskR->reset();
 			}
 
 			approachObj->objHasContacts = objHasContact("LeftGripper") && objHasContact("RightGripper");
@@ -958,6 +996,11 @@ namespace mc_handover
 					gripperR->setTargetQ({closeGrippers});
 
 					restartEverything = false;
+
+					bodyPosR = Eigen::Vector3d::Zero();
+					bodyPosS = Eigen::Vector3d::Zero();
+
+					double bodiesDiffX = 0.0;
 
 					double leftForce_Xabs = 0.0;
 					double leftForce_Yabs = 0.0;

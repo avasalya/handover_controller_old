@@ -131,7 +131,7 @@ namespace mc_handover
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
 		std::vector<std::string> robotLtMarkers, robotRtMarkers;
-		std::vector<std::string> objMarkers, subjRtMarkers, subjLtMarkers, subjMarkers;
+		std::vector<std::string> objMarkers, subjRtMarkers, subjLtMarkers, subjMarkers, subjHeadMarkers;
 
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 
@@ -141,6 +141,7 @@ namespace mc_handover
 		Eigen::Vector3d gripperLtEfA, gripperRtEfA;
 		Eigen::Vector3d gripperLtEfB, gripperRtEfB;
 
+		Eigen::Vector3d headPos, headPos1, headPos2;
 		Eigen::Vector3d fingerPosL, fingerPosR;
 		Eigen::Vector3d objectPosC, objectPosCx, objectPosCy;
 		sva::PTransformd virObjLeft, virObjRight;

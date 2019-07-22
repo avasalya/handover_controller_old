@@ -2,13 +2,13 @@
 
 namespace mc_handover
 {
-	ApproachObject::ApproachObject()
-	{ cout<<"\033[1;50mhandover object created\033[0m\n"; }
+	ApproachObject::ApproachObject() {}
+	// { cout<<"\033[1;50mhandover object created\033[0m\n"; }
 
 
 
-	ApproachObject::~ApproachObject()
-	{ cout<<"\033[1;50mhandover object destroyed\033[0m\n"; }
+	ApproachObject::~ApproachObject() {}
+	// { cout<<"\033[1;50mhandover object destroyed\033[0m\n"; }
 
 
 
@@ -16,23 +16,25 @@ namespace mc_handover
 	void ApproachObject::initials()
 	{
 		/*markers Name strings*/
-		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "7mars_subj_hands"};
+		strMarkersBodyName = {"4mars_robot_left_hand", "4mars_robot_right_hand", "3mars_obj", "7mars_subj_hands", "2mars_subj_head"};
 
 		robotLtMarkers = {"wristLtEfA", "wristLtEfB", "gripperLtEfA", "gripperLtEfB"};//0-3 + dummy
 		robotRtMarkers = {"wristRtEfA", "wristRtEfB", "gripperRtEfA", "gripperRtEfB"};//4-7
 
-		// objMarkers = {"left", "center", "right", "centerX", "centerY"};//8-12
 		objMarkers = {"center", "centerX", "centerY"}; //8-10 + dummyObj
-
 
 		subjRtMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD"};//11-14
 		subjLtMarkers = {"lShapeLtA",              "lShapeLtC", "lShapeLtD"};//15-17
 		subjMarkers = {"lShapeRtA", "lShapeRtB", "lShapeRtC", "lShapeRtD", "lShapeLtA", "lShapeLtC", "lShapeLtD"}; //11-17
 
+		subjHeadMarkers = {"head1", "head2"};//18-19 + dummyHead
+
+
 		strMarkersName.insert(strMarkersName.begin(), robotLtMarkers.begin(), robotLtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), robotRtMarkers.begin(), robotRtMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), objMarkers.begin(), objMarkers.end());
 		strMarkersName.insert(strMarkersName.end(), subjMarkers.begin(), subjMarkers.end());
+		strMarkersName.insert(strMarkersName.end(), subjHeadMarkers.begin(), subjHeadMarkers.end());
 
 		totalMarkers = strMarkersName.size();
 
@@ -40,7 +42,6 @@ namespace mc_handover
 			markers_name_index[strMarkersName[k]] = k;
 
 		Markers.resize(totalMarkers);
-		// object.resize(objMarkers.size());
 
 		markersPos.resize(totalMarkers);
 		for(int m=0; m<totalMarkers; m++)
@@ -50,8 +51,6 @@ namespace mc_handover
 		{	LOG_ERROR("robot markers are not considered") }
 		else
 		{	LOG_WARNING("robot markers are considered")	}
-
-		LOG_SUCCESS("******** Both hands together scenario *********")
 
 		/*prediction controller parameter*/
 		tuner << 100., 10., 10.;
@@ -171,6 +170,11 @@ namespace mc_handover
 
 			finR_rel_efL = (gripperEfL - fingerPosR).norm();
 			finL_rel_efR = (gripperEfR - fingerPosL).norm();
+
+
+			headPos1 = markersPos[18].col(i);//head left
+			headPos2 = markersPos[19].col(i);//head right
+			headPos = 0.5*(headPos1 + headPos2);
 
 
 			/*virtual markers and their relative position*/
