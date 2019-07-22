@@ -507,6 +507,28 @@ namespace mc_handover
 		}
 
 
+
+		/*move EF to initial position*/
+		if( (finR_rel_efL > 0.45) && (finL_rel_efR > 0.45) )
+		{
+			if(!goBackInit)
+			{
+				posTaskL->position(relaxPosL);
+				oriTaskL->orientation(initRotL);
+
+				posTaskR->position(relaxPosR);
+				oriTaskR->orientation(initRotR);
+
+				if(!gClose)
+				{
+					t9 = difftime( time(0), start);
+				}
+				gClose = true;
+			}
+		}
+
+
+
 		/*restart handover*/
 		if( (finR_rel_efL > 0.8) && (finL_rel_efR > 0.8) )
 		{
@@ -590,22 +612,6 @@ namespace mc_handover
 
 			if(restartHandover)
 			{
-				/*move EF to initial position*/
-				if(!goBackInit)
-				{
-					posTaskL->position(relaxPosL);
-					oriTaskL->orientation(initRotL);
-
-					posTaskR->position(relaxPosR);
-					oriTaskR->orientation(initRotR);
-
-					if(!gClose)
-					{
-						t9 = difftime( time(0), start);
-					}
-					gClose = true;
-				}
-
 				openGripper = false;
 				closeGripper = false;
 
