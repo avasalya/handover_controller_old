@@ -13,6 +13,8 @@
 #include <tuple>
 #include <queue>
 #include <utility>
+#include <time.h>
+
 
 #include <Eigen/Core>
 #include <Eigen/SVD>
@@ -50,11 +52,36 @@ namespace mc_handover
 
 		bool handoverRun();
 
-		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> lShpMarkersName);
+		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> predictionController(
+			const Eigen::Vector3d& curPosEf,
+			const Eigen::Matrix3d & constRotLink6,
+			std::vector<std::string> lShpMarkersName);
 
-		bool goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos);
+		bool goToHandoverPose(
+			double min,
+			double max,
+			bool& enableHand,
+			Eigen::Vector3d& curPosEf,
+			std::shared_ptr<mc_tasks::PositionTask>& posTask,
+			std::shared_ptr<mc_tasks::OrientationTask>& oriTask,
+			std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d,
+			Eigen::Matrix3d> handPredict,
+			Eigen::Vector3d fingerPos);
 
-		bool forceController(bool& enableHand, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th,  Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> lShpMarkersName, double obj_rel_robotHand);
+		bool forceController(
+			bool& enableHand,
+			Eigen::Vector3d constPos,
+			Eigen::Vector3d initPos,
+			Eigen::Matrix3d initRot,
+			Eigen::Vector3d handForce,
+			Eigen::Vector3d Th,
+			Eigen::Vector3d efAce,
+			std::shared_ptr<mc_tasks::PositionTask>& posTask,
+			std::shared_ptr<mc_tasks::OrientationTask>& oriTask,
+			std::string gripperName,
+			std::vector<std::string> robotMarkersName,
+			std::vector<std::string> lShpMarkersName,
+			double obj_rel_robotHand);
 
 		bool Flag_withoutRobot{false}; //TRUE, otherwise use ROBOT_Markers
 
@@ -67,18 +94,43 @@ namespace mc_handover
 		int t_observe;
 		int it;
 
-		int i{0};
+		int i{1};
 		int e{1};
 
 		int totalMarkers;
+
+
+		int count_hr_success{0};
+		int count_rh_success{0};
+		int count_hr_fail{0};
+		int count_rh_fail{0};
+		int count_reset{0};
+
+		time_t start;
+
+		double t1{0.0};
+		double t2{0.0};
+		double t3{0.0};
+		double t4{0.0};
+		double t5{0.0};
+		double t6{0.0};
+		double t7{0.0};
+		double t8{0.0};
+		double t9{0.0};
+		double t_falseClose{0.0};
+
+		bool bool_t1{true};
+		bool bool_t6{true};
+
 
 		std::vector<Eigen::Vector3d> Markers;
 		std::vector<Eigen::MatrixXd> markersPos;
 
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
-		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers, subjMarkers;
+		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers, subjMarkers, subjHeadMarkers;
 
+		Eigen::Vector3d headPos, headPos1, headPos2;
 		Eigen::Vector3d objectPos, fingerPosL, fingerPosR;
 		Eigen::Matrix3d idtMat = Eigen::Matrix3d::Identity();
 		Eigen::Matrix3d handRot= idtMat;
@@ -89,10 +141,10 @@ namespace mc_handover
 
 		std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> lHandPredict, rHandPredict;
 
-		bool useLeftEf{true};
+		bool useLtEf{true};
 		bool stopLtEf{true};
 
-		bool useRightEf{true};
+		bool useRtEf{true};
 		bool stopRtEf{true};
 
 		bool enableLHand{true};

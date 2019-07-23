@@ -74,7 +74,20 @@ namespace mc_handover
 
 
 			int fps{200};
+			int g{1};
+			int dt{1};
 			int maxMarkers, markersCount, until, b_;
+
+			double leftForce_Xabs{0.0};
+			double leftForce_Yabs{0.0};
+			double leftForce_Zabs{0.0};
+			double rightForce_Xabs{0.0};
+			double rightForce_Yabs{0.0};
+			double rightForce_Zabs{0.0};
+
+
+			double bodiesDiffX{0.0};
+			Eigen::Vector3d bodyPosR, bodyPosS;
 
 			Eigen::Vector3d move, target, initialCom = Eigen::Vector3d::Zero();
 
@@ -86,10 +99,10 @@ namespace mc_handover
 			std::vector<Eigen::Vector3d> efLPos, efLVel;
 			std::vector<Eigen::Vector3d> efRPos, efRVel;
 			Eigen::Vector3d efLAce, efRAce;
-			int g{1};
 
 
 			Eigen::Vector3d initPosL, initPosR, fingerPos;
+			Eigen::Vector3d constPosL, constPosR;
 			Eigen::Matrix3d constRotL, constRotR;
 
 			Eigen::Matrix3d ltRotW, rtRotW;
@@ -98,15 +111,20 @@ namespace mc_handover
 			Eigen::VectorXd thresh = Eigen::VectorXd::Zero(12);
 			Eigen::Vector3d leftTh, rightTh;
 			Eigen::Vector3d leftForce, rightForce;
+			Eigen::Vector3d leftForceLo, rightForceLo;
+
 
 			std::shared_ptr<mc_tasks::PositionTask> posTaskL;
-			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
-
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskL;
+
+			std::shared_ptr<mc_tasks::PositionTask> posTaskR;
 			std::shared_ptr<mc_tasks::OrientationTask> oriTaskR;
 
 			std::shared_ptr<mc_tasks::OrientationTask> chestOriTask;
 			std::shared_ptr<mc_tasks::PositionTask> chestPosTask;
+
+			std::shared_ptr<mc_tasks::PositionTask> bodyPosTask;
+			std::shared_ptr<mc_tasks::OrientationTask> bodyOriTask;
 
 			std::shared_ptr<mc_tasks::EndEffectorTask>objEfTask;
 

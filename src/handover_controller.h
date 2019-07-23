@@ -69,17 +69,18 @@ namespace mc_handover
 		virtual bool read_write_msg(std::string & msg, std::string & out) override;
 
 
+		mc_solver::ContactConstraint contactConstraint;
 		std::map<std::string, sva::ForceVecd> wrenches;
-		
+
 		bool getHostInfo();
 		bool Flag_ROBOT{false};
-		
+
 
 
 	private:
 
 		double openG{0.5};
 		double closeG{0.2};
-		
+
 	};
 } // namespace mc_control

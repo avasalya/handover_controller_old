@@ -29,7 +29,9 @@ namespace mc_handover
 			{
 				if(msg.markers.at(d).marker_name== "dummy")
 				{}
-				else if( c < 16)/*used markers count*/
+				else if(msg.markers.at(d).marker_name== "dummyHead")
+				{}
+				else if( c < approachObj->totalMarkers)/*used markers count*/
 				{
 					approachObj->Markers[c] <<
 					msg.markers.at(d).translation.x, msg.markers.at(d).translation.y, msg.markers.at(d).translation.z;
@@ -72,6 +74,8 @@ namespace mc_handover
 			-0.243029,   0.967128, -0.0748305,
 			-0.969923,  -0.241198,  0.0327433;
 
+			constPosL<<  0.20, 0.3, 0.9;
+			constPosR<<  0.20, -0.3, 0.9;
 
 			/*initial force/torque threshold*/
 			thresh << 10, 10, 10, 4, 4, 4, 10, 10, 10, 4, 4, 4;
@@ -96,6 +100,16 @@ namespace mc_handover
 			chestOriTask.reset(new mc_tasks::OrientationTask("CHEST_LINK1", ctl.robots(), 0, 3.0, 1e2));
 			ctl.solver().addTask(chestOriTask);
 			chestOriTask->orientation(Eigen::Matrix3d::Identity());
+
+
+			/*body pos task*/
+			bodyPosTask.reset(new mc_tasks::PositionTask("BODY", ctl.robots(), 0, 3.0, 1e2));
+			ctl.solver().addTask(bodyPosTask);
+
+			/*body ori task*/
+			bodyOriTask.reset(new mc_tasks::OrientationTask("BODY", ctl.robots(), 0, 3.0, 1e2));
+			ctl.solver().addTask(bodyOriTask);
+			bodyOriTask->orientation(Eigen::Matrix3d::Identity());
 
 
 			/*Ef pos Tasks*/
@@ -123,19 +137,6 @@ namespace mc_handover
 			ctl.solver().addTask(objEfTask);
 			objEfTask->set_ef_pose(sva::PTransformd(Eigen::Vector3d(0.5, 0.0, 1.1)));
 
-
-			/*play-pause MOCAP*/
-			ctl.gui()->addElement({"MOCAP"},
-				mc_rtc::gui::Button("pause", [this]()
-				{
-					Cortex_Request("Pause", &pResponse, &nBytes);
-				}),
-
-				mc_rtc::gui::Button("Play", [this]()
-				{
-					Cortex_Request("LiveMode", &pResponse, &nBytes);
-				})
-				);
 
 			/*restart mocapStep*/
 			ctl.gui()->addElement({"Handover", "Restart"},
@@ -299,32 +300,77 @@ namespace mc_handover
 
 
 			/*specific logs*/
-			ctl.logger().addLogEntry("posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
-			ctl.logger().addLogEntry("posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
+			ctl.logger().addLogEntry("logs-HANDOVER_posTaskL", [this]() -> Eigen::Vector3d { return posTaskL->position(); });
+			ctl.logger().addLogEntry("logs-HANDOVER_posTaskR", [this]() -> Eigen::Vector3d { return posTaskR->position(); });
 
-			ctl.logger().addLogEntry("objectPos",[this]()-> Eigen::Vector3d { return approachObj->objectPos; });
-			ctl.logger().addLogEntry("subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
-			ctl.logger().addLogEntry("subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_obj mass",[this]() -> double { return approachObj->objMass; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_bool enableLHand",[this]() -> double { return approachObj->enableLHand; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bool enableRHand",[this]() -> double { return approachObj->enableRHand; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_bool useLtEf",[this]() -> double { return approachObj->useLtEf; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bool stopLtEf",[this]() -> double { return approachObj->stopLtEf; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_bool useRtEf",[this]() -> double { return approachObj->useRtEf; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bool stopRtEf",[this]() -> double { return approachObj->stopRtEf; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_objectPos",[this]()-> Eigen::Vector3d { return approachObj->objectPos; });
+			ctl.logger().addLogEntry("logs-HANDOVER_subjFinL",[this]() -> Eigen::Vector3d { return approachObj->fingerPosL; });
+			ctl.logger().addLogEntry("logs-HANDOVER_subjFinR",[this]() -> Eigen::Vector3d { return approachObj->fingerPosR; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_Fzero",[this]() -> Eigen::Vector3d { return approachObj->Fzero; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Fclose",[this]() -> Eigen::Vector3d { return approachObj->Fclose; });
+			ctl.logger().addLogEntry("logs-HANDOVER_efL Ace",[this]() -> Eigen::Vector3d { return efLAce; });
+			ctl.logger().addLogEntry("logs-HANDOVER_efR Ace",[this]() -> Eigen::Vector3d { return efRAce; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Finert",[this]() -> Eigen::Vector3d { return approachObj->Finert; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Fload",[this]() -> Eigen::Vector3d { return approachObj->Fload; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Fpull",[this]() -> Eigen::Vector3d { return approachObj->Fpull; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_new thresh",[this]() -> Eigen::Vector3d { return approachObj->newTh; });
+			ctl.logger().addLogEntry("logs-HANDOVER_right Thresh",[this]() -> Eigen::Vector3d { return rightTh; });
+			ctl.logger().addLogEntry("logs-HANDOVER_left Thresh",[this]() -> Eigen::Vector3d { return leftTh; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_bool grippper open",[this]() -> double { return approachObj->gOpen; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bool grippper close",[this]() -> double { return approachObj->gClose; });
 
 
-			ctl.logger().addLogEntry("Fzero",[this]() -> Eigen::Vector3d { return approachObj->Fzero; });
-			ctl.logger().addLogEntry("Fclose",[this]() -> Eigen::Vector3d { return approachObj->Fclose; });
-			ctl.logger().addLogEntry("efL Ace",[this]() -> Eigen::Vector3d { return efLAce; });
-			ctl.logger().addLogEntry("efR Ace",[this]() -> Eigen::Vector3d { return efRAce; });
-			ctl.logger().addLogEntry("Finert",[this]() -> Eigen::Vector3d { return approachObj->Finert; });
-			ctl.logger().addLogEntry("Fload",[this]() -> Eigen::Vector3d { return approachObj->Fload; });
+			ctl.logger().addLogEntry("logs-HANDOVER_leftHandForce-ABS_X",[this]() -> double { return leftForce_Xabs; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rightHandForce-ABS_X",[this]() -> double { return rightForce_Xabs; });
 
-			ctl.logger().addLogEntry("new thresh",[this]() -> Eigen::Vector3d { return approachObj->newTh; });
-			ctl.logger().addLogEntry("right Thresh",[this]() -> Eigen::Vector3d { return rightTh; });
-			ctl.logger().addLogEntry("left Thresh",[this]() -> Eigen::Vector3d { return leftTh; });
-			ctl.logger().addLogEntry("Fpull",[this]() -> Eigen::Vector3d { return approachObj->Fpull; });
+			ctl.logger().addLogEntry("logs-HANDOVER_leftHandForce-ABS_Y",[this]() -> double { return leftForce_Yabs; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rightHandForce-ABS_Y",[this]() -> double { return rightForce_Yabs; });
 
-			ctl.logger().addLogEntry("obj mass",[this]() -> double { return approachObj->objMass; });
-			ctl.logger().addLogEntry("bool enableLHand",[this]() -> double { return approachObj->enableLHand; });
-			ctl.logger().addLogEntry("bool enableRHand",[this]() -> double { return approachObj->enableRHand; });
+			ctl.logger().addLogEntry("logs-HANDOVER_leftHandForce-ABS_Z",[this]() -> double { return leftForce_Zabs; });
+			ctl.logger().addLogEntry("logs-HANDOVER_rightHandForce-ABS_Z",[this]() -> double { return rightForce_Zabs; });
 
-			ctl.logger().addLogEntry("bool grippper open",[this]() -> double { return approachObj->gOpen; });
-			ctl.logger().addLogEntry("bool grippper close",[this]() -> double { return approachObj->gClose; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t1",[this]() -> double { return approachObj->t1; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t2",[this]() -> double { return approachObj->t2; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t3",[this]() -> double { return approachObj->t3; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t4",[this]() -> double { return approachObj->t4; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t5",[this]() -> double { return approachObj->t5; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t6",[this]() -> double { return approachObj->t6; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t7",[this]() -> double { return approachObj->t7; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t8",[this]() -> double { return approachObj->t8; });
+			ctl.logger().addLogEntry("logs-HANDOVER_elapsed_t9",[this]() -> double { return approachObj->t9; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_hr-success",[this]() -> double { return approachObj->count_hr_success; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_hr-fail",[this]() -> double { return approachObj->count_hr_fail; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_rh-success",[this]() -> double { return approachObj->count_rh_success; });
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_rh-fail",[this]() -> double { return approachObj->count_rh_fail; });
+
+			ctl.logger().addLogEntry("logs-HANDOVER_Trials_reset",[this]() -> double { return approachObj->count_reset; });
+
+
+			ctl.logger().addLogEntry("logs-HANDOVER_bodyPosRobot",[this]() -> Eigen::Vector3d { return bodyPosR; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bodyPosSubj",[this]() -> Eigen::Vector3d { return bodyPosS; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bodies-distX",[this]() -> double { return bodiesDiffX; });
+
+
+
+			LOG_SUCCESS("******** Both hands INDIVIDUAL scenario *********")
+
 		}// start
 
 
@@ -340,6 +386,41 @@ namespace mc_handover
 
 			rtPosW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK7")].translation();
 			rtRotW = ctl.robot().mbc().bodyPosW[ctl.robot().bodyIndexByName("RARM_LINK6")].rotation();
+
+			/*Force sensor*/
+			leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+			rightForce = ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
+
+
+			leftForce_Xabs = abs(leftForce(0));
+			leftForce_Yabs = abs(leftForce(1));
+			leftForce_Zabs = abs(leftForce(2));
+
+
+			rightForce_Xabs = abs(rightForce(0));
+			rightForce_Yabs = abs(rightForce(1));
+			rightForce_Zabs = abs(rightForce(2));
+
+
+			leftForceLo = ctl.robot().surfaceWrench("InternLeftHand").force();
+			rightForceLo = ctl.robot().surfaceWrench("InternRightHand").force();
+
+
+			/*chest pos and chest/body joint ori*/
+			chestPosTask->position({0.032, 0.0, 1.12});
+			chestOriTask->orientation(Eigen::Matrix3d::Identity());
+			bodyOriTask->orientation(Eigen::Matrix3d::Identity());
+
+
+			/*human robot body distance*/
+			if(approachObj->i>1)
+			{
+				bodyPosR = bodyPosTask->position();
+				bodyPosS = approachObj->headPos;
+
+				bodiesDiffX = bodyPosS(0)-bodyPosR(0);
+			}
+
 
 			efLPos.resize(3);
 			efLVel.resize(2);
@@ -368,10 +449,6 @@ namespace mc_handover
 				}
 			}
 
-			/*Force sensor*/
-			leftForce = ctl.robot().forceSensor("LeftHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-			rightForce = ctl.robot().forceSensor("RightHandForceSensor").worldWrenchWithoutGravity(ctl.robot()).force();
-
 
 			/*set com pose*/
 			target = initialCom + move;
@@ -381,7 +458,7 @@ namespace mc_handover
 			auto open_gripper = [&](std::string gripperName)
 			{
 				auto gripper = ctl.grippers[gripperName].get();
-				gripper->setTargetQ({0.5});
+				gripper->setTargetQ({openGrippers});
 
 				approachObj->gOpen = false;
 				approachObj->openGripper = true;
@@ -431,9 +508,7 @@ namespace mc_handover
 				}
 			}
 			else
-			{
-				startCapture = true;
-			}
+			{ startCapture = true; }
 
 
 			/*start only when ithFrame == 1*/
@@ -442,7 +517,6 @@ namespace mc_handover
 
 				if(Flag_CORTEX)
 				{
-
 					/*get markers position FrameByFrame*/
 					if(approachObj->Flag_withoutRobot)
 						{ b_ = 2; c = 8; }
@@ -481,7 +555,6 @@ namespace mc_handover
 								"pBody->nMarkers: " << pBody->nMarkers<<"\n"<<
 								" & FrameofData.BodyData[b].nMarkers: " <<FrameofData.BodyData[b].nMarkers<<"\n" ) }
 					}
-
 				}
 
 				if( approachObj->handoverRun() )
@@ -491,21 +564,21 @@ namespace mc_handover
 					{
 						if( ((approachObj->i)%(approachObj->t_observe)==0) )
 						{
-							approachObj->useLeftEf = false;
+							approachObj->useLtEf = false;
 
 							/*subj right*/
 							approachObj->lHandPredict = approachObj->predictionController(ltPosW, constRotL, approachObj->subjRtMarkers);
 
-							approachObj->useLeftEf = get<0>(approachObj->lHandPredict);
+							approachObj->useLtEf = get<0>(approachObj->lHandPredict);
 						}
 
 
-						if( approachObj->useLeftEf )
+						if( approachObj->useLtEf )
 						{
 							/*subj right*/
 							taskOK = approachObj->goToHandoverPose(0.0, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers, approachObj->obj_rel_robotLtHand);
+							taskOK = approachObj->forceController(approachObj->enableLHand, constPosL, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers, approachObj->obj_rel_robotLtHand);
 
 							gripperControl("l_gripper");
 						}
@@ -541,9 +614,15 @@ namespace mc_handover
 								// if(approachObj->obj_rel_robotLtHand < approachObj->obj_rel_robotRtHand)
 								if(fingerPos(0) < 0.7)
 								{
+									if(approachObj->bool_t1)
+									{
+										approachObj->bool_t1 = false;
+										approachObj->t1 = difftime( time(0), approachObj->start);
+									}
+
 									if( fingerPos(1) >= 0 )
 									{
-										if( (approachObj->stopRtEf) && (approachObj->useLeftEf) )
+										if( (approachObj->stopRtEf) && (approachObj->useLtEf) )
 										{
 											LOG_INFO("robotLeftHand in use")
 
@@ -560,7 +639,7 @@ namespace mc_handover
 									}
 									else
 									{
-										if( (approachObj->stopLtEf) && (approachObj->useRightEf) )
+										if( (approachObj->stopLtEf) && (approachObj->useRtEf) )
 										{
 											LOG_WARNING("robotRightHand in use")
 
@@ -596,22 +675,22 @@ namespace mc_handover
 						/*feed ef pose*/
 						if( (!approachObj->stopRtEf) )
 						{
-							approachObj->useRightEf=false;
+							approachObj->useRtEf = false;
 							robotMarkersName = approachObj->robotLtMarkers;
 
 							taskOK = approachObj->goToHandoverPose(-0.1, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotLtHand);
+							taskOK = approachObj->forceController(approachObj->enableLHand, constPosL, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotLtHand);
 							gripperControl("l_gripper");
 						}
 						else if( (!approachObj->stopLtEf) )
 						{
-							approachObj->useLeftEf = false;
+							approachObj->useLtEf = false;
 							robotMarkersName = approachObj->robotRtMarkers;
 
 							taskOK = approachObj->goToHandoverPose(-0.7, 0.10, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableRHand, initPosR, initRotR, rightForce, rightTh, efRAce, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotRtHand);
+							taskOK = approachObj->forceController(approachObj->enableRHand, constPosR, initPosR, initRotR, rightForce, rightTh, efRAce, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotRtHand);
 							gripperControl("r_gripper");
 						}
 
@@ -629,20 +708,32 @@ namespace mc_handover
 
 			if(restartEverything)
 			{
+				dt+=1;
+
+				/*reset moap markers*/
+				for(unsigned int d=0; d<approachObj->totalMarkers; d++)
+				{
+					approachObj->Markers[d] << Eigen::Vector3d(0, 0, 0);
+				}
+
+
 				auto  gripperL = ctl.grippers["l_gripper"].get();
 				auto  gripperR = ctl.grippers["r_gripper"].get();
 
 				gripperL->setTargetQ({openGrippers});
 				gripperR->setTargetQ({openGrippers});
 
-				posTaskL->stiffness(2.0);
-				posTaskL->position(initPosL);
+				if(!approachObj->stopRtEf)
+				{
+					posTaskL->position(constPosL);
+					oriTaskL->orientation(initRotL);
+				}
+				else if(!approachObj->stopLtEf)
+				{
+					posTaskR->position(constPosR);
+					oriTaskR->orientation(initRotR);
+				}
 
-				posTaskR->stiffness(2.0);
-				posTaskR->position(initPosR);
-
-				oriTaskL->orientation(initRotL);
-				oriTaskR->orientation(initRotR);
 
 				approachObj->e = 1;
 
@@ -656,34 +747,26 @@ namespace mc_handover
 				approachObj->takeBackObject = false;
 				approachObj->restartHandover = false;
 
-				approachObj->useLeftEf = true;
+				approachObj->useLtEf = true;
 				approachObj->stopLtEf = true;
 
-				approachObj->useRightEf = true;
+				approachObj->useRtEf = true;
 				approachObj->stopRtEf = true;
 
 				approachObj->pickaHand = false;
 
-				approachObj->newTh = Eigen::Vector3d::Zero();
-				approachObj->Finert = Eigen::Vector3d::Zero();
-				approachObj->Fzero = Eigen::Vector3d::Zero();
-				approachObj->Fclose = Eigen::Vector3d::Zero();
-				approachObj->Fload = Eigen::Vector3d::Zero();
-				approachObj->Fpull = Eigen::Vector3d::Zero();
-
 				approachObj->objMass = 0.2;
 
-				if( (posTaskL->eval().norm() <0.1)  && (posTaskR->eval().norm() <0.1) )
+				if( (dt%800) == 0 ) // 4 seconds )
 				{
-
 					/*reset head*/
 					ctl.solver().removeTask(headTask);
 					headTask.reset(new mc_tasks::LookAtTask("HEAD_LINK1", headVector, headTarget, ctl.robots(), ctl.robots().robotIndex(), 2., 500.));
 					ctl.solver().addTask(headTask);
 					headTask->selectActiveJoints(ctl.solver(), activeJointsName);
 
-					posTaskL->stiffness(4.0);
-					posTaskR->stiffness(4.0);
+					posTaskL->position(initPosL);
+					posTaskR->position(initPosR);
 
 					approachObj->enableLHand = true;
 					approachObj->enableRHand = true;
@@ -692,6 +775,41 @@ namespace mc_handover
 					gripperR->setTargetQ({closeGrippers});
 
 					restartEverything = false;
+
+					bodyPosR = Eigen::Vector3d::Zero();
+					bodyPosS = Eigen::Vector3d::Zero();
+
+					double bodiesDiffX = 0.0;
+
+					double leftForce_Xabs = 0.0;
+					double leftForce_Yabs = 0.0;
+					double leftForce_Zabs = 0.0;
+					double rightForce_Xabs = 0.0;
+					double rightForce_Yabs = 0.0;
+					double rightForce_Zabs = 0.0;
+
+					approachObj->t1 = 0.0;
+					approachObj->t2 = 0.0;
+					approachObj->t3 = 0.0;
+					approachObj->t4 = 0.0;
+					approachObj->t5 = 0.0;
+					approachObj->t6 = 0.0;
+					approachObj->t7 = 0.0;
+					approachObj->t8 = 0.0;
+					approachObj->t9 = 0.0;
+					approachObj->t_falseClose = 0.0;
+
+					approachObj->bool_t1 = true;
+					approachObj->bool_t6 = true;
+
+					approachObj->newTh = Eigen::Vector3d::Zero();
+					approachObj->Finert = Eigen::Vector3d::Zero();
+					approachObj->Fzero = Eigen::Vector3d::Zero();
+					approachObj->Fclose = Eigen::Vector3d::Zero();
+					approachObj->Fload = Eigen::Vector3d::Zero();
+					approachObj->Fpull = Eigen::Vector3d::Zero();
+
+					approachObj->count_reset++;
 
 					cout<<"\033[1;33m***handover fresh start***\033[0m\n";
 				}
