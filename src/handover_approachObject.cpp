@@ -281,6 +281,7 @@ namespace mc_handover
 		Eigen::Vector3d initPos,
 		Eigen::Matrix3d initRot,
 		Eigen::Vector3d handForce,
+		Eigen::Vector3d ForceLo,
 		Eigen::Vector3d Th,
 		Eigen::Vector3d efAce,
 		std::shared_ptr<mc_tasks::PositionTask>& posTask,
@@ -416,13 +417,19 @@ namespace mc_handover
 				else if( (enableHand) && (openGripper) && (!closeGripper) && (!restartHandover) && (subj_rel_ef < 0.12) )
 				{
 					Fzero = handForce;
+					local_Fzero = ForceLo;
+
 					enableHand = false;
 					t3 = difftime( time(0), start);
+
 					LOG_WARNING("motion stopped with Fzero Norm "<< Fzero.norm())
 				}
 
 				/*closed WITH object*/
-				else if( (!enableHand) && (graspObject) && ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) ) )
+				else if( (!enableHand) && (graspObject) &&
+					// ( (ef_area_wAB_gA > ef_area_wAB_O) || (ef_area_wAB_gB > ef_area_wAB_O) )
+					( abs( (ForceLo - local_Fzero)(2) ) > 4.0 )
+					)
 				{
 					gClose = true;
 					closeGripper = true;

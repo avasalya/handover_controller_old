@@ -74,6 +74,7 @@ namespace mc_handover
 			Eigen::Vector3d initPos,
 			Eigen::Matrix3d initRot,
 			Eigen::Vector3d handForce,
+			Eigen::Vector3d ForceLo,
 			Eigen::Vector3d Th,
 			Eigen::Vector3d efAce,
 			std::shared_ptr<mc_tasks::PositionTask>& posTask,
@@ -130,6 +131,8 @@ namespace mc_handover
 		std::map<std::string, double> markers_name_index;
 		std::vector<std::string> strMarkersBodyName, strMarkersName;
 		std::vector<std::string> robotLtMarkers, subjLtMarkers, robotRtMarkers, subjRtMarkers, subjMarkers, subjHeadMarkers;
+
+		Eigen::Vector3d local_Fzero;
 
 		Eigen::Vector3d headPos, headPos1, headPos2;
 		Eigen::Vector3d objectPos, fingerPosL, fingerPosR;

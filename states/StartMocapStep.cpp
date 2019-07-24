@@ -576,7 +576,7 @@ namespace mc_handover
 							/*subj right*/
 							taskOK = approachObj->goToHandoverPose(0.0, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, approachObj->fingerPosR);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, constPosL, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers, approachObj->obj_rel_robotLtHand);
+							taskOK = approachObj->forceController(approachObj->enableLHand, constPosL, initPosL, initRotL, leftForce, leftForceLo, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", approachObj->robotLtMarkers, approachObj->subjRtMarkers, approachObj->obj_rel_robotLtHand);
 
 							gripperControl("l_gripper");
 						}
@@ -678,7 +678,7 @@ namespace mc_handover
 
 							taskOK = approachObj->goToHandoverPose(-0.1, 0.7, approachObj->enableLHand, ltPosW, posTaskL, oriTaskL, approachObj->lHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableLHand, constPosL, initPosL, initRotL, leftForce, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotLtHand);
+							taskOK = approachObj->forceController(approachObj->enableLHand, constPosL, initPosL, initRotL, leftForce, leftForceLo, leftTh, efLAce, posTaskL, oriTaskL, "l_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotLtHand);
 							gripperControl("l_gripper");
 						}
 						else if( (!approachObj->stopLtEf) )
@@ -688,7 +688,7 @@ namespace mc_handover
 
 							taskOK = approachObj->goToHandoverPose(-0.7, 0.10, approachObj->enableRHand, rtPosW, posTaskR, oriTaskR, approachObj->rHandPredict, fingerPos);
 
-							taskOK = approachObj->forceController(approachObj->enableRHand, constPosR, initPosR, initRotR, rightForce, rightTh, efRAce, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotRtHand);
+							taskOK = approachObj->forceController(approachObj->enableRHand, constPosR, initPosR, initRotR, rightForce, rightForceLo, rightTh, efRAce, posTaskR, oriTaskR, "r_gripper", robotMarkersName, subjMarkersName, approachObj->obj_rel_robotRtHand);
 							gripperControl("r_gripper");
 						}
 
