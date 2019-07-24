@@ -121,6 +121,7 @@ namespace mc_handover
 
 		bool bool_t1{true};
 		bool bool_t6{true};
+		bool rh_fail{true};
 
 
 		std::vector<Eigen::Vector3d> Markers;

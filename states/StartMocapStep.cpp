@@ -801,6 +801,7 @@ namespace mc_handover
 
 					approachObj->bool_t1 = true;
 					approachObj->bool_t6 = true;
+					approachObj->rh_fail = true;
 
 					approachObj->newTh = Eigen::Vector3d::Zero();
 					approachObj->Finert = Eigen::Vector3d::Zero();

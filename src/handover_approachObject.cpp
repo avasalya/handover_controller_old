@@ -275,7 +275,7 @@ namespace mc_handover
 		double ef_area_wAB_gB;
 		double ef_area_wAB_f;
 
-		double subj_rel_ef, subj_rel_obj;
+		double subj_rel_ef, obj_rel_ef;
 
 		Eigen::Vector3d fingerPos, gripperEf;
 
@@ -307,7 +307,17 @@ namespace mc_handover
 		gripperEf = 0.5*( markersPos[markers_name_index[robotMarkersName[2]]].col(i) + markersPos[markers_name_index[robotMarkersName[3]]].col(i) );
 
 		subj_rel_ef = (gripperEf - fingerPos).norm();
-		subj_rel_obj = (objectPos - fingerPos).norm();
+		obj_rel_ef = (gripperEf - objectPos).norm();
+
+
+		/*check for false r-to-h trial*/
+		if( rh_fail && (subj_rel_ef < 0.15) && (obj_rel_ef > 0.5) && (!goBackInit) )
+		{
+			count_rh_fail++;
+			rh_fail = false;
+
+			LOG_ERROR("did robot drop the object ?")
+		}
 
 
 		if( subj_rel_ef < 0.3 )
@@ -343,8 +353,10 @@ namespace mc_handover
 
 						if(goBackInit)
 						{
-							goBackInit = false;
 							t8 = difftime( time(0), start);
+							count_rh_success++;
+
+							goBackInit = false;
 
 							LOG_SUCCESS("object pulled, threshold on " << axis_name << " with pull force " << Fpull[idx]<< " reached on "<< gripperName + " with newTh " << newTh.transpose())
 							cout << gripperName + "_Forces at Grasp "<< handForce.transpose() <<endl;
@@ -401,6 +413,8 @@ namespace mc_handover
 						closeGripper = false;
 						graspObject = true;
 
+						count_hr_fail++;
+
 						gOpen = true;
 						t_falseClose = difftime( time(0), start);
 						LOG_ERROR("false close, try with object again")
@@ -423,6 +437,7 @@ namespace mc_handover
 				if(e == 2)
 				{
 					t5 = difftime( time(0), start);
+					count_hr_success++;
 				}
 
 				if( (e%200==0) )//wait xx sec
@@ -501,6 +516,7 @@ namespace mc_handover
 
 					bool_t1 = true;
 					bool_t6 = true;
+					rh_fail = true;
 
 					LOG_INFO("object returned to subject, motion enabled, restarting handover\n")
 				}
