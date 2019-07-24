@@ -132,7 +132,10 @@ namespace mc_handover
 
 
 
-	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(const Eigen::Vector3d& curPosEf, const Eigen::Matrix3d & constRotLink6, std::vector<std::string> subjMarkersName)
+	std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> ApproachObject::predictionController(
+		const Eigen::Vector3d& curPosEf,
+		const Eigen::Matrix3d& constRotLink6,
+		std::vector<std::string> subjMarkersName)
 	{
 		bool ready{false};
 
@@ -217,7 +220,18 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::goToHandoverPose(double min, double max, bool& enableHand, Eigen::Vector3d& curPosEf, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::tuple<bool, Eigen::MatrixXd, Eigen::Vector3d, Eigen::Matrix3d> handPredict, Eigen::Vector3d fingerPos)
+	bool ApproachObject::goToHandoverPose(
+		double min,
+		double max,
+		bool& enableHand,
+		Eigen::Vector3d& curPosEf,
+		std::shared_ptr<mc_tasks::PositionTask>& posTask,
+		std::shared_ptr<mc_tasks::OrientationTask>& oriTask,
+		std::tuple<bool,
+		Eigen::MatrixXd,
+		Eigen::Vector3d,
+		Eigen::Matrix3d> handPredict,
+		Eigen::Vector3d fingerPos)
 	{
 		Eigen::Vector3d wp, handoverPos;
 
@@ -261,7 +275,20 @@ namespace mc_handover
 
 
 
-	bool ApproachObject::forceController(bool& enableHand, Eigen::Vector3d constPos, Eigen::Vector3d initPos, Eigen::Matrix3d initRot, Eigen::Vector3d handForce, Eigen::Vector3d Th, Eigen::Vector3d efAce, std::shared_ptr<mc_tasks::PositionTask>& posTask, std::shared_ptr<mc_tasks::OrientationTask>& oriTask, std::string gripperName, std::vector<std::string> robotMarkersName, std::vector<std::string> subjMarkersName, double obj_rel_robotHand)
+	bool ApproachObject::forceController(
+		bool& enableHand,
+		Eigen::Vector3d constPos,
+		Eigen::Vector3d initPos,
+		Eigen::Matrix3d initRot,
+		Eigen::Vector3d handForce,
+		Eigen::Vector3d Th,
+		Eigen::Vector3d efAce,
+		std::shared_ptr<mc_tasks::PositionTask>& posTask,
+		std::shared_ptr<mc_tasks::OrientationTask>& oriTask,
+		std::string gripperName,
+		std::vector<std::string> robotMarkersName,
+		std::vector<std::string> subjMarkersName,
+		double obj_rel_robotHand)
 	{
 		Eigen::Vector3d ef_wA_O, ef_wA_wB, ef_wA_gA, ef_wA_gB, ef_wA_f;
 
@@ -326,15 +353,10 @@ namespace mc_handover
 
 			auto checkForce = [&](const char *axis_name, int idx)
 			{
-				objMass = Fload.norm()/9.81;
-				Finert = objMass * efAce;
+				// /*new threshold*/
+				// newTh = Fload + Th;
 
-				Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
-				Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
-				Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
-
-				/*new threshold*/
-				newTh = Fload + Th;
+				// objMass = Fload.norm()/9.81;
 
 				if( subj_rel_ef < 0.15 )
 				{
@@ -344,6 +366,12 @@ namespace mc_handover
 						t7 = difftime( time(0), start);
 						LOG_WARNING("2nd cycle, motion stopped, try to retreat object")
 					}
+
+					Finert = objMass * efAce;
+
+					Fpull[0] = abs(handForce[0]) - abs(Finert[0]) - abs(Fzero[0]);
+					Fpull[1] = abs(handForce[1]) - abs(Finert[1]) - abs(Fzero[1]);
+					Fpull[2] = abs(handForce[2]) - abs(Finert[2]) - abs(Fzero[2]);
 
 					if( (abs(Fpull[idx]) > newTh[idx]) )
 					{
@@ -452,6 +480,13 @@ namespace mc_handover
 					accumulate( Floadz.begin(), Floadz.end(), 0.0)/double(Floadz.size());
 
 					LOG_SUCCESS("robot has object, motion enabled, Fload "<< Fload.transpose() << ", EF returning to init pose" )
+
+
+					/*try "worldWrench" with gravity*/
+					objMass = Fload.norm()/9.81;
+
+					/*new threshold*/
+					newTh = Fload + Th;
 
 					/*clear vector memories*/
 					Floadx.clear(); Floady.clear(); Floadz.clear();

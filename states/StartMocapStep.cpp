@@ -113,11 +113,11 @@ namespace mc_handover
 
 
 			/*Ef pos Tasks*/
-			posTaskL = make_shared<mc_tasks::PositionTask>("LARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
+			posTaskL = make_shared<mc_tasks::PositionTask>("LARM_LINK7", Eigen::Vector3d(0.0, 0.0, -0.09), ctl.robots(), 0, 4.0, 1e3);
 			ctl.solver().addTask(posTaskL);
 			initPosL = posTaskL->position();
 
-			posTaskR = make_shared<mc_tasks::PositionTask>("RARM_LINK7", ctl.robots(), 0, 4.0, 1e3);
+			posTaskR = make_shared<mc_tasks::PositionTask>("RARM_LINK7", Eigen::Vector3d(0.0, 0.0, -0.09), ctl.robots(), 0, 4.0, 1e3);
 			ctl.solver().addTask(posTaskR);
 			initPosR = posTaskR->position();
 
@@ -724,12 +724,12 @@ namespace mc_handover
 				if(!approachObj->stopRtEf)
 				{
 					posTaskL->position(constPosL);
-					oriTaskL->orientation(initRotL);
+					oriTaskL->orientation(constRotL);
 				}
 				else if(!approachObj->stopLtEf)
 				{
 					posTaskR->position(constPosR);
-					oriTaskR->orientation(initRotR);
+					oriTaskR->orientation(constRotR);
 				}
 
 
@@ -765,6 +765,8 @@ namespace mc_handover
 
 					posTaskL->position(initPosL);
 					posTaskR->position(initPosR);
+					oriTaskL->orientation(initRotL);
+					oriTaskR->orientation(initRotR);
 
 					approachObj->enableLHand = true;
 					approachObj->enableRHand = true;
