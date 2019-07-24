@@ -462,7 +462,7 @@ namespace mc_handover
 				else if( (!enableHand) &&
 						(graspObject) && /*along localY direction*/
 						( abs( (leftForceLo - local_FzeroL)(2) ) >4.0 ) &&
-						( abs( (rightForceLo - local_FzeroL)(2) ) > 4.0 ) )
+						( abs( (rightForceLo - local_FzeroR)(2) ) > 4.0 ) )
 				{
 					gClose = true;
 					closeGripper = true;
