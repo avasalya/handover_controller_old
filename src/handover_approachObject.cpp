@@ -522,8 +522,8 @@ namespace mc_handover
 				if(!gClose)
 				{
 					t9 = difftime( time(0), start);
+					gClose = true;
 				}
-				gClose = true;
 			}
 		}
 

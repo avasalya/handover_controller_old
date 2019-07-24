@@ -367,6 +367,8 @@ namespace mc_handover
 			ctl.logger().addLogEntry("logs-HANDOVER_new threshR",[this]() -> Eigen::Vector3d { return approachObj->newThR; });
 			ctl.logger().addLogEntry("logs-HANDOVER_FpullR",[this]() -> Eigen::Vector3d { return approachObj->FpullR; });
 
+			ctl.logger().addLogEntry("logs-HANDOVER_bool grippper open",[this]() -> double { return approachObj->gOpen; });
+			ctl.logger().addLogEntry("logs-HANDOVER_bool grippper close",[this]() -> double { return approachObj->gClose; });
 
 			ctl.logger().addLogEntry("logs-HANDOVER_updateOffsetPosL",[this]() -> Eigen::Vector3d { return updateOffsetPosL; });
 			ctl.logger().addLogEntry("logs-HANDOVER_updateOffsetPosR",[this]() -> Eigen::Vector3d { return updateOffsetPosR; });
@@ -975,6 +977,7 @@ namespace mc_handover
 				approachObj->useLeftEf = false;
 				approachObj->useRightEf = false;
 
+				approachObj->objMass = 0.5;
 
 				if( (dt%800) == 0 ) // 4 seconds
 				{
