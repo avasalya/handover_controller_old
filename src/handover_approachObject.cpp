@@ -314,6 +314,7 @@ namespace mc_handover
 		if( rh_fail && (subj_rel_ef < 0.15) && (obj_rel_ef > 0.5) && (!goBackInit) )
 		{
 			count_rh_fail++;
+			count_rh_success--;
 			rh_fail = false;
 
 			LOG_ERROR("did robot drop the object ?")
